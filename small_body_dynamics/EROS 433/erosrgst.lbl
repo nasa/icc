@@ -1,0 +1,135 @@
+PDS_VERSION_ID        = PDS3                                                  
+LABEL_REVISION_NOTE   = "                                                     
+  2001-07-19 CU:BTCarcich                                                     
+  15 Apr 2002, A.C.Raugh   Modified for new data set                          
+  "                                                                           
+                                                                              
+RECORD_TYPE           = "FIXED_LENGTH"                                        
+RECORD_BYTES          = 50                                                    
+FILE_RECORDS          = 16471                                                 
+                                                                              
+^TABLE                = "EROSRGST.TAB"                                        
+                                                                              
+DATA_SET_ID           = "NEAR-A-5-COLLECTED-MODELS-V1.0"                      
+PRODUCT_NAME          = "433 EROS SHAPE MODEL, NEAR MSI"                      
+PRODUCT_ID            = "NEARMOD-EROSRGST-200204"                             
+INSTRUMENT_HOST_NAME  = "NEAR EARTH ASTEROID RENDEZVOUS"                      
+INSTRUMENT_NAME       = "MULTI-SPECTRAL IMAGER"                               
+TARGET_NAME           = "433 EROS"                                            
+START_TIME            = "N/A"                                                 
+STOP_TIME             = "N/A"                                                 
+PRODUCT_CREATION_TIME = 2001-01-12 /* Model Creation Date */                  
+                                                                              
+OBJECT     = TABLE                                                            
+  ROWS               = 16471                                                  
+  ROW_BYTES          = 50                                                     
+  INTERCHANGE_FORMAT = "ASCII"                                                
+  COLUMNS            = 6                                                      
+  DESCRIPTION        = "Numerical model of 433 Eros, derived solely           
+    from NEAR-SHOEMAKER data.  This model comprises a grid with points        
+    every two degrees in latitude and west longitude, and four data           
+    associated with each point.  The model is written with both 0 and         
+    360 longitude entries.  Coordinates are planetocentric.                   
+                                                                              
+    N.B. In this EROSRGST product, some radii starting from the model         
+    center intersect the surface in more than one point.  This happens mostly 
+    around 160 degrees west longitude.  That means that the RGST format used  
+    in this product is not able to adequately represent the shape model's     
+    surface.  Caveat emptor.  If this is an issue, users may use one of the   
+    plate models.  See the document file, erosmsi.doc, for this data set.     
+                                                                              
+    See Thomas, et al. (2002) [THOMASETAL2002] for details of this shape      
+    model."                                                                   
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 1                                                         
+    NAME          = "LATITUDE"                                                
+    UNIT          = "DEGREE"                                                  
+    DATA_TYPE     = "ASCII_REAL"                                              
+    START_BYTE    = 1                                                         
+    BYTES         = 8                                                         
+    FORMAT        = "F8.1"                                                    
+    MINIMUM       = -90.0                                                     
+    MAXIMUM       = +90.0                                                     
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 2                                                         
+    NAME          = "LONGITUDE"                                               
+    UNIT          = "DEGREE"                                                  
+    DATA_TYPE     = "ASCII_REAL"                                              
+    START_BYTE    = 9                                                         
+    BYTES         = 8                                                         
+    FORMAT        = "F8.1"                                                    
+    MINIMUM       = 0.0                                                       
+    MAXIMUM       = 360.0                                                     
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 3                                                         
+    NAME          = "RADIUS"                                                  
+    UNIT          = "KILOMETER"                                               
+    DATA_TYPE     = "ASCII_REAL"                                              
+    START_BYTE    = 17                                                        
+    BYTES         = 8                                                         
+    FORMAT        = "F8.2"                                                    
+    MINIMUM       = 3.07                                                      
+    MAXIMUM       = 17.68                                                     
+    DESCRIPTION   = "Model radius for this latitude and longitude.            
+      This is the distance of the surface grid point from the center          
+      of the model."                                                          
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 4                                                         
+    NAME          = "ACCELERATION"                                            
+    UNIT          = "CM/S/S"                                                  
+    DATA_TYPE     = "ASCII_REAL"                                              
+    START_BYTE    = 25                                                        
+    BYTES         = 8                                                         
+    FORMAT        = "F8.3"                                                    
+    MINIMUM       = 0.222                                                     
+    MAXIMUM       = 0.557                                                     
+    DESCRIPTION   = "Model gravity for this latitude and longitude.  This     
+      is the magnitude of the acceleration, in cm/s/s, due to local gravity   
+      at the grid point, including the effect of Eros' rotation.  The         
+      direction of the gravity vector is not specified."                      
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 5                                                         
+    NAME          = "SLOPE"                                                   
+    UNIT          = "DEGREE"                                                  
+    DATA_TYPE     = "ASCII_REAL"                                              
+    START_BYTE    = 33                                                        
+    BYTES         = 8                                                         
+    FORMAT        = "F8.2"                                                    
+    MINIMUM       = 0.13                                                      
+    MAXIMUM       = 35.08                                                     
+    DESCRIPTION   = "Model slope for this latitude and longitude.  This       
+      is the local slope, in degrees, of the surface relative to an           
+      equipotential surface at the grid point.  In other words, it is the     
+      angle between the local gravity vector and the local surface normal.    
+      The local gravity vector includes the effect of Eros' rotation."        
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 6                                                         
+    NAME          = "TOPO_HEIGHT"                                             
+    UNIT          = "KILOMETER"                                               
+    DATA_TYPE     = "ASCII_REAL"                                              
+    START_BYTE    = 41                                                        
+    BYTES         = 8                                                         
+    FORMAT        = "F8.2"                                                    
+    MINIMUM       = -1.76                                                     
+    MAXIMUM       = 0.62                                                      
+    DESCRIPTION   = "Model topography for this latitude and longitude.        
+      This is the local potential energy of the surface at this grid point    
+      relative to the surface at the south pole, divided by the mean surface  
+      gravitational acceleration for Eros of .47 cm/s/s.  The result is a     
+      rough analog to topographic height or elevation.  The local gravity     
+      vector used to calculate this datum includes the effect of Eros'        
+      rotation."                                                              
+  END_OBJECT = COLUMN                                                         
+END_OBJECT = TABLE                                                            
+END                                                                           

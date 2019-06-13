@@ -1,0 +1,174 @@
+PDS_VERSION_ID            = PDS3                                              
+                                                                              
+RECORD_TYPE               = "FIXED_LENGTH"                                    
+RECORD_BYTES              = 44                                                
+FILE_RECORDS              = 1037                                              
+                                                                              
+^TABLE                    = "N393COVAR.TAB"                                   
+                                                                              
+INSTRUMENT_HOST_NAME      = "NEAR EARTH ASTEROID RENDEZVOUS"                  
+TARGET_NAME               = "433 EROS"                                        
+INSTRUMENT_NAME           = "NEAR LASER RANGEFINDER"                          
+DATA_SET_ID               = "NEAR-A-5-COLLECTED-MODELS-V1.0"                  
+                                                                              
+OBSERVATION_TYPE          = "GRAVITY MODEL COVARIANCE"                        
+PRODUCT_ID                = "NEARMOD-N393COVAR-200204"                        
+PRODUCT_NAME              = "NLR393V3 GRAV POTENTIAL COVARIANCE MATRIX"       
+PRODUCT_RELEASE_DATE      = 2001-08-31                                        
+                                                                              
+START_TIME                = 2000-03-05T00:00:04                               
+STOP_TIME                 = 2001-02-12T19:42:43                               
+PRODUCT_CREATION_TIME     = 2000-06-06T18:22:00                               
+PRODUCER_FULL_NAME        = "MARK TORRENCE"                                   
+PRODUCER_INSTITUTION_NAME = "GODDARD SPACE FLIGHT CENTER"                     
+PRODUCER_ID               = "NLR SCIENCE TEAM"                                
+SOFTWARE_NAME             = "GEODYN/SOLVE"                                    
+                                                                              
+DESCRIPTION               = "                                                 
+  This file contains covariances for the coefficients of the spherical        
+  harmonic model of the gravity potential of Eros archived in this same       
+  data set in the file 'N393COEFF.TAB'.                                       
+                                                                              
+  The field is complete to degree and order 16, but covariances are given     
+  to degree and order 6. Input data were from the NEAR Laser Rangefinder      
+  (NLR) on the NEAR-Shoemaker (NEAR) spacecraft, together with two-way        
+  Doppler and range data from radio tracking. The coordinate system is        
+  given by the project-supplied orientation SPICE files, with longitudes      
+  measured positive east.                                                     
+                                                                              
+  When evaluated, the model gives the gravitational potential of Eros. The    
+  potential model is the solution NLR393V3, from the orbit determination      
+  and parameter estimation program GEODYN/SOLVE. This software integrates     
+  the equations of motion of the spacecraft using force models and estimates  
+  the potential field of celestial bodies and other parameters.               
+                                                                              
+  Parameters for this model:                                                  
+                                                                              
+                          Degree:  16                                         
+                           Order:  16                                         
+         Coefficients normalized:  Yes                                        
+                Reference radius:  1600m                                      
+             Reference longitude:  0.0 degrees                                
+              Reference latitude:  0.0 degrees                                
+      Gravitational constant, GM:  4.46176546159E+05 m^3/s^2                  
+                                                                              
+                                                                              
+  This product is an ASCII table containing one row for each pair of          
+  coefficient entries. The table represents a full covariance matrix,         
+  with 45 rows by 45 columns. Each row or column represents one of the        
+  coefficients of N393COEFF.TAB, starting with the C(2,0) coefficient         
+  and ending with S(6,6). A covariance matrix is symmetric, so only the       
+  upper triangle is given.                                                    
+                                                                              
+  The gravity model was produced under the direction of                       
+  D.E. Smith of NASA-Goddard Space Flight Center."                            
+                                                                              
+NOTE                      = "                                                 
+  The propagation of covariance to uncertainties is a complex task            
+  which had not yet been performed as of the date these data were             
+  archived. When and if the formal uncertainties are calculated               
+  and submitted to the PDS, they will be incorporated into the                
+  archive."                                                                   
+                                                                              
+                                                                              
+OBJECT     = TABLE                                                            
+  ROWS               = 1037                                                   
+  COLUMNS            = 7                                                      
+  ROW_BYTES          = 44                                                     
+  INTERCHANGE_FORMAT = "ASCII"                                                
+  DESCRIPTION        = "The SHADR covariance table contains the               
+    coefficient covariance for the spherical harmonic model. For each         
+    degree index m, order index n, and coefficient Cmn or Smn, the            
+    formal covariance of (C,S)mn with any other coefficient is given.         
+    The space-delimited data require 42 ASCII characters; these are           
+    followed an ASCII carriage-return, and an ASCII line-feed."               
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 1                                                         
+    NAME          = "TYPE_1"                                                  
+    DATA_TYPE     = "CHARACTER"                                               
+    START_BYTE    = 1                                                         
+    BYTES         = 1                                                         
+    FORMAT        = "A1"                                                      
+    DESCRIPTION   = "The coefficient type (C or S) of the first               
+      coefficient entry in this record"                                       
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 2                                                         
+    NAME          = "DEGREE_1"                                                
+    DATA_TYPE     = "ASCII_INTEGER"                                           
+    START_BYTE    = 2                                                         
+    BYTES         = 4                                                         
+    FORMAT        = "I4"                                                      
+    MINIMUM       = 2                                                         
+    MAXIMUM       = 6                                                         
+    DESCRIPTION   = "The degree index m of the first C or S coefficient       
+      in this record."                                                        
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 3                                                         
+    NAME          = "ORDER_1"                                                 
+    DATA_TYPE     = "ASCII_INTEGER"                                           
+    START_BYTE    = 6                                                         
+    BYTES         = 3                                                         
+    FORMAT        = "I3"                                                      
+    MINIMUM       = 0                                                         
+    MAXIMUM       = 6                                                         
+    DESCRIPTION   = "The order index n of the first C or S coefficient        
+      in this record."                                                        
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 4                                                         
+    NAME          = "TYPE_2"                                                  
+    DATA_TYPE     = "CHARACTER"                                               
+    START_BYTE    = 11                                                        
+    BYTES         = 1                                                         
+    FORMAT        = "A1"                                                      
+    DESCRIPTION   = "The coefficient type (C or S) of the second coefficient  
+      entry in this record."                                                  
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 5                                                         
+    NAME          = "DEGREE_2"                                                
+    DATA_TYPE     = "ASCII_INTEGER"                                           
+    START_BYTE    = 12                                                        
+    BYTES         = 4                                                         
+    FORMAT        = "I4"                                                      
+    MINIMUM       = 2                                                         
+    MAXIMUM       = 6                                                         
+    DESCRIPTION   = "The degree index m of the second C or S coefficient      
+      entry in this record."                                                  
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 6                                                         
+    NAME          = "ORDER_2"                                                 
+    DATA_TYPE     = "ASCII_INTEGER"                                           
+    START_BYTE    = 16                                                        
+    BYTES         = 3                                                         
+    FORMAT        = "I3"                                                      
+    MINIMUM       = 0                                                         
+    MAXIMUM       = 6                                                         
+    DESCRIPTION   = "The order index n of the second C or S coefficient       
+      entry in this record."                                                  
+  END_OBJECT = COLUMN                                                         
+                                                                              
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 7                                                         
+    NAME          = "COVARIANCE"                                              
+    DATA_TYPE     = "ASCII_REAL"                                              
+    START_BYTE    = 19                                                        
+    BYTES         = 24                                                        
+    FORMAT        = "E24.15"                                                  
+    DESCRIPTION   = "The covariance (C,S)m1n1(C,S)m2n2 of the spherical       
+      harmonic model."                                                        
+  END_OBJECT = COLUMN                                                         
+                                                                              
+END_OBJECT = TABLE                                                            
+                                                                              
+END                                                                           

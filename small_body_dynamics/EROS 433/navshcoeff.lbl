@@ -1,0 +1,131 @@
+PDS_VERSION_ID               = PDS3                                           
+                                                                              
+RECORD_TYPE                  = "FIXED_LENGTH"                                 
+RECORD_BYTES                 = 48                                             
+FILE_RECORDS                 = 630                                            
+                                                                              
+^TABLE                       = "NAVSHCOEFF.TAB"                               
+                                                                              
+DATA_SET_ID                  = "NEAR-A-5-COLLECTED-MODELS-V1.0"               
+PRODUCT_ID                   = "NEARMOD-NAVSHCOEFF-200204"                    
+PRODUCT_NAME                 = "NEAR RS SHAPE MODEL, COEFFICIENTS"            
+PRODUCT_CREATION_TIME        = 2001-10-05                                     
+                                                                              
+TARGET_NAME                  = "433 EROS"                                     
+INSTRUMENT_HOST_NAME         = "NEAR EARTH ASTEROID RENDEZVOUS"               
+INSTRUMENT_NAME              = "NEAR LASER RANGEFINDER"                       
+START_TIME                   = 2000-04-30                                     
+STOP_TIME                    = 2000-08-27                                     
+                                                                              
+SPACECRAFT_CLOCK_START_COUNT = "UNK"                                          
+SPACECRAFT_CLOCK_STOP_COUNT  = "UNK"                                          
+                                                                              
+DESCRIPTION                  = "                                              
+   This file contains the spherical harmonic coefficients for the             
+   Eros shape model in the accompanying file 'NAVPLATE.TAB'. The NLR          
+   measurements were made over the period 30 April 2000 to 27 August          
+   2000, from orbits of 35 to 50 km.                                          
+                                                                              
+   This version of the model has been reformatted from the original           
+   submitted version. The original format was compatible with NEAR            
+   software. Reformatting done by the PDS Small Bodies Node split the         
+   original file into two: one for the triangular plate model; and            
+   a second for the spherical harmonic coefficients.                          
+                                                                              
+   The triangular plate model format was further modified to match            
+   that of other radar shape models in the SBN database.                      
+                                                                              
+   The coefficients in this file are the normalized (Cnm,Snm) coefficients    
+   of the standard spherical harmonic expansion of Lengendre polynomials      
+   and related functions. For a complete discussion of the derivations of     
+   the gravitational potential and related shape model, see Miller, et        
+   al. (2002) and Kaula (1966).                                               
+                                                                              
+   Parameters for this Model:                                                 
+                                                                              
+     Volume = 0.251819982022E+04 km^3                                         
+     Center of Gravity offset (x,y,z), km:                                    
+                                                                              
+       (-0.965632900625E-02, 0.242943063605E-02, 0.325843327842E-01)          
+                                                                              
+     Inertia tensor, km^2:                                                    
+                                                                              
+        0.167094082478E+02  0.931918519930E+01 -0.337531969464E-01            
+        0.931918519930E+01  0.716695159550E+02 -0.387221058813E-02            
+       -0.337531969464E-01 -0.387221058813E-02  0.744434196414E+02            
+                                                                              
+                                                                              
+   The gravity  model obtained by integrating this shape model is             
+   provided as a separate companion file ('NAVGRAV.TAB').                     
+                                                                              
+   The shape model files and descriptive information regarding the            
+   original file formats and contents were kindly supplied by                 
+   J. K. Miller of the NEAR navigation team, in response to user              
+   requests made at the NEAR PDS archive data review.                         
+                                                                              
+  REFERENCES                                                                  
+                                                                              
+  Kaula, W.M., 1966. Theory of Satellite Geodesy, Blaisdell, Waltham, MA.     
+                                                                              
+  Miller, J.K., A.S. Konopliv, P.G. Antreasian, J.J. Bordi, S. Chesley,       
+    C.E. Helfrich, W.M. Owen, T.C.Wang, B.G. Williams, D.K. Yeomans and       
+    D.J. Scheeres, Determination of Shape, Gravity and Rotational             
+    State of Asteroid 433 Eros, Icarus, 155, 3-17, 2002.                      
+   "                                                                          
+                                                                              
+OBJECT     = TABLE                                                            
+  NAME               = "COEFFICIENTS"                                         
+  INTERCHANGE_FORMAT = "ASCII"                                                
+  COLUMNS            = 4                                                      
+  ROW_BYTES          = 48                                                     
+  ROWS               = 630                                                    
+  DESCRIPTION        = "This table list the spherical harmonic coefficients   
+    Cij and Sij."                                                             
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 1                                                         
+    NAME          = "I"                                                       
+    BYTES         = 2                                                         
+    DATA_TYPE     = "ASCII_INTEGER"                                           
+    START_BYTE    = 1                                                         
+    FORMAT        = "I2"                                                      
+    MINIMUM       = 0                                                         
+    MAXIMUM       = 34                                                        
+    DESCRIPTION   = "First subscript"                                         
+  END_OBJECT                                                                  
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 2                                                         
+    NAME          = "J"                                                       
+    BYTES         = 2                                                         
+    DATA_TYPE     = "ASCII_INTEGER"                                           
+    START_BYTE    = 4                                                         
+    FORMAT        = "I2"                                                      
+    MINIMUM       = 0                                                         
+    MAXIMUM       = 34                                                        
+    DESCRIPTION   = "Second subscript"                                        
+  END_OBJECT                                                                  
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 3                                                         
+    NAME          = "C_IJ"                                                    
+    BYTES         = 19                                                        
+    DATA_TYPE     = "ASCII_REAL"                                              
+    START_BYTE    = 8                                                         
+    FORMAT        = "E19.12"                                                  
+    DESCRIPTION   = "C[i,j] coefficient"                                      
+  END_OBJECT                                                                  
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 4                                                         
+    NAME          = "S_IJ"                                                    
+    BYTES         = 19                                                        
+    DATA_TYPE     = "ASCII_REAL"                                              
+    START_BYTE    = 28                                                        
+    FORMAT        = "E19.12"                                                  
+    DESCRIPTION   = "S[i,j] coefficient. Note that all S[i,0] = 0."           
+  END_OBJECT                                                                  
+                                                                              
+END_OBJECT = TABLE                                                            
+                                                                              
+END                                                                           

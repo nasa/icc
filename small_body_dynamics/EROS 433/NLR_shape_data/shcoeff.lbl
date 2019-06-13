@@ -1,0 +1,123 @@
+PDS_VERSION_ID            = PDS3                                              
+                                                                              
+RECORD_TYPE               = "FIXED_LENGTH"                                    
+RECORD_BYTES              = 48                                                
+FILE_RECORDS              = 16471                                             
+                                                                              
+^TABLE                    = "SHCOEFF.TAB"                                     
+                                                                              
+INSTRUMENT_HOST_NAME      = "NEAR EARTH ASTEROID RENDEZVOUS"                  
+TARGET_NAME               = "433 EROS"                                        
+INSTRUMENT_NAME           = "NEAR LASER RANGEFINDER"                          
+DATA_SET_ID               = "NEAR-A-5-COLLECTED-MODELS-V1.0"                  
+                                                                              
+OBSERVATION_TYPE          = "SHAPE MODEL"                                     
+PRODUCT_ID                = "NEARMOD-SHCOEFF-200204"                          
+PRODUCT_NAME       = "NLR EROS SPHERICAL HARMONIC SHAPE MODEL COEFFICIENTS"   
+PRODUCT_RELEASE_DATE      = 2001-07-31                                        
+                                                                              
+START_TIME                = 2000-03-05T00:00:04                               
+STOP_TIME                 = 2001-02-12T19:42:43                               
+PRODUCT_CREATION_TIME     = 2000-06-06T18:22:00                               
+PRODUCER_FULL_NAME        = "GREG NEUMANN"                                    
+PRODUCER_INSTITUTION_NAME = "GODDARD SPACE FLIGHT CENTER"                     
+PRODUCT_VERSION_TYPE      = "PRELIMINARY"                                     
+PRODUCER_ID               = "MGS MOLA"                                        
+SOFTWARE_NAME             = "UNK;UNK"                                         
+                                                                              
+DESCRIPTION               = "                                                 
+                                                                              
+  This file contains coefficients and related data for a spherical            
+  harmonic model of the shape of Eros.  Input data are from the NEAR          
+  Laser Rangefinder (NLR) on the NEAR-Shoemaker (NEAR) spacecraft.            
+  The oordinate system is given by the project-supplied orientation           
+  SPICE files, with longitudes measured positive east.  When evaluated,       
+  the model gives absolute radius from Eros center of mass in meters.         
+                                                                              
+  The model is a numerical transform of planetary radius values               
+  from the NLR 0.125-degree gridded data set presented in the                 
+  accompanying files 'SHAPEMAP*.FIT' into spherical harmonics                 
+  using Simpson's Rule quadrature.                                            
+                                                                              
+  The gridded data set included selected NLR observations from day            
+  2000-065 to 2001-043. A total of 15,868,304 observations are                
+  represented. The original file name of this submission was                  
+  'NLRT180A.TAB'.                                                             
+                                                                              
+  Parameters for this model:                                                  
+                                                                              
+     Reference radius      16000 km  (not needed for the model)               
+     Model type            Topography                                         
+     Degree                180                                                
+     Order                 180                                                
+     Reference longitude   0.0  degrees                                       
+     Reference latitude    0.0  degrees                                       
+                                                                              
+                                                                              
+  This  shape model was produced under the direction of                       
+  D.E. Smith of NASA-Goddard Space Flight Center."                            
+                                                                              
+OBJECT     = TABLE                                                            
+  ROWS               = 16471                                                  
+  COLUMNS            = 4                                                      
+  ROW_BYTES          = 48                                                     
+  INTERCHANGE_FORMAT = "ASCII"                                                
+  DESCRIPTION        = "The SHADR coefficients table contains the             
+    coefficients for the spherical harmonic model. Each row in the            
+    table contains the degree index m, the order index n, and the             
+    coefficients Cmn and Smn. Note that uncertainties are not                 
+    provided.                                                                 
+                                                                              
+    When evaluated, the model gives absolute radius from Eros center          
+    of mass in meters."                                                       
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 1                                                         
+    NAME          = "COEFFICIENT_DEGREE"                                      
+    DATA_TYPE     = "ASCII_INTEGER"                                           
+    START_BYTE    = 1                                                         
+    BYTES         = 3                                                         
+    FORMAT        = "I3"                                                      
+    MINIMUM       = 0                                                         
+    MAXIMUM       = 180                                                       
+    DESCRIPTION   = "The degree index m of the C and S coefficients           
+      in this record"                                                         
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 2                                                         
+    NAME          = "COEFFICIENT_ORDER"                                       
+    DATA_TYPE     = "ASCII_INTEGER"                                           
+    START_BYTE    = 5                                                         
+    BYTES         = 3                                                         
+    FORMAT        = "I3"                                                      
+    MINIMUM       = 0                                                         
+    MAXIMUM       = 180                                                       
+    DESCRIPTION   = "The order index n of the C and S coefficients in         
+      this record"                                                            
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 3                                                         
+    NAME          = "C"                                                       
+    DATA_TYPE     = "ASCII_REAL"                                              
+    START_BYTE    = 9                                                         
+    BYTES         = 18                                                        
+    FORMAT        = "E18.11"                                                  
+    DESCRIPTION   = "The coefficient Cmn for this spherical harmonic model"   
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 4                                                         
+    NAME          = "S"                                                       
+    DATA_TYPE     = "ASCII_REAL"                                              
+    START_BYTE    = 29                                                        
+    BYTES         = 18                                                        
+    FORMAT        = "E18.11"                                                  
+                                                                              
+    DESCRIPTION   = "The coefficient Smn for this spherical harmonic model"   
+  END_OBJECT = COLUMN                                                         
+                                                                              
+END_OBJECT = TABLE                                                            
+                                                                              
+END                                                                           

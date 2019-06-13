@@ -1,0 +1,162 @@
+PDS_VERSION_ID            = PDS3                                              
+                                                                              
+RECORD_TYPE               = "FIXED_LENGTH"                                    
+RECORD_BYTES              = 44                                                
+FILE_RECORDS              = 32131                                             
+                                                                              
+^TABLE                    = "N15ACOVAR.TAB"                                   
+                                                                              
+DATA_SET_ID               = "NEAR-A-5-COLLECTED-MODELS-V1.0"                  
+INSTRUMENT_HOST_NAME      = "NEAR EARTH ASTEROID RENDEZVOUS"                  
+TARGET_NAME               = "433 EROS"                                        
+INSTRUMENT_NAME           = "RADIO SCIENCE SUBSYSTEM"                         
+OBSERVATION_TYPE          = "GRAVITY FIELD"                                   
+ORIGINAL_PRODUCT_ID       = "NEAR15A"                                         
+PRODUCT_ID                = "NEARMOD-N15ACOVAR-200204"                        
+PRODUCT_NAME              = "NEAR15A GRAV SOLUTION COVARIANCE MATRIX"         
+PRODUCT_RELEASE_DATE      = 2001-05-09                                        
+                                                                              
+                                                                              
+START_ORBIT_NUMBER        = 1                                                 
+STOP_ORBIT_NUMBER         = "NULL"                                            
+START_TIME                = 2000-02-14T16:00:00                               
+STOP_TIME                 = 2001-02-12T15:15:00                               
+PRODUCT_CREATION_TIME     = 2001-05-09T00:00:00                               
+PRODUCER_FULL_NAME        = "ALEX S. KONOPLIV"                                
+PRODUCER_INSTITUTION_NAME = "JET PROPULSION LABORATORY"                       
+PRODUCT_VERSION_TYPE      = "PRELIMINARY"                                     
+PRODUCER_ID               = "NEAR RSS TEAM"                                   
+SOFTWARE_NAME             = "SHAGRV.V1.0"                                     
+                                                                              
+DESCRIPTION               = "                                                 
+  This file contains the covariance matrix for the coefficients               
+  comprising spherical harmonic gravity solution NEAR15A for                  
+  433 Eros.  NEAR15A is a 15th degree and order model obtained                
+  from radiometric tracking (Doppler and range data) and landmark             
+  tracking of the NEAR spacecraft in orbit about Eros. The gravity            
+  model includes data from the entire mission beginning with orbit            
+  insertion on Feb. 14, 2000 and ending with the first descent                
+  maneuver for landing on Feb. 12, 2001.                                      
+                                                                              
+  The coefficients are listed in the accompanying file 'N15ACOEFF.TAB'.       
+  Note, however, that in the present file the C[1,0] coefficient is           
+  taken as the gravitational constant. Also, no covariance values             
+  are given for coefficients which are identically zero (C[1,1] and           
+  all S[i,0]).  The covariance matrix itself is symmetric; only the           
+  upper triangular elements are listed in this file.                          
+                                                                              
+  The following parameters were supplied with the model:                      
+                                                                              
+                       Degree:  15                                            
+                        Order:  15                                            
+      Coefficients Normalized:  Yes                                           
+             Reference Radius:  16.0km                                        
+           Reference Latitude:   0.0 degrees                                  
+          Reference Longitude:   0.0 degrees                                  
+   Gravitational Constant, GM:   4.46275472004E-04 km^3/s^2                   
+                             +/- 2.19591611330E-09 km^3/s^2                   
+                                                                              
+    Eros-fixed reference frame (J2000):                                       
+            Right ascencsion =   11.363    degrees                            
+                 Declination =   17.232    degrees                            
+              Prime meridian =  326.08     degrees                            
+               Rotation rate = 1639.389232 degrees/day                        
+                                                                              
+  The original submitted file had the name 'JGE15A01.SHB'.                    
+                                                                              
+  The NEAR15A gravity model was produced at JPL by Alex Konopliv of           
+  the NEAR Radio Science Team."                                               
+                                                                              
+OBJECT     = TABLE                                                            
+  ROWS               = 32131                                                  
+  ROW_BYTES          = 44                                                     
+  COLUMNS            = 7                                                      
+  INTERCHANGE_FORMAT = "ASCII"                                                
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 1                                                         
+    NAME          = "TYPE_1"                                                  
+    START_BYTE    = 1                                                         
+    BYTES         = 1                                                         
+    DATA_TYPE     = "CHARACTER"                                               
+    FORMAT        = "A1"                                                      
+    DESCRIPTION   = "A 'C' or 'S' indicating the type of the first            
+      coefficient"                                                            
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 2                                                         
+    NAME          = "DEGREE_1"                                                
+    START_BYTE    = 4                                                         
+    BYTES         = 2                                                         
+    DATA_TYPE     = "ASCII_INTEGER"                                           
+    FORMAT        = "I2"                                                      
+    MINIMUM       = 1                                                         
+    MAXIMUM       = 15                                                        
+    DESCRIPTION   = "The order of the first coefficient. Note that this       
+      number is zero-filled to 2 digits."                                     
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 3                                                         
+    NAME          = "ORDER_1"                                                 
+    START_BYTE    = 7                                                         
+    BYTES         = 2                                                         
+    DATA_TYPE     = "ASCII_INTEGER"                                           
+    FORMAT        = "I2"                                                      
+    DESCRIPTION   = "The degree of the first coefficient. Note that this      
+      number is zero-filled to 2 digits."                                     
+    MINIMUM       = 0                                                         
+    MAXIMUM       = 15                                                        
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 4                                                         
+    NAME          = "TYPE_2"                                                  
+    START_BYTE    = 10                                                        
+    BYTES         = 1                                                         
+    DATA_TYPE     = "CHARACTER"                                               
+    FORMAT        = "A1"                                                      
+    DESCRIPTION   = "A 'C' or 'S' indicating the type of the second           
+      coefficient"                                                            
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 5                                                         
+    NAME          = "DEGREE_2"                                                
+    START_BYTE    = 13                                                        
+    BYTES         = 2                                                         
+    DATA_TYPE     = "ASCII_INTEGER"                                           
+    FORMAT        = "I2"                                                      
+    MINIMUM       = 1                                                         
+    MAXIMUM       = 15                                                        
+    DESCRIPTION   = "The order of the second coefficient. Note that this      
+      number is zero-filled to 2 digits."                                     
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 6                                                         
+    NAME          = "ORDER_2"                                                 
+    START_BYTE    = 16                                                        
+    BYTES         = 2                                                         
+    DATA_TYPE     = "ASCII_INTEGER"                                           
+    FORMAT        = "I2"                                                      
+    MINIMUM       = 0                                                         
+    MAXIMUM       = 15                                                        
+    DESCRIPTION   = "The degree of the second coefficient. Note that this     
+      number is zero-filled to 2 digits."                                     
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 7                                                         
+    NAME          = "COVARIANCE"                                              
+    START_BYTE    = 21                                                        
+    BYTES         = 22                                                        
+    DATA_TYPE     = "ASCII_REAL"                                              
+    FORMAT        = "E22.15"                                                  
+    DESCRIPTION   = "Covariance value for this pair of coefficients"          
+  END_OBJECT = COLUMN                                                         
+                                                                              
+END_OBJECT = TABLE                                                            
+                                                                              
+END                                                                           

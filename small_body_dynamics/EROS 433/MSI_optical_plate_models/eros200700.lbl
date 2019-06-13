@@ -1,0 +1,108 @@
+PDS_VERSION_ID        = PDS3                                                  
+LABEL_REVISION_NOTE   = "                                                     
+  2001-07-19 CU:BTCarcich                                                     
+  15 Apr 2002, A.C.Raugh: Modified for new data set                           
+  20 May 2002, A.C.Raugh  Slight reformatting for POVray compatibility        
+  "                                                                           
+                                                                              
+RECORD_TYPE           = "FIXED_LENGTH"                                        
+RECORD_BYTES          = 46                                                    
+FILE_RECORDS          = 301052                                                
+                                                                              
+^VERTEX_TABLE         = ("EROS200700.TAB", 1)                                 
+^FACET_TABLE          = ("EROS200700.TAB", 100353)                            
+                                                                              
+DATA_SET_ID           = "NEAR-A-5-COLLECTED-MODELS-V1.0"                      
+PRODUCT_NAME          = "433 EROS PLATE MODEL MSI 200700"                     
+PRODUCT_ID            = "NEARMOD-EROS200700-200204"                           
+INSTRUMENT_HOST_NAME  = "NEAR EARTH ASTEROID RENDEZVOUS"                      
+INSTRUMENT_NAME       = "MULTI-SPECTRAL IMAGER"                               
+TARGET_NAME           = "433 EROS"                                            
+START_TIME            = "N/A"                                                 
+STOP_TIME             = "N/A"                                                 
+PRODUCT_CREATION_TIME = 2001-01-12 /* Model Creation Date */                  
+                                                                              
+OBJECT     = VERTEX_TABLE                                                     
+  ROWS               = 100352                                                 
+  ROW_BYTES          = 46                                                     
+  INTERCHANGE_FORMAT = "ASCII"                                                
+  COLUMNS            = 2                                                      
+  DESCRIPTION        = "Table of vertices of numerical shape model of 433     
+    Eros.  These are the vertices of plates that approximate the surface of   
+    433 Eros.                                                                 
+                                                                              
+    Each row of this table contains the X, Y and Z coordinates of one vertex  
+    in a Cartesian coordinate system that is fixed with respect to 433 Eros's 
+    body-fixed rotating reference frame.  The origin of the coordinate system 
+    is coincident with 433 Eros's center of mass to an accuracy of about 10 m.
+    The +Z axis of the coordinate system is coincident with 433 Eros's North  
+    spin pole.  The +X axis of the coordinate system is coincident with       
+    433 Eros's Prime Meridian.  The coordinate system is right-handed."       
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 1                                                         
+    NAME          = "VERTEX FLAG"                                             
+    DESCRIPTION   = "A 'v', indicating this line defines a vertex"            
+    DATA_TYPE     = "CHARACTER"                                               
+    START_BYTE    = 1                                                         
+    BYTES         = 1                                                         
+    FORMAT        = "A1"                                                      
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 2                                                         
+    NAME          = "COORDINATES"                                             
+    DESCRIPTION   = "The (x,y,z) coordinates of one vertex in the model"      
+    UNIT          = "KILOMETER"                                               
+    DATA_TYPE     = "ASCII_REAL"                                              
+    START_BYTE    = 3                                                         
+    BYTES         = 42                                                        
+    ITEMS         = 3                                                         
+    ITEM_BYTES    = 14                                                        
+    FORMAT        = "3(E14.5)"                                                
+  END_OBJECT = COLUMN                                                         
+                                                                              
+END_OBJECT = VERTEX_TABLE                                                     
+                                                                              
+OBJECT     = FACET_TABLE                                                      
+  ROWS               = 200700                                                 
+  ROW_BYTES          = 46                                                     
+  INTERCHANGE_FORMAT = "ASCII"                                                
+  COLUMNS            = 2                                                      
+  DESCRIPTION        = "Table of triangular plates of numerical shape model   
+    of 433 Eros.  These triangular plates approximate the surface of          
+    433 Eros.                                                                 
+                                                                              
+    Each row of this table contains three integer offsets that point to three 
+    vertices from the previous table.  Those three vertices are the vertices  
+    of one triangular plate of the shape model.  Each integer is the offset   
+    from the first row in the table of vertices.  An offset of 0 points to    
+    the first row in the table of vertices, an offset of 1 to the second row, 
+    and so on."                                                               
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 1                                                         
+    NAME          = "FACET FLAG"                                              
+    DESCRIPTION   = "An 'f', indicating this line defines a triangular facet" 
+    DATA_TYPE     = "CHARACTER"                                               
+    START_BYTE    = 1                                                         
+    BYTES         = 1                                                         
+    FORMAT        = "A1"                                                      
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 2                                                         
+    NAME          = "FACET VERTICES"                                          
+    DESCRIPTION   = "Offsets of the three vertices defining this              
+      triangular plane. The offsets are into the preceding vertex             
+      table."                                                                 
+    DATA_TYPE     = "ASCII_INTEGER"                                           
+    START_BYTE    = 3                                                         
+    BYTES         = 42                                                        
+    ITEMS         = 3                                                         
+    ITEM_BYTES    = 14                                                        
+    FORMAT        = "3(I14)"                                                  
+  END_OBJECT = COLUMN                                                         
+                                                                              
+END_OBJECT = FACET_TABLE                                                      
+END                                                                           

@@ -1,0 +1,95 @@
+PDS_VERSION_ID        = PDS3                                                  
+                                                                              
+RECORD_TYPE           = "FIXED_LENGTH"                                        
+RECORD_BYTES          = 30                                                    
+FILE_RECORDS          = 64800                                                 
+                                                                              
+^TABLE                = "NLRSHAPE.TAB"                                        
+                                                                              
+DATA_SET_ID           = "NEAR-A-5-COLLECTED-MODELS-V1.0"                      
+PRODUCT_ID            = "NEARMOD-NLRSHAPE-200204"                             
+PRODUCT_NAME          = "NLR EROS SHAPE MODEL (LONG, LAT, RADIUS)"            
+PRODUCT_RELEASE_DATE  = 2001-09-01                                            
+INSTRUMENT_HOST_NAME  = "NEAR EARTH ASTEROID RENDEZVOUS"                      
+INSTRUMENT_NAME       = "NEAR LASER RANGEFINDER"                              
+TARGET_NAME           = "433 EROS"                                            
+START_TIME            = 2000-03-05T00:00:04                                   
+STOP_TIME             = 2001-02-12T19:42:43                                   
+PRODUCT_CREATION_TIME = 2001-09-01T00:00:00                                   
+PRODUCER_ID           = "NLR SCIENCE TEAM"                                    
+DESCRIPTION           = "This 1 degree resolution tabular file contains       
+  global shape data of Eros, including the latitude and longitude of          
+  the NLR laser bounce point, the radius, and the number of observations      
+  (counts)."                                                                  
+                                                                              
+                                                                              
+OBJECT     = TABLE                                                            
+  ROWS               = 64800                                                  
+  COLUMNS            = 4                                                      
+  ROW_BYTES          = 30                                                     
+  INTERCHANGE_FORMAT = "ASCII"                                                
+  DESCRIPTION        = "Table contains one row for each NLR radius            
+    bounce point and observation count. Each row includes 4 data              
+    columns (28 total bytes) and an ASCII carriage-return line-feed           
+    pair at the end of each record."                                          
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER                = 1                                          
+    NAME                         = "LONGITUDE"                                
+    DATA_TYPE                    = "ASCII_REAL"                               
+    POSITIVE_LONGITUDE_DIRECTION = "EAST"                                     
+    START_BYTE                   = 1                                          
+    BYTES                        = 5                                          
+    FORMAT                       = "F5.1"                                     
+    UNIT                         = "DEGREE"                                   
+    MINIMUM                      = 0.5                                        
+    MAXIMUM                      = 359.5                                      
+    DESCRIPTION                  = "East longitude of the laser range point   
+      in body fixed, center of mass coordinates."                             
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 2                                                         
+    NAME          = "LATITUDE"                                                
+    DATA_TYPE     = "ASCII_REAL"                                              
+    START_BYTE    = 6                                                         
+    BYTES         = 6                                                         
+    FORMAT        = "F6.1"                                                    
+    UNIT          = "DEGREE"                                                  
+    MINIMUM       = -89.5                                                     
+    MAXIMUM       = +89.5                                                     
+    DESCRIPTION   = "North latitude of the laser range point                  
+      in body fixed, center of mass coordinates."                             
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 3                                                         
+    NAME          = "EROS_RADIUS"                                             
+    DATA_TYPE     = "ASCII_REAL"                                              
+    START_BYTE    = 12                                                        
+    BYTES         = 10                                                        
+    FORMAT        = "F10.2"                                                   
+    UNIT          = "METER"                                                   
+    MINIMUM       = 3039.89                                                   
+    MAXIMUM       = 17643.00                                                  
+    DESCRIPTION   = "The magnitude of the vector from the center              
+      of Eros to the laser range point, in meters.  This vector is the        
+      median value of valid observations within a given pixel."               
+  END_OBJECT = COLUMN                                                         
+                                                                              
+  OBJECT     = COLUMN                                                         
+    COLUMN_NUMBER = 4                                                         
+    NAME          = "COUNTS"                                                  
+    DATA_TYPE     = "ASCII_INTEGER"                                           
+    START_BYTE    = 22                                                        
+    BYTES         = 7                                                         
+    FORMAT        = "I7"                                                      
+    MINIMUM       = 0                                                         
+    MAXIMUM       = 38357                                                     
+    DESCRIPTION   = "The number of observations per pixel                     
+      that were used to produce the NLR shape data product."                  
+  END_OBJECT = COLUMN                                                         
+                                                                              
+END_OBJECT = TABLE                                                            
+                                                                              
+END                                                                           

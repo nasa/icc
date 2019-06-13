@@ -1,0 +1,69 @@
+PDS_VERSION_ID            = PDS3                                              
+                                                                              
+RECORD_TYPE               = "FIXED_LENGTH"                                    
+FILE_RECORDS              = 2881                                              
+RECORD_BYTES              = 2880                                              
+                                                                              
+^HEADER                   = ("SHAPEMAP_I2.FIT",1)                             
+^IMAGE                    = ("SHAPEMAP_I2.FIT",2)                             
+                                                                              
+DATA_SET_ID               = "NEAR-A-5-COLLECTED-MODELS-V1.0"                  
+PRODUCT_ID                = "NEARMOD-SHAPEMAPI2-200204"                       
+PRODUCT_NAME              = "NLR SHAPE MAP OF 433 EROS, 1 METER RESOLUTION"   
+INSTRUMENT_HOST_NAME      = "NEAR EARTH ASTEROID RENDEZVOUS"                  
+INSTRUMENT_ID             = "NLR"                                             
+INSTRUMENT_NAME           = "NEAR LASER RANGEFINDER"                          
+TARGET_NAME               = "433 EROS"                                        
+START_TIME                = 2000-03-05T00:00:04                               
+STOP_TIME                 = 2001-02-12T19:42:43                               
+PRODUCT_CREATION_TIME     = 2001-07-13T12:00:00                               
+PRODUCER_FULL_NAME        = "DAVID E. SMITH"                                  
+PRODUCER_INSTITUTION_NAME = "GODDARD SPACE FLIGHT CENTER"                     
+DESCRIPTION               = "This file has been reformatted from              
+  the original NLR shape map file submitted ('NLR125AR.IMG') to be            
+  compatible with the FITS formatting standard. The scale and offset          
+  from the original label have been applied and the resulting value           
+  rounded to the nearest integer. This the resolution of this file            
+  is one meter, versus the 0.25m resolution of the original data. A           
+  version of this data is also supplied in 4-byte floating-point              
+  format in the file 'SHAPEMAP_R4.FIT'. NLR coverage is mapped in             
+  the file 'COVERMAP.FIT'.                                                    
+                                                                              
+  Following is the description supplied with the original:                    
+                                                                              
+    This data product is a shape map of Eros at a resolution of               
+    0.125 by 0.125 degrees, based on altimetry data acquired by               
+    the NLR instrument. The NLR profile data are the source for               
+    this data set. The map is in the form of a binary table with              
+    one row for each 0.125-degree latitude, from 0 to 360 degrees             
+    East longitude and 90 to -90 degrees latitude. The binned                 
+    data include edited NLR observations from 200-km orbits and               
+    lower, using the NLR393 orbit solutions produced at NASA-GSFC.            
+    A total of approximately 15,889,635 observations are represented,         
+    ranging in radius from 3020 to 17666 meters.                              
+  "                                                                           
+                                                                              
+OBJECT     = HEADER                                                           
+  HEADER_TYPE = "FITS"                                                        
+  BYTES       = 2880                                                          
+  RECORDS     = 1                                                             
+  DESCRIPTION = "Minimal FITS header, supplied by SBN personnel"              
+END_OBJECT = HEADER                                                           
+                                                                              
+OBJECT     = IMAGE                                                            
+  NAME         = "MEDIAN_RADIUS"                                              
+  DESCRIPTION  = "Median observed planetary radius within the 0.125           
+    by 0.125 degree area.  Where no observations lie within the area,         
+    an interpolated value is supplied. The number of observations is          
+    provided in the 'COVERMAP.FIT' data product."                             
+  LINES        = 1440                                                         
+  LINE_SAMPLES = 2880                                                         
+  SAMPLE_TYPE  = "MSB_INTEGER"                                                
+  SAMPLE_BITS  = 16                                                           
+  UNIT         = "METER"                                                      
+  MINIMUM      = 17565                                                        
+  MAXIMUM      = 3026                                                         
+END_OBJECT = IMAGE                                                            
+                                                                              
+END                                                                           
+                                                                              
