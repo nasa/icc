@@ -31,7 +31,7 @@ sc_max_memory = 8*0.5e12; % [bits] 0.5TB, on-board memory on each SC
 delta_t = 10*60; % [sec], simulation time step
 total_t = 0.5*24*60*60; % [sec]; 0.5 days, total time of simulation
 
-flag_scObservingPoints = 1; % Put this to 0 for SC to observe all points per unit time, 1 for observing only nearest point per unit time  #FIX: case 0 
+flag_scObservingPoints = 1; % Put this to 0 for SC to observe all points per unit time, 1 for observing only nearest point per unit time 
 
 % Set Plotting Preferences
 standard_font_size = 18; % size of font in the simulation figure
@@ -46,7 +46,7 @@ SphericalModel = {'EROS 433/Gravity_models/n15acoeff.tab', @readErosGravityModel
 
 % Load physical parameters of asteroid as a struct
 ErosParameters = get_Eros_body_parameters(SphericalModel{1}); % input is optional
-ErosParameters.radius = ErosParameters.radius*10^-3; % change units from [m] to [km]  % #FIX
+ErosParameters.radius = ErosParameters.radius*10^-3; % change units from [m] to [km] 
 
 % Name and path of shapefile. For now, only used for plotting.
 shapefilename = 'EROS 433/MSI_optical_plate_models/eros022540.tab';
