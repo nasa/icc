@@ -1,5 +1,5 @@
 classdef SwarmTrajectory < handle
-    %SWARMSTATEHANDLER Stores and manipulates spacecraft trajectory data
+    %SWARMTRAJECTORY Stores and manipulates spacecraft trajectory data
 
     %% Properties
     properties

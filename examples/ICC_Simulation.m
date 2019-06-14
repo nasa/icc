@@ -14,7 +14,7 @@ clear, clc, close all, run ../startup.m  % refresh
 % Add Required Packages to PATH
 addpath(genpath(strcat(ROOT_PATH,'/small_body_dynamics/EROS 433')))
 addpath(strcat(ROOT_PATH,'/small_body_dynamics'))
-addpath(strcat(ROOT_PATH,'/utilities'))
+addpath(genpath(strcat(ROOT_PATH,'/utilities'))) % Add all utilities 
 addpath(strcat(ROOT_PATH,'/visualization'))
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

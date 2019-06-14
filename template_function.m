@@ -4,16 +4,21 @@ function [output_arg1, output_arg2] = template_function(input_arg1, input_arg2)
 %    *optional input
 %   
 %   Inputs: 
-%    - input_arg1: [units] description
-%    - *input_arg2: [units] description
+%    - input_arg1 [units]: Description
+%    - *input_arg2 [units]: Description
 % 
 %   Outputs: 
-%    - input_arg1: [units] description
-%    - input_arg2: [units] description
+%    - input_arg1 [units]: Description
+%    - input_arg2 [units]: Description
 
 % Code goes here 
 output_arg1 = input_arg1;
-output_arg2 = input_arg2;
+
+if nargin > 1 
+    output_arg2 = input_arg2;
+else 
+    output_arg2 = input_arg1;
+end
 
 end
 
