@@ -1,11 +1,7 @@
 # Visualization
-
 Utilities for data visualization 
 
-## File Descriptions
-- `<ScriptName>` --- <description>
-
-
-Note: The "render_" prefix means that the function will add to an existing 
-plot, "plot_" functions will create the plot (e.g. plotting functions add
-titles) 
+## Ploting Function Naming Conventions
+- "render_" functions add to an existing plot, and return a handle for the rendered object. 
+- "initialize_" functions will create and format plot, but not add content.
+- "plot_" functions will both initialize and render. 

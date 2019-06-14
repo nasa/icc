@@ -1,8 +1,17 @@
-# Utilities
-Utilities for orbital dynamics.
+# utilities 
+Functions for simulation, analysis, and support of the various modules. 
 
-- op2rv: convert [Keplerian orbital elements](https://en.wikipedia.org/wiki/Orbital_elements) to radius and velocity. 
+## communication_and_relay
+Simulation and analysis of data transfer between spacecraft.
 
-- rv2op: converts radius and velocity to Keplerian orbital elements. Suffers from singularities for circular or equatorial orbits.
+## observation 
+Simulation and analysis of asteroid observation.
 
-- rotmat: generate rotation matrices from given Euler angles.
+## orbit 
+Orbital dynamics and simulation.
+
+## transformations 
+Transformation of data.
+
+## misc
+Other. 

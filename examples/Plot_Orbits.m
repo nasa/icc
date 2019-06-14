@@ -19,13 +19,6 @@ total_t = 0.2*24*60*60; % [sec]; 100 days, total time of simulation
 flag_testInHouse = true; % test in-house spherical harmonics integrator
 flag_testSBDT = false; % test SBDT integrators 
 
-% if exist(SBDT_PATH, 'dir')
-%     flag_testSBDT = true;
-% else
-%     fprintf("WARNING: SBDT path not in %s.\n You should set SBDT folder as a global SBDT_PATH.\n SBDT tests will be skipped.\n", SBDT_PATH)
-% end
-
-
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %           In-house spherical harmonics integrator.                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
