@@ -10,10 +10,11 @@
 % 
 % Author: Saptarshi Bandyopadhyay (saptarshi.bandyopadhyay@jpl.nasa.gov)
 
-function Rot_matrix_at_t = func_Rot_matrix_at_t(t,rotation_rate)
+function Rot_matrix_at_t = rotation_matrix_at_t(t,rotation_rate)
 
 theta = mod(rotation_rate*t,2*pi);
 
 Rot_matrix_at_t = [cos(theta) -sin(theta) 0;
     sin(theta)  cos(theta) 0;
     0           0 1];
+end

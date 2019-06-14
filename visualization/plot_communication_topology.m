@@ -1,12 +1,23 @@
 function [ ] = plot_communication_topology(sc_current_state, carrier_sc_position, communicating_sc_index, asteroid_radius, color_array, standard_font_size)
-%PLOT_COMMUNICATION_TOPOLOGY Summary of this function goes here
-%   Detailed explanation goes here
+%PLOT_COMMUNICATION_TOPOLOGY Plots a 2D projection of the spacecraft
+%locations with lines indicating the data flow on the current iteration.
+%The asteroid is approximated by a spherical outer bound.
+%   Syntax: [] = plot_communication_topology(sc_current_state, carrier_sc_position, communicating_sc_index, asteroid_radius, *color_array, *standard_font_size)
+%    *optional input
 
-cla()
-hold on
-
+%% Interpret Input
 n_spacecraft = size(sc_current_state,1);
 
+if nargin < 6
+    standard_font_size = 25;
+end
+if nargin < 5
+    color_array = ['c' 'r' 'b' 'g' 'm'];
+end
+
+%% Plot
+cla()
+hold on
 theta = 0:pi/50:2*pi;
 x_circle = asteroid_radius * cos(theta);
 y_circle = asteroid_radius * sin(theta);

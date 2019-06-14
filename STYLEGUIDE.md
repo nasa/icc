@@ -27,7 +27,7 @@ Prefixes:
 - Time should correspond to rows
 
 ## Units 
-Unless otherwise specified, all functions should use the following units ... [TBD]
+Unless otherwise specified, all functions should use the following units: kg, meters, seconds
 
 ## Other 
 Generally full names are preferred over symbols or abbreviations. e.g. *current_velocity* not *v_curr*

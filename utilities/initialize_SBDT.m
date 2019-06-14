@@ -1,8 +1,7 @@
-% Load SBDT
-% Assumes that SBDT_PATH is specified as a variable somewhere.
-% If it isn't, defaults to a directory on Federico's computer.
-
 function [] = initialize_SBDT()
+%INITIALIZE_SBDT 
+%   Assumes that SBDT_PATH is specified as a variable somewhere.
+%   If it isn't, defaults to a directory on Federico's computer.
 global SBDT_PATH
 if isempty(SBDT_PATH)
     SBDT_PATH = '/Users/frossi/Documents/JPL/ICC/SBDT';

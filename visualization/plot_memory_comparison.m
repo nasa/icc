@@ -1,23 +1,29 @@
 function [ ] = plot_memory_comparison( sc_memory_use , communicating_sc_index, standard_comm_data_rate, delta_t, sc_max_memory , color_array, standard_font_size )
-%PLOT_MEMORY_USE_COMPARISON Summary of this function goes here
-%   Detailed explanation goes here
+%PLOT_MEMORY_COMPARISON Plots a bar graph of the memory use of each
+%spacecraft.
+%   Syntax: [] = plot_memory_comparison( sc_memory_use , communicating_sc_index, standard_comm_data_rate, delta_t, *sc_max_memory , *color_array, *standard_font_size )
+%    *optional input
 
-cla()
-hold on
+%% Interpret Inputs
 
-if nargin < 7 
-    standard_font_size = 25; 
-end 
-if nargin < 6 
+n_spacecraft = size(sc_memory_use,1);
+
+if nargin < 7
+    standard_font_size = 25;
+end
+if nargin < 6
     color_array = ['c' 'r' 'b' 'g' 'm'];
-end 
-if nargin < 5 
-    flag_knowMaxMemory = false; 
+end
+if nargin < 5
+    flag_knowMaxMemory = false;
 else
     flag_knowMaxMemory = true;
-end 
+end
 
-n_spacecraft = size(sc_memory_use,1); 
+
+%% Plot
+cla()
+hold on
 
 for i_sc = 1:1:n_spacecraft
     fill([i_sc i_sc+0.1 i_sc+0.1 i_sc], (1e-6)*[0 0 sc_memory_use(i_sc,1) sc_memory_use(i_sc,1)],color_array(mod(i_sc,length(color_array))+1))
@@ -43,5 +49,5 @@ ylabel('Mega Bits','fontsize',standard_font_size,'FontName','Times New Roman')
 title('Memory Use','fontsize',standard_font_size,'FontName','Times New Roman')
 set(gca, 'fontsize',standard_font_size,'FontName','Times New Roman')
 
-end 
+end
 

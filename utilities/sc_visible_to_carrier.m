@@ -11,8 +11,9 @@
 % Author: Saptarshi Bandyopadhyay (saptarshi.bandyopadhyay@jpl.nasa.gov)
 
 function this_visible = sc_visible_to_carrier(this_SC_pos, carrier_SC_pos, Radius)
-
-% http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html
+%SC_VISIBLE_TO_CARRIER Returns 1 if a line connnecting the spacecraft and
+%carrier does not intersect an outer spherical approximation of the
+%asteroid, and 0 otherwise. 
 
 x0 = [0 0 0];
 
