@@ -8,13 +8,12 @@ clear, clc, close all, run ../startup.m  % refresh
 addpath(genpath(strcat(ROOT_PATH,'/small_body_dynamics/EROS 433')))
 addpath(strcat(ROOT_PATH,'/small_body_dynamics'))
 
-
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                   User Options: Flags and Parameters                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 delta_t = 10*60; % [sec] simulation time step
-total_t = 0.2*24*60*60; % [sec]; 100 days, total time of simulation
+total_t = 5*24*60*60; % [sec]; 5 days, total time of simulation
 
 flag_testInHouse = true; % test in-house spherical harmonics integrator
 flag_testSBDT = false; % test SBDT integrators 

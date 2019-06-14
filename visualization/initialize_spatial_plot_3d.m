@@ -18,7 +18,7 @@ for i = 1:2:n_inputs
     end
     if strcmpi(varargin{i},'limits')
         limitsSpecified = true;
-        axes_limits = varargin{i+1};
+        axes_limits = varargin{i+1}; 
     end
 end
 

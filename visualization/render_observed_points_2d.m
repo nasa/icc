@@ -18,7 +18,7 @@ function [] = render_observed_points_2d(varargin)
 %% Interpret the Inputs
 
 n_inputs = max(size(varargin));
-pos_points = varargin{1} ;
+pos_points = varargin{1} ;  
 point_index = varargin{2} ;
 n_spacecraft = varargin{3} ;
 above_or_below = varargin{4};

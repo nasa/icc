@@ -14,7 +14,7 @@ function [h] = render_spacecraft_3d(varargin)
 
 %% Interpret the Inputs
 n_inputs = max(size(varargin));
-sc_position_array = varargin{1};
+sc_position_array = varargin{1}; % Convert to [km] for plotting 
 n_spacecraft = size(sc_position_array,3);
 
 colorSpecified = false;

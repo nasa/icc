@@ -5,13 +5,13 @@ function [isc_comm, sc_memory_use] = simulate_single_hop_communication(sc_previo
 %             carrier_current_pos, asteroid_radius, standard_comm_data_rate, sc_memory_use, sc_max_memory, delta_t)
 %
 %   Inputs:
-%    - sc_previous_pos [km]: [N_SPACECRAFT x 3] Array of sc positions at
+%    - sc_previous_pos [m]: [N_SPACECRAFT x 3] Array of sc positions at
 %   	previous iteration
-%    - sc_current_pos [km]: [N_SPACECRAFT x 3] Array of sc positions at
+%    - sc_current_pos [m]: [N_SPACECRAFT x 3] Array of sc positions at
 %    	current iteration
-%    - carrier_current_pos [km]: [N_SPACECRAFT x 3] Array of carrier
+%    - carrier_current_pos [m]: [N_SPACECRAFT x 3] Array of carrier
 %    	position at current iteration
-%    - asteroid_radius [km]: Equatorial radius of asteroid
+%    - asteroid_radius [m]: Equatorial radius of asteroid
 %    - standard_comm_data_rate [bits/s]: Data flow rate between spacecraft
 %    	and carrier
 %    - sc_memory_use [bits]: Vector containing the current memory usage of

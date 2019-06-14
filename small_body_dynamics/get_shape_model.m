@@ -8,7 +8,7 @@ function [ShapeModel] = get_shape_model(shapefilename)
 %       e.g. 'EROS 433/MSI_optical_plate_models/eros022540.tab'
 %
 %   Outputs: 
-%    - ShapeModel: A struct containing the Faces and Verticies of the
+%    - ShapeModel: A struct containing the Faces and Verticies [m] of the
 %       object described in shapefilename
 
 
@@ -22,7 +22,7 @@ Faces = Raw_Model.data(facetIdx,:);
 Faces = Faces + 1;                 % Move to one-based indexing
 
 % Create ShapeModel
-ShapeModel.Vertices = Vertices;
+ShapeModel.Vertices = Vertices.*10^3; % convert to [m]
 ShapeModel.Faces = Faces;
 
 end

@@ -26,3 +26,4 @@ Prefixes:
 - Functions should indicate the meaning of all input and output variables. See the *template_function* for an example of this. 
 - Generally full names are preferred over symbols or abbreviations. e.g. *current_velocity* not *v_curr*
 - Modules should be self contained if at all possible 
+- Meters are preferred over kilometers for all functions except plotting funcitons

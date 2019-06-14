@@ -7,14 +7,14 @@ function [point_index, sc_memory_use] = simulate_asteroid_observation( sc_curren
 %    *optional input
 %   
 %   Inputs: 
-%    - sc_current_pos [km] : [N_SPACECRAFT x 3] Array of sc positions 
+%    - sc_current_pos [m] : [N_SPACECRAFT x 3] Array of sc positions 
 %    - sc_memory_use [bits]: Vector containing the current memory usage of
 %    	each spacecraft 
 %    - sc_max_memory [bits]: Scalar indicating the maximum memory capacity
 %    	of the spacecraft 
 %    - point_index: Vector of indicies for observed points on the asteroid
 %    - pos_points: [N_VERTICIES x 3] Array of model vertex points 
-%    - asteroid_radius: [km]
+%    - asteroid_radius: [m]
 %    - bits_per_point [bits]: Data collected at a point on the body
 %    - *flag_scObservingPoints: Scalar selecting observation method to use 
 %        Cases: (1) Observe all points per unit time 

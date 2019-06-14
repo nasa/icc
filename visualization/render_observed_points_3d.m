@@ -17,7 +17,7 @@ function [h] = render_observed_points_3d(varargin)
 
 %% Interpret the Inputs
 n_inputs = max(size(varargin));
-pos_points = varargin{1} ;
+pos_points = varargin{1} ; % Convert to [km] for plotting 
 point_index = varargin{2} ;
 n_spacecraft = varargin{3} ;
 
