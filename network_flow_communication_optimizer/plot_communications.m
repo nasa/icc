@@ -72,7 +72,7 @@ if nargin<8
 end
 
 if nargin<9
-    videoname = 'video.avi';
+    videoname = ['plot_communications',datestr(now,'yyyymmdd_HHMMSS'),'.avi'];;
 end
 
 if record_video

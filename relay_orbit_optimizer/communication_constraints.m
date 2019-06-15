@@ -37,7 +37,7 @@ if nargin<6
     max_distance=120000;
 end
 
-addpath('../utilities')
+addpath(genpath('../utilities'))
 
 % In order to ensure we do not get too close, we re-integrate the orbit.
 % This is all sorts of atrocious.

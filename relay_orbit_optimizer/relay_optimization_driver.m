@@ -26,8 +26,8 @@
 
 clear all; close all; clc;
 
-addpath('../')
-initializeSBDT()
+addpath(genpath('../utilities/'))
+initialize_SBDT()
 
 % % a: between 40 and 100;
 % % e: between 0 and 0.5
@@ -78,9 +78,11 @@ max_distance = 120000;
 min_distance = 25000;
 nonlcon = @(params) communication_constraints(spacecraft,params, gravity_model,ctime,GM, max_distance, min_distance, location_scaling_factor);
 
+% Optimize!
 [x,fval,exitflag,output] = fmincon(fun,relay_initial_condition,A,b,Aeq,beq,lb,ub,nonlcon,options)
 
-%x(1) = x(1)*1e4;
+% Rescale the inputs.
 x(1:3) = x(1:3) / location_scaling_factor;
 
+% Plot
 [goal] = comm_optimization_problem(x,[0 : 300 : 86400], true);

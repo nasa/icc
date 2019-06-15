@@ -20,7 +20,7 @@
 
 function [bodyModel] = loadEros(constants, orbitNumber, frameNumber, ...
         shapeNumber, gravityNumber)
-    %% LOADVESTA - Creates models of the asteroid 433 Eros.
+    %% LOADEROS - Creates models of the asteroid 433 Eros.
     %
     %  Derived from SBDT's loadVesta.
     %

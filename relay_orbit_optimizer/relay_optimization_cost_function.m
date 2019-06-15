@@ -28,7 +28,7 @@
 
 function [goal, gradient] = relay_optimization_cost_function(spacecraft,sc_initial_condition, gravity_model,ctime,GM, location_scaling_factor)
 
-addpath('../utilities')
+addpath(genpath('../utilities'))
 addpath('../network_flow_communication_optimizer')
 
 sc_initial_condition(1:3) = sc_initial_condition(1:3) / location_scaling_factor;

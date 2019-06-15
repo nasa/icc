@@ -354,4 +354,5 @@ assert(close_enough(network_flows(3,1,2),1))
 % assert(abs(network_flows(3,3,4)-1)<assert_tol)
 % assert(network_flows(2,2,3)==.5)
 
+disp("Tests succeeded!")
 return

@@ -8,4 +8,7 @@ Demonstrations of module capabilities and usage examples.
  of the spacecraft.
 
 - `Plot_Orbits.m` provides a usage example of the small body dynamics 
-integrartors 
+integrators.
+
+- `Communication_Optimization_Demo.m` provides a usage example of the network
+flow communications optimization module.

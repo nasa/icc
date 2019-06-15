@@ -44,7 +44,8 @@ if nargin<1
 end
 addpath(genpath('../small_body_dynamics'))
 addpath('../network_flow_communication_optimizer')
-addpath('../utilities')
+addpath('../relay_orbit_optimizer')
+addpath(genpath('../utilities'))
 
 global SBDT_PATH
 if isempty(SBDT_PATH)
@@ -149,7 +150,7 @@ spacecraft.priority(1:2,:) = 1;
 spacecraft.memory = ones(4,1)*1e10; %1TB
 spacecraft.memory(end) = 0; % Force to store delivered science right away
 record_video = plot_flag;
-videoname = 'myvideo.avi';
+videoname = ['comm_optimization_problem_',datestr(now,'yyyymmdd_HHMMSS'),'.avi'];
 
 reference_bandwidth = 250000;
 reference_distance = 100000;
