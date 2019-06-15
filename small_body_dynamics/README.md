@@ -17,5 +17,5 @@ Usage examples are provided in `exploreErosGravity.m`.
 A demo of SBDT's multiple gravity models is available in `EROS 433/SBDT_demo_Eros.m`.
 
 ## Example Output
-![A trajectory around EROS 433 in the body-fixed frame](../media/examples/relative_trajectory.png)
-![A trajectory around EROS 433 in the absolute reference frame](../media/examples/absolute_trajectory.png)
+![A trajectory around EROS 433 in the body-fixed frame](../media/relative_trajectory.png)
+![A trajectory around EROS 433 in the absolute reference frame](../media/absolute_trajectory.png)
