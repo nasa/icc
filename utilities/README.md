@@ -13,5 +13,8 @@ Orbital dynamics and simulation.
 ## transformations 
 Transformation of data.
 
+## spice
+Utilities to use JPL's [SPICE toolkit](https://naif.jpl.nasa.gov/naif/toolkit.html) to use ephemerides from NASA's [Navigation and Ancillary Information Facility (NAIF)](https://naif.jpl.nasa.gov/naif/about.html).
+
 ## misc
 Other. 
