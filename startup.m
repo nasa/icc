@@ -8,6 +8,9 @@ ROOT_PATH = pwd;
 global SBDT_PATH
 SBDT_PATH =  strcat(ROOT_PATH, '/../SBDT') ; 
 
+% Add MICE to path 
+addpath(genpath(strcat(ROOT_PATH, '/../mice/'))); 
+
 %% Complete Setup 
 
 run utilities/misc/initialize_SBDT.m
