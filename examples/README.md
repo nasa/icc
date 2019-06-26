@@ -12,3 +12,7 @@ integrators.
 
 - `Communication_Optimization_Demo.m` provides a usage example of the network
 flow communications optimization module.
+
+- `Voronoi_On_Eros` provides a usage example of the functions in the 
+coverage optmization module that are used to create Voronoi partitions on 
+a small body. 
