@@ -1,41 +1,48 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Copyright 2019 by California Institute of Technology.  ALL RIGHTS RESERVED. %
+% United  States  Government  sponsorship  acknowledged.   Any commercial use %
+% must   be  negotiated  with  the  Office  of  Technology  Transfer  at  the %
+% California Institute of Technology.                                         %
+%                                                                             %
+% This software may be subject to  U.S. export control laws  and regulations. %
+% By accepting this document,  the user agrees to comply  with all applicable %
+% U.S. export laws and regulations.  User  has the responsibility  to  obtain %
+% export  licenses,  or  other  export  authority  as may be required  before %
+% exporting  such  information  to  foreign  countries or providing access to %
+% foreign persons.                                                            %
+%                                                                             %
+% This  software  is a copy  and  may not be current.  The latest  version is %
+% maintained by and may be obtained from the Mobility  and  Robotics  Sytstem %
+% Section (347) at the Jet  Propulsion  Laboratory.   Suggestions and patches %
+% are welcome and should be sent to the software's maintainer.                %
+%                                                                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function neighbor_set = create_neighbor_set(ShapeModel)
-
-
-% clear, clc, close all, run ../startup.m  % refresh
-
-% Add Required Packages to PATH
-% addpath(genpath(strcat(ROOT_PATH,'/small_body_dynamics/EROS 433')))
-% addpath(strcat(ROOT_PATH,'/small_body_dynamics'))
-% addpath(genpath(strcat(ROOT_PATH,'/utilities'))) % Add all utilities
-% addpath(strcat(ROOT_PATH,'/visualization'))
+%CREATE_NEIGHBOR_SET processes shape model data into a cell of connected
+%nodes. Nodes are said to be connected if they share a face. 
+%   Syntax: neighbor_set = create_neighbor_set(ShapeModel)
+%   
+%   Inputs: 
+%    - ShapeModel: A struct with fields
+%       - Verices [N_VERTICES x 3]: Vertex points of the body (in 3-space) 
+%       - Faces [N_FACES x 3]: Faces defining body
 % 
-% % Spherical harmonics model. Format is specified in the MATLAB function 'gravitysphericalharmonic.m'.
-% SphericalModel = {'EROS 433/Gravity_models/n15acoeff.tab', @readErosGravityModel};
-% 
-% % Load physical parameters of asteroid as a struct
-% ErosParameters = get_Eros_body_parameters(SphericalModel{1}); % input is optional
-% 
-% % Name and path of shapefile. For now, only used for plotting.
-% shapefilename = 'EROS 433/MSI_optical_plate_models/eros022540.tab';
-% 
-% ErosShapeModel = get_shape_model(shapefilename) ; % Faces and verticies of Eros model
+%   Outputs: 
+%    - neighbor_set [N_VERTICES x 1]: A cell containing the neighbors (i.e.
+%    connected verticies) for each vertex. 
+%       e.g. neighbor_set{i} will contain all verticies sharing a face with
+%       vertex i 
 
-%
 G = ShapeModel;
-
 V = G.Vertices;
 E = G.Faces;
-
-% figure()
-% hold on
-
-% find and plot neighbors of v1:
 n_vertices = size(V,1);
 n_faces    = size(E,1);
 vertex_set = 1:n_vertices;
 N = cell(n_vertices, 1); % neighbor_set{i} returns neighbors of ith vertex
 neighbor_set = cell(n_vertices, 1); 
-N = cell(n_vertices, 1); 
+
 for j = vertex_set
     for i = 1:n_faces
         
