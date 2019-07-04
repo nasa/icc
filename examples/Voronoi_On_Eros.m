@@ -33,7 +33,7 @@ clear, clc, close all, run ../startup.m  % refresh
 % Add Required Packages to PATH
 addpath(genpath(strcat(ROOT_PATH,'/small_body_dynamics/EROS 433')))
 addpath(strcat(ROOT_PATH,'/small_body_dynamics'))
-addpath(strcat(ROOT_PATH,'/coverage_optimizer')) % Add all utilities
+addpath(strcat(ROOT_PATH,'/voronoi_coverage_optimizer')) % Add all utilities
 addpath(strcat(ROOT_PATH,'/visualization'))
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -71,11 +71,11 @@ n_vertices = size(V,1);
 
 % Load the "neighbor_set" for Eros:
 % neighbor_set{i} returns the (indicies of) verticies connected to vertex i
-if isfile(strcat(ROOT_PATH,'/coverage_optimizer/Eros_neighbor_set.mat'))
-    load(strcat(ROOT_PATH,'/coverage_optimizer/Eros_neighbor_set.mat'))
+if isfile(strcat(ROOT_PATH,'/voronoi_coverage_optimizer/Eros_neighbor_set.mat'))
+    load(strcat(ROOT_PATH,'/voronoi_coverage_optimizer/Eros_neighbor_set.mat'))
 else
     neighbor_set = create_neighbor_set(ErosShapeModel);
-    save(strcat(ROOT_PATH,'/coverage_optimizer/Eros_neighbor_set.mat'),'neighbor_set')
+    save(strcat(ROOT_PATH,'/voronoi_coverage_optimizer/Eros_neighbor_set.mat'),'neighbor_set')
 end
 
 % Initialize random sources
@@ -109,6 +109,7 @@ if flag_demo == 1
         % Coverage Areas
         plot3(V(voronoi_cells{i},1),V(voronoi_cells{i},2),V(voronoi_cells{i},3),'.','color', color_array(1+mod(i,6) ),'markersize', 4 )
     end
+    
 elseif flag_demo == 2
     % Iteratively call the algorithm with the wavefront propagation limited
     % at an increasing number of steps (demonstrational purposes only)
