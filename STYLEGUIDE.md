@@ -27,3 +27,4 @@ Prefixes:
 - Generally full names are preferred over symbols or abbreviations. e.g. *current_velocity* not *v_curr*
 - Modules should be self contained if at all possible 
 - Meters are preferred over kilometers for all functions except plotting funcitons
+- Each module should contain a README file. Dependencies on other modules should be indicated at the end of this file.
