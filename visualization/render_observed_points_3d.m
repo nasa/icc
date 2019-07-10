@@ -4,9 +4,9 @@ function [h] = render_observed_points_3d(varargin)
 %    *optional input
 %
 %   Inputs:
-%    - pos_points [km]: [N_VERTICIES x 3] Array of model vertex points
-%    - point_index: Vector of indicies indicating the observed points on
-%       the asteroid
+%    - pos_points [km]: [N_VERTICES x 3] Array of model vertex points
+%    - point_index [N_VERTICES x 1]: Vector of indicies indicating the
+%       observed points on the asteroid.
 %    - n_spacecraft: Number of spacecraft
 %    - *color_array: Array of colors assigned to the spacecraft
 %    - *showNotObserved: logical variable; will plot unobserved points
@@ -17,7 +17,7 @@ function [h] = render_observed_points_3d(varargin)
 
 %% Interpret the Inputs
 n_inputs = max(size(varargin));
-pos_points = varargin{1} ; % Convert to [km] for plotting 
+pos_points = varargin{1} ; % Convert to [km] for plotting
 point_index = varargin{2} ;
 n_spacecraft = varargin{3} ;
 
@@ -52,9 +52,11 @@ end
 % Plot points being observed, and colorcode by the agent number
 for ns = 1:1:n_spacecraft
     observed_index = logical(point_index == ns);
-    h(ns) = plot3(pos_points(observed_index,1),pos_points(observed_index,2),...
-        pos_points(observed_index,3),'o','MarkerFaceColor',color_array(mod(ns,length(color_array))+1),...
-        'MarkerEdgeColor',color_array(mod(ns,length(color_array))+1),'MarkerSize',5);
+    if sum(observed_index)>0
+        h(ns) = plot3(pos_points(observed_index,1),pos_points(observed_index,2),...
+            pos_points(observed_index,3),'o','MarkerFaceColor',color_array(mod(ns,length(color_array))+1),...
+            'MarkerEdgeColor',color_array(mod(ns,length(color_array))+1),'MarkerSize',5);
+    end
 end
 
 end
