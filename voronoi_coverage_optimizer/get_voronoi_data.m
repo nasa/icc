@@ -49,7 +49,7 @@ function [voronoi_cells, voronoi_boundaries, voronoi_nodes] = get_voronoi_data(v
 sources = varargin{1}; 
 neighbor_set = varargin{2};
 if nargin < 3 
-    max_steps = 500; % maximum iterations in wave propagation 
+    max_steps = inf; % maximum iterations in wave propagation 
 else
     max_steps = varargin{3};
 end
@@ -70,8 +70,10 @@ end
 bordering_nodes = []; % nodes "colliding" with other boundaries 
 
 %% Step 1: Calculate Voronoi Cells and Boundary
-
-for j = 1:max_steps % max_steps is search stop limit
+j = 0; 
+continue_search = true; 
+while (j<max_steps)&&(continue_search==true)
+    j=j+1; 
     for i=1:n_sources 
         % Get candidate explored nodes
         [c_explored_vertices, c_boundary_set] = propagate_wavefront(voronoi_cells{i}, boundary_set{i}, neighbor_set, 1);
@@ -102,7 +104,7 @@ for j = 1:max_steps % max_steps is search stop limit
         end
     end
     if n_empty_bounds==n_sources
-        break
+        continue_search = false; 
     end
 end
 
