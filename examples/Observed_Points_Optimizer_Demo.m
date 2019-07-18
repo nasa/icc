@@ -42,7 +42,10 @@ addpath(strcat(ROOT_PATH,'/observed_points_optimizer'))
 
 n_spacecraft = 2;  % Number of Spacecraft, not counting the carrier
 
-sc_types  = ones(1,n_spacecraft); % Index for instruments on board - 0 for carrier, 1 for not carrier
+sc_types = cell(1,n_spacecraft);
+for i_sc = 1:n_spacecraft
+    sc_types{i_sc}  = 1; % Indicies for instruments on board - 0 for carrier, 1 for not carrier
+end 
 
 sc_max_memory = zeros(1,n_spacecraft); % not used, but must be defined
 

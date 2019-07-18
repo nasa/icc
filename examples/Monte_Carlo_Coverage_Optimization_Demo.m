@@ -46,7 +46,10 @@ addpath(strcat(ROOT_PATH,'/monte_carlo_coverage_optimizer'))
 % Set Parameters:
 n_spacecraft = 2 ; % Number of Spacecraft, not counting the carrier
 
-sc_types  = ones(1,n_spacecraft); % Index for instruments on board - 0 for carrier, 1 for not carrier
+sc_types = cell(1,n_spacecraft);
+for i_sc = 1:n_spacecraft
+    sc_types{i_sc}  = 1; % Indicies for instruments on board - 0 for carrier, 1 for not carrier
+end 
 
 delta_t = 10*60; % [s]; simulation time step
 total_t = 1*24*60*60; % [s]; 1/2 day, total time of simulation

@@ -68,7 +68,7 @@ asteroid_vertices = AsteroidModel.BodyModel.shape.vertices; % Verticies composin
 observable_points = Swarm.Observation.observable_points; 
 for i_time = 1:K
     for i_sc = sc_find_observable_pts
-        if sc_type(i_sc) == 0
+        if ismember(0,sc_type{i_sc})
             observable_points{i_sc, i_time} = []; % carrier spacecraft does not observe anything
         else
             if flag_optimization_approach==0

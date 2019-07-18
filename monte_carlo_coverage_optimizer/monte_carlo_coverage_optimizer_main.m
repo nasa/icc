@@ -18,14 +18,14 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function Swarm = monte_carlo_coverage_optimizer(AsteroidModel, Swarm, n_trial_orbits)
+function Swarm = monte_carlo_coverage_optimizer_main(AsteroidModel, Swarm, n_trial_orbits)
 %MONTE_CARLO_COVERAGE_OPTIMIZER  Generates a set of random orbits, and
 %assigns one of these orbits to each instrument carrying spacecraft in the
 %swarm. (does not set carrier orbit)
 %   The orbits are chosen sequentially (one spacecraft after another) 
 %   such that the overall coverage reward is maximized on each iteration. 
 %
-%   Syntax: [swarm_map, swarm_observation_flow, swarm_observed_points, swarm_priority, swarm_reward, swarm_orbits] = monte_carlo_coverage_optmizer(SmallBodyParameters, time_vector, sc_obs_type, n_trial_orbits)
+%   Syntax: Swarm = monte_carlo_coverage_optimizer_main(AsteroidModel, Swarm, n_trial_orbits)
 %   
 %   Inputs: 
 %    - Asteroid_Model
