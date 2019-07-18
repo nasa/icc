@@ -23,7 +23,7 @@
 %               Usage example of Observed Points Optimizer                %
 %                                                                         %
 % Demonstrates usage of the observed_points_optimizer module by finding   %
-% the observation points accociated with randomly generated orbits.       %
+% the best observation points accociated with randomly generated orbits.  %
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -32,7 +32,7 @@ clear, clc, close all, run ../startup.m  % refresh
 % Add Required Packages to PATH
 addpath(genpath(strcat(ROOT_PATH,'/small_body_dynamics/EROS 433')))
 addpath(strcat(ROOT_PATH,'/small_body_dynamics'))
-addpath(genpath(strcat(ROOT_PATH,'/utilities'))) % Add all utilities 
+addpath(genpath(strcat(ROOT_PATH,'/utilities'))) % Add all utilities
 addpath(strcat(ROOT_PATH,'/visualization'))
 addpath(strcat(ROOT_PATH,'/observed_points_optimizer'))
 
@@ -40,87 +40,88 @@ addpath(strcat(ROOT_PATH,'/observed_points_optimizer'))
 %                   User Options: Flags and Parameters                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Set Parameters:
-n_spacecraft = 2; % Number of Spacecraft, not counting the carrier 
-sc_obs_type  = ones(1,n_spacecraft); % Index for instruments on board - 0 for carrier, 1 for not carrier 
+n_spacecraft = 2;  % Number of Spacecraft, not counting the carrier
+
+sc_types  = ones(1,n_spacecraft); % Index for instruments on board - 0 for carrier, 1 for not carrier
+
+sc_max_memory = zeros(1,n_spacecraft); % not used, but must be defined
+
 delta_t = 10*60; % [s]; simulation time step
 total_t = 1*24*60*60; % [s]; 1 day, total time of simulation
+time_vector = 0:delta_t:total_t; % sample times
+
+color_array = ['r', 'b', 'g', 'c', 'm'];
+
+flag_simulation = 1; % 1 to show simulation; 2 to show plot
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%             Initialize Simulation Environment Variables                 %
+%                       Initialize Eros Model                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Spherical harmonics model. Format is specified in the MATLAB function 'gravitysphericalharmonic.m'.
-SphericalModel = {'EROS 433/Gravity_models/n15acoeff.tab', @readErosGravityModel};
+userModelsPath = strcat(SBDT_PATH,'/ExampleUserModels');
+constantsModel = 1;
+addpath(strcat(SBDT_PATH,'/Startup'));
+global constants
+constants = addSBDT(SBDT_PATH, userModelsPath, constantsModel);
 
-% Load physical parameters of asteroid as a struct
-ErosParameters = get_Eros_body_parameters(SphericalModel{1}); % input is optional
-
-% Name and path of shapefile. For now, only used for plotting.
-shapefilename = 'EROS 433/MSI_optical_plate_models/eros022540.tab';
-
-ErosShapeModel = get_shape_model(shapefilename) ; % Faces and verticies of Eros model
-pos_points = ErosShapeModel.Vertices;
-num_points = size(pos_points,1);
-
-% Create an instance of the dynamics model we will use
-ErosGravity = SphericalHarmonicsGravityIntegrator(SphericalModel,ErosParameters.rotation_rate, 0, ErosShapeModel, @ode23tb);
-
-% Initialize point index. This keeps track of the observed points on Eros.
-point_index = zeros(num_points,1);
-
-% Initialize memory use array. This keeps track of the memory usage for the spacecraft
-sc_memory_use = zeros(n_spacecraft,1);
-
-% Construct Small Body Parameters Struct 
-SmallBodyParameters = ErosParameters; 
-SmallBodyParameters.rotation_at_t0 = 0; 
-SmallBodyParameters.ShapeModel = ErosShapeModel; 
-
+% In order to select a different gravity model, change the inputs to
+% the loadEros function. See the help for assistance
+eros_sbdt = loadEros( constants, 1, 1, 4, 3 );
+ErosModel = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                          Integrate Trajectory                           %
+%                        Initialize Swarm Model                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Initialize other spacecraft states (i.e. swarm state)
-sc_initial_state_array = initialize_random_orbits(n_spacecraft, ErosParameters); 
+% Instantiate SpacecraftSwarm class for handling spacecraft data
+Swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
 
-time_vector = 0:delta_t:total_t;
-
-% Integrate for instrument spacecraft
-orbits = zeros( length(time_vector), 6, n_spacecraft);
-for i_sc = 1:n_spacecraft
-    [~, abs_traj, ~] = ErosGravity.integrate(time_vector, sc_initial_state_array(i_sc, :), 'absolute' );
-    orbits(:, :, i_sc) = abs_traj;
-end
-
-% Instantiate SwarmTrajectory class for handling orbit data
-swarm   = SwarmTrajectory(orbits, time_vector); % instrument and relay spacecraft
+% Initialize spacecraft states and integrate in absolute frame
+sc_initial_state_array = initialize_random_orbits(n_spacecraft, ErosModel); % [m, m/s]
+Swarm.integrate_trajectories(ErosModel, sc_initial_state_array, 'absolute');
 
 % Check for collisions
-if swarm.collision_with_asteroid(ErosParameters.radius)
+if Swarm.collision_with_asteroid(ErosModel)
     fprintf('\nCollision with the asteroid!\n\n')
     percentage_seen = 0;
     return
 end
 
-
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%             Find Best Observation Points for Given Orbit                %
+%             Find Best Observation Points for Given Orbits               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[map, observation_flow, observed_points, priority, reward] = observed_points_optimizer_main(SmallBodyParameters, time_vector, sc_obs_type, orbits); 
+Swarm = observed_points_optimizer_main(ErosModel, Swarm);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                 Show Observed Points Map with Orbits                    %
+%                   Show Observed Points Simulation                       %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Generate Point Index Vector 
-point_index = zeros(1,size(map,2));
-for i_sc = 1:n_spacecraft
-    point_index = point_index + (map(i_sc,:)>0).*i_sc;
-end
 
-% Show Observed Points 
+% Show Observed Points
+h1=figure(1);
+set(h1,'Color',[1 1 1]);
+set(h1,'units','normalized','outerposition',[0 0 1 1])
+set(h1,'PaperPositionMode','auto');
+
 initialize_spatial_plot_3d()
-render_asteroid_3d(SmallBodyParameters.ShapeModel);
-render_observed_points_3d(SmallBodyParameters.ShapeModel.Vertices, point_index, n_spacecraft);
+render_asteroid_3d(ErosModel);
+axis equal
+axis([-1 1 -1 1 -1 1].*40)
+
+if flag_simulation==1
+    for i_time = 1:Swarm.get_num_timesteps()
+        hold on
+        for i_sc = 1:n_spacecraft
+            if ~isempty(Swarm.Observation.observable_points{i_sc, i_time})
+                h_op(i_sc) = render_these_points_3d(ErosModel, Swarm.Observation.observable_points{i_sc, i_time}, 'color', 'y'); %#ok<*SAGROW>
+                render_these_points_3d(ErosModel, Swarm.Observation.observed_points(i_sc, i_time), 'color', color_array(i_sc))
+            end
+        end
+        h_sc = render_spacecraft_3d(Swarm.rel_trajectory_array(1:i_time,1:3,:)./1000,'color', color_array);
+        drawnow limitrate
+        pause(0.125); delete(h_op); delete(h_sc);
+    end
+elseif flag_simulation == 2
+    render_observed_points_3d(ErosModel, Swarm);
+    render_spacecraft_3d(Swarm.rel_trajectory_array./1000,'color', color_array);
+end

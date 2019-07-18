@@ -18,15 +18,10 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function observable_points = get_observable_points(asteroid_vertices, sc_position)
-%GET_OBSERVABLE_POINTS Returns a vector of the asteroid vertex indicies
-%which are feasible for observation by the spacecraft in the given position
-%   
-%   Returns all points within n degrees of nadir
+function observable_points = get_nadir_point(asteroid_vertices, sc_position)
+%GET_NADIR_POINT Returns nadir point
 
-%% Return All Points within n Degrees of Nadir
-
-rad_threshold = deg2rad(10); 
+%% Return Nadir Point 
 Nv = size(asteroid_vertices,1);
 
 off_nadir_angle = zeros(1,Nv);
@@ -35,6 +30,9 @@ for i_v = 1:Nv
     r_vs = sc_position - r_v; % vector from vertex i_v to spacecraft
     off_nadir_angle(i_v) = atan2(norm(cross(r_v, r_vs)), dot(r_v,r_vs));
 end
-observable_points = find(off_nadir_angle<rad_threshold);
+
+[~, min_ind] = min(off_nadir_angle);
+
+observable_points = min_ind;
 
 end
