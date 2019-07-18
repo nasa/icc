@@ -35,8 +35,8 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             obj.sample_times = time_vector; % [s]; Sample times: all time dependent variables in sync with this
             
             obj.Parameters.available_memory = sc_max_memory; % [bits]; [1 x N] vector of the memory capacity of each spacecraft
-            obj.Parameters.types = sc_types; % [1 x N] cell containing the list of instruments (indices) carrierd by each spacecraft
-            obj.Parameters.n_spacecraft = N;  % Number of spacecraft in the swarm
+            obj.Parameters.types = sc_types; % [1 x N] cell containing the list of instruments (indices) carried by each spacecraft
+            obj.Parameters.n_spacecraft = N; % Number of spacecraft in the swarm
             
             obj.Observation.observed_points = zeros(N, K); % observed_points(i,k) = index of vertex on asteroid observed by spacecraft i at time k
             obj.Observation.observable_points = cell(N,K); % obvservable_points(
@@ -50,6 +50,7 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             
             obj.all_trajectories_set = false;
             obj.unset_trajectories = 1:N;
+            
         end
         
         %% Set Methods
@@ -96,12 +97,17 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
         %$%%%%%%%%%%%%%%%%%%%%%%%% Indexing %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         function sc_indicies = get_indicies_of_type(obj, type)
             % Returns the indicies of all spacecraft of the given type
-            sc_indicies = find(obj.Parameters.types==type);
+            sc_indicies = [] ;
+            for i_sc = 1:length(obj.Parameters.types)
+                if ismember(type, obj.Parameters.types{i_sc})
+                    sc_indicies = [sc_indicies, i_sc]; %#ok<AGROW>
+                end
+            end
         end
         
         function sc_indicies = get_indicies_except_type(obj, type)
             % Returns the indicies of all spacecraft not of the given type
-            sc_indicies = find(obj.Parameters.types~=type);
+            sc_indicies = setdiff(1:obj.get_num_spacecraft(),  obj.get_indicies_of_type(type));
         end
         
         %%%%%%%%%%%%%%%%%%%%%%%%% Observation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -142,6 +148,12 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             if length(fieldnames(obj))~=6
                 warning('Extra fields added to object!')
                 valid = false; 
+            elseif length(obj.Parameters.available_memory)~=obj.get_num_spacecraft()
+                warning('object.Parameters.available_memory should be [1 x N] double!')
+                valid = false;
+            elseif (length(obj.Parameters.types)~=obj.get_num_spacecraft()) || ~iscell(obj.Parameters.types)
+                warning('object.Parameters.types should be [1 x N] cell array!')
+                valid = false;
             elseif length(fieldnames(obj.Observation))~=4
                 warning('Extra fields added to object.Observation!')
                 valid = false;
