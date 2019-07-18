@@ -17,7 +17,7 @@
 % are welcome and should be sent to the software's maintainer.                %
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [sc_init_pos] = initialize_random_orbits(n_spacecraft , AsteroidParameters, sc_carrier_state)
+function [sc_init_pos] = initialize_random_orbits(n_spacecraft , AsteroidModel, sc_carrier_state)
 %F_INITIALIZE_RANDOM_ORBITS Initializes random orbital position around an
 %asteroid 
 %   Syntax: initialize_random_orbits(n_spacecraft , AsteroidParameters, sc_carrier_state)
@@ -35,7 +35,7 @@ function [sc_init_pos] = initialize_random_orbits(n_spacecraft , AsteroidParamet
 %% Initialize States
 sc_init_pos = zeros(n_spacecraft,6);
 
-min_radius_orbit = 2*AsteroidParameters.radius;
+min_radius_orbit = 2*AsteroidModel.BodyModel.shape.maxRadius; % km
 
 i_sc = 0;
 while i_sc < n_spacecraft
@@ -54,10 +54,10 @@ while i_sc < n_spacecraft
         
     end
     
-    sc_init_pos(i_sc,1:3) = rand_point; % [m]
+    sc_init_pos(i_sc,1:3) = rand_point.*1000; % [m]
     
     % Given Position, find velocity
-    v_magnitude =  sqrt(AsteroidParameters.Gravity.GM/norm(rand_point)); % [m/s]
+    v_magnitude =  sqrt(AsteroidModel.BodyModel.gravity.gm/norm(rand_point)); % [km/s]
     rand_x = 2*(rand-0.5);
     rand_y = 2*(rand-0.5);
     rand_z = 2*(rand-0.5);
@@ -65,9 +65,10 @@ while i_sc < n_spacecraft
     v_direction = cross( rand_point/norm(rand_point) , [rand_x rand_y rand_z]/(norm([rand_x rand_y rand_z])) );
     v_direction = v_direction/norm(v_direction);
     
-    sc_init_pos(i_sc,4:6) = v_magnitude*v_direction; % [m/s]
+    sc_init_pos(i_sc,4:6) = v_magnitude*v_direction.*1000; % [m/s]
 
-    
+%     % Convert to meters 
+%     sc_init_pos = 
 end
 
 

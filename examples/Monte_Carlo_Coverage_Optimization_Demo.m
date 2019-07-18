@@ -44,70 +44,74 @@ addpath(strcat(ROOT_PATH,'/monte_carlo_coverage_optimizer'))
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Set Parameters:
-n_spacecraft = 4; % Number of Spacecraft, not counting the carrier
+n_spacecraft = 2 ; % Number of Spacecraft, not counting the carrier
 
-sc_obs_type  = [ones(1,n_spacecraft-1), 0]; % Index for instruments on board - 0 for carrier, 1 for not carrier
+sc_types  = ones(1,n_spacecraft); % Index for instruments on board - 0 for carrier, 1 for not carrier
 
 delta_t = 10*60; % [s]; simulation time step
-total_t = 1*24*60*60; % [s]; 1 day, total time of simulation
-time_vector = 0:delta_t:total_t;
+total_t = 1*24*60*60; % [s]; 1/2 day, total time of simulation
+time_vector = 0:delta_t:total_t; % sample times
 
 n_trial_orbits = 10 ;
-sc_max_memory = 8*20*1e9.*ones(1,n_spacecraft-1); % 20 GB max memory for instrument spacecraft 
-sc_max_memory(1,n_spacecraft) = 8*10000*1e9; % Memory limit for carrier spacecraft 
+sc_max_memory = 8*20*1e9.*ones(1,n_spacecraft-1); % 20 GB max memory for instrument spacecraft
+sc_max_memory(1,n_spacecraft) = 8*10000*1e9; % Memory limit for carrier spacecraft
+
+color_array = ['r', 'b', 'g', 'c', 'm'];
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                         Initialize Variables                            %
+%                       Initialize Eros Model                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Initialize SmallBodyParameters Struct
-% Spherical harmonics model. Format is specified in the MATLAB function 'gravitysphericalharmonic.m'.
-SphericalModel = {'EROS 433/Gravity_models/n15acoeff.tab', @readErosGravityModel};
 
-% Load physical parameters of asteroid as a struct
-SmallBodyParameters = get_Eros_body_parameters(SphericalModel{1}); % input is optional
+userModelsPath = strcat(SBDT_PATH,'/ExampleUserModels');
+constantsModel = 1;
+addpath(strcat(SBDT_PATH,'/Startup'));
+global constants
+constants = addSBDT(SBDT_PATH, userModelsPath, constantsModel);
 
-% Name and path of shapefile. For now, only used for plotting.
-SmallBodyParameters.shapefilename =  'EROS 433/MSI_optical_plate_models/eros022540.tab';
+% In order to select a different gravity model, change the inputs to
+% the loadEros function. See the help for assistance
+eros_sbdt = loadEros( constants, 1, 1, 4, 3 );
+ErosModel = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt);
 
-% Construct Small Body Parameters Struct
-SmallBodyParameters.rotation_at_t0 = 0;
-SmallBodyParameters.ShapeModel = get_shape_model(SmallBodyParameters.shapefilename) ; % Faces and verticies of Eros model
-SmallBodyParameters.SphericalModel = SphericalModel;
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                        Initialize Swarm Model                           %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Initialize Carrier Orbit
-% Initialize carrier state
-carrier_current_pos = [100000 0 0]; % [m]
-v_magnitude = sqrt(SmallBodyParameters.Gravity.GM/norm(carrier_current_pos)); % [m/s]
-v_direction = [0 1 0];
-carrier_sc_velocity = v_magnitude*v_direction; % [m/s]
-carrier_current_state = [carrier_current_pos carrier_sc_velocity];
-ErosGravity = SphericalHarmonicsGravityIntegrator(SphericalModel,SmallBodyParameters.rotation_rate, 0, SmallBodyParameters.ShapeModel, @ode23tb);
-
-% Integrate for carrier spacecraft
-[~ ,carrier_orbit, ~] = ErosGravity.integrate(time_vector, carrier_current_state, 'absolute' ); % [m]
+% Instantiate SpacecraftSwarm class for handling spacecraft data
+Swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                             Optimization                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Optimize Orbits and Observed Points with Monte Carlo - all but carrier
-[map, observation_flow, observed_points, priority, reward, orbits] = monte_carlo_coverage_optmizer(SmallBodyParameters, time_vector, sc_obs_type, n_trial_orbits);
 
-% Add in Carrier Orbit
-orbits(:,:,end) = carrier_orbit;
+% Optimize Orbits and Observed Points with Monte Carlo
+Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                              Show Results                               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Generate Point Index Vector
-point_index = zeros(1,size(map,2));
-for i_sc = 1:n_spacecraft
-    for i_v = 1:length(point_index)
-        if map(i_sc,i_v)>0
-            point_index(i_v) = i_sc; 
+
+% Show Observed Points
+h1=figure(1);
+set(h1,'Color',[1 1 1]);
+set(h1,'units','normalized','outerposition',[0 0 1 1])
+set(h1,'PaperPositionMode','auto');
+initialize_spatial_plot_3d()
+render_asteroid_3d(ErosModel);
+axis equal
+axis([-1 1 -1 1 -1 1].*40)
+for i_time = 1:Swarm.get_num_timesteps()
+    hold on
+    for i_sc = 1:n_spacecraft
+        if ~isempty(Swarm.Observation.observable_points{i_sc, i_time})
+            h_op(i_sc) = render_these_points_3d(ErosModel, Swarm.Observation.observable_points{i_sc, i_time}, 'color', 'y'); %#ok<*SAGROW>
+            render_these_points_3d(ErosModel, Swarm.Observation.observed_points(i_sc, i_time), 'color', color_array(i_sc))
         end
     end
+    h_sc = render_spacecraft_3d(Swarm.rel_trajectory_array(1:i_time,1:3,:)./1000,'color', color_array);
+    drawnow limitrate
+    pause(0.125)
+    delete(h_op)
+    delete(h_sc)
 end
-
-initialize_spatial_plot_3d()
-render_asteroid_3d(SmallBodyParameters.ShapeModel);
-render_observed_points_3d(SmallBodyParameters.ShapeModel.Vertices, point_index, n_spacecraft);
+h_sc = render_spacecraft_3d(Swarm.rel_trajectory_array(1:i_time,1:3,:)./1000,'color', color_array);

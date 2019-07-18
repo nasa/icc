@@ -1,30 +1,35 @@
 function [h] = render_observed_points_3d(varargin)
-%F_RENDER_OBSERVED_POINTS_3D Renders location of the observed points
-%    Syntax: render_observed_points_3d(pos_points, point_index, n_spacecraft, 'color_array', *color_array, 'show_not_observed', *showNotObserved )
+%F_RENDER_OBSERVED_POINTS_3D Renders location of the observed points given
+%the Asteroid and Swarm objects
+%    Syntax: render_observed_points_3d(AsteroidModel, Swarm, 'color_array', *color_array, 'show_not_observed', *showNotObserved )
 %    *optional input
 %
 %   Inputs:
-%    - pos_points [km]: [N_VERTICES x 3] Array of model vertex points
-%    - point_index [N_VERTICES x 1]: Vector of indicies indicating the
-%       observed points on the asteroid.
-%    - n_spacecraft: Number of spacecraft
-%    - *color_array: Array of colors assigned to the spacecraft
-%    - *showNotObserved: logical variable; will plot unobserved points
-%       along with the observed points when set to true
+%    - AsteroidModel
+%    - Swarm
 %
 %   Outputs:
 %    - h: plot handle for the points rendered
 
 %% Interpret the Inputs
-n_inputs = max(size(varargin));
-pos_points = varargin{1} ; % Convert to [km] for plotting
-point_index = varargin{2} ;
-n_spacecraft = varargin{3} ;
+% n_inputs = max(size(varargin));
+AsteroidModel = varargin{1}; 
+Swarm = varargin{2}; 
+
+pos_points = AsteroidModel.BodyModel.shape.vertices ; % Convert to [km] for plotting
+n_spacecraft = Swarm.get_num_spacecraft(); 
+
+point_index = zeros(1,size(pos_points,1));
+for i_sc = 1:n_spacecraft
+    obs_points = Swarm.Observation.observed_points(i_sc,:);
+    obs_points(obs_points==0)= [];
+    point_index(obs_points) = i_sc; 
+end
 
 colorSpecified = false;
 showNotObserved = false;
 
-if n_inputs > 3
+if nargin > 3
     for i = 4:2:n_inputs
         if strcmpi(varargin{i},'color_array') || strcmpi(varargin{i},'colorArray') ||  strcmpi(varargin{i},'color')
             colorSpecified = true;

@@ -20,14 +20,13 @@
 
 function [] = render_observed_points_2d(varargin)
 %F_RENDER_OBSERVED_POINTS_2D Renders location of the observed points in 2d
-%    Syntax: render_observed_points_2d(pos_points, point_index, n_spacecraft, above_or_below, 'color_array', *color_array)
+%given Asteriod and Swarm objects 
+%    Syntax: render_observed_points_2d(AsteroidModel, Swarm, above_or_below, 'color_array', *color_array)
 %    *optional input
 %
 %   Inputs:
-%    - pos_points [km]: [N_VERTICIES x 3] Array of model vertex points
-%    - point_index: Vector of indicies indicating the observed points on
-%       the asteroid
-%    - n_spacecraft: Number of spacecraft
+%    - AsteroidModel
+%    - Swarm
 %    - above_or_below: {'above','below'} Side of the asteroid to be viewed
 %       in the 2D projection
 %    - *color_array: Array of colors assigned to the spacecraft
@@ -37,15 +36,28 @@ function [] = render_observed_points_2d(varargin)
 
 %% Interpret the Inputs
 
-n_inputs = max(size(varargin));
-pos_points = varargin{1} ;  
-point_index = varargin{2} ;
-n_spacecraft = varargin{3} ;
-above_or_below = varargin{4};
+AsteroidModel = varargin{1};
+Swarm = varargin{2};
+
+pos_points = AsteroidModel.BodyModel.shape.vertices ; % Convert to [km] for plotting
+n_spacecraft = Swarm.get_num_spacecraft();
+
+point_index = zeros(1,size(pos_points,1));
+for i_sc = 1:n_spacecraft
+    obs_points = Swarm.Observation.observed_points(i_sc,:);
+    obs_points(obs_points==0)= [];
+    point_index(obs_points) = i_sc;
+end
+
+if nargin<3
+    above_or_below = 'above';
+else
+    above_or_below = varargin{3};
+end
 
 colorSpecified = false;
 
-if n_inputs > 4
+if nargin > 3
     if strcmpi(varargin{5},'color_array') || strcmpi(varargin{5},'colorArray') ||  strcmpi(varargin{5},'color')
         colorSpecified = true;
         color_array = varargin{6};
@@ -59,8 +71,7 @@ end
 %% Plot
 
 hold on
-
-above_equator_index = logical(pos_points(:,3)>=0);
+above_equator_index = transpose(logical(pos_points(:,3)>=0));
 not_observed_index = logical(point_index == 0);
 
 if strcmp(above_or_below, 'above')
