@@ -36,14 +36,15 @@ if colorSpecified == false
 end
 
 %% Plot
+hold on 
 for i_sc = 1:n_spacecraft
     h(i_sc) = plot3( sc_position_array(end, 1, i_sc), sc_position_array(end, 2, i_sc), sc_position_array(end, 3, i_sc),...
-        'o','MarkerFaceColor',color_array(mod(i_sc,length(color_array))+1), ...
-        'MarkerEdgeColor',color_array(mod(i_sc,length(color_array))+1),'MarkerSize',10);
+        'o','MarkerFaceColor',color_array(mod(i_sc-1,length(color_array))+1), ...
+        'MarkerEdgeColor',color_array(mod(i_sc-1,length(color_array))+1),'MarkerSize',10);
     
     if showTrail == true % shows the entire orbital path
         h(2*i_sc+1) = plot3( sc_position_array(:, 1, i_sc), sc_position_array(:, 2, i_sc), sc_position_array(:, 3, i_sc),...
-            '-','Color',color_array(mod(i_sc,length(color_array))+1));
+            '-','Color',color_array(mod(i_sc-1,length(color_array))+1));
     end
 end
 

@@ -50,23 +50,35 @@ flag_demo = 1; % 1 for basic usage example; 2 for illustrative example of algori
 color_array = ['r','g','b','c','m','y','k']; % colors used to index spacecraft
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%             Initialize Simulation Environment Variables                 %
+%                       Initialize Eros Model                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Spherical harmonics model. Format is specified in the MATLAB function 'gravitysphericalharmonic.m'.
-SphericalModel = {'EROS 433/Gravity_models/n15acoeff.tab', @readErosGravityModel};
 
-% Load physical parameters of asteroid as a struct
-ErosParameters = get_Eros_body_parameters(SphericalModel{1}); % input is optional
+userModelsPath = strcat(SBDT_PATH,'/ExampleUserModels');
+constantsModel = 1;
+addpath(strcat(SBDT_PATH,'/Startup'));
+global constants
+constants = addSBDT(SBDT_PATH, userModelsPath, constantsModel);
 
-% Name and path of shapefile. For now, only used for plotting.
-shapefilename = 'EROS 433/MSI_optical_plate_models/eros022540.tab';
+% In order to select a different gravity model, change the inputs to
+% the loadEros function. See the help for assistance
+eros_sbdt = loadEros( constants, 1, 1, 4, 3 );
+ErosModel = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt);
 
-ErosShapeModel = get_shape_model(shapefilename) ; % Faces and verticies of Eros model
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                        Initialize Swarm Model                           %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% % Instantiate SpacecraftSwarm class for handling spacecraft data
+% Swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                             Voronoi Demo                                %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Define a few variables for convienience
-G = ErosShapeModel;
-V = G.Vertices;
-E = G.Faces;
+% G = ErosShapeModel;
+V = ErosModel.BodyModel.shape.vertices;   %G.Vertices;
+E = ErosModel.BodyModel.shape.edges;   % G.Faces;
 n_vertices = size(V,1);
 
 % Load the "neighbor_set" for Eros:
@@ -84,15 +96,13 @@ for i = 1:n_sources
     sources{i} = randi([1,n_vertices]) ;
 end
 
-if flag_demo == 1
-    % Call the algorithm, show the results
-    
+if flag_demo == 1 % Call the algorithm, show the results
     %% Calculate the Discrete Voronoi Data on the Mesh
     [voronoi_cells, voronoi_boundaries, voronoi_nodes] = get_voronoi_data(sources, neighbor_set);
     
     %% Plot Results
     figure();  hold on
-    render_asteroid_3d(G);
+    render_asteroid_3d(ErosModel);
     axis equal
     view(3)
     
@@ -110,9 +120,7 @@ if flag_demo == 1
         plot3(V(voronoi_cells{i},1),V(voronoi_cells{i},2),V(voronoi_cells{i},3),'.','color', color_array(1+mod(i,6) ),'markersize', 4 )
     end
     
-elseif flag_demo == 2
-    % Iteratively call the algorithm with the wavefront propagation limited
-    % at an increasing number of steps (demonstrational purposes only)
+elseif flag_demo == 2 % Iteratively call the algorithm with the wavefront propagation limited at an increasing number of steps (demonstrational purposes only)
     
     for i_steps = 1:2:50
         %% Calculate the Discrete Voronoi Data on the Mesh
@@ -121,7 +129,7 @@ elseif flag_demo == 2
         %% Plot Results
         if i_steps ==1
             figure();  hold on
-            render_asteroid_3d(G);
+            render_asteroid_3d(ErosModel);
             axis equal
             view(3)
         else

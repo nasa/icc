@@ -36,7 +36,7 @@ delta_t = 10*60; % [sec] simulation time step
 total_t = 5*24*60*60; % [sec]; 5 days, total time of simulation
 
 flag_testInHouse = true; % test in-house spherical harmonics integrator
-flag_testSBDT = false; % test SBDT integrators 
+flag_testSBDT = true; % test SBDT integrators 
 
 tspan = [0: delta_t: total_t];
 

@@ -1,5 +1,5 @@
 # icc-dev
-Contains MATLAB simulation and optimization code for spacecraft orbiting Small Solar System Bodies.
+Contains MATLAB simulation and optimization code for spacecraft orbiting small Solar System Bodies.
 ___
 ## Quickstart
 The examples folder contains example _main_ scripts, which demonstrate usage of the provided modules. The scripts should be executed from within this folder. 
@@ -14,12 +14,28 @@ Optimize the communication flows between spacecraft, given a set of orbits, data
 ### relay_orbit_optimizer
 Optimize the orbit of relay spacecraft, given the orbits of science spacecraft, their data production, and the orbit of the carrier.
 
+### observed_points_optimizer
+Optimize the observation of spacecraft, given the orbits of science spacecraft.
+
+### monte_carlo_coverage_optimizer
+Runs a monte carlo to select spacecraft orbits. Calls the observed points optimizer to calculate the coverage reward of each trial orbit set. 
+
 ### utilities
 Common utilities and supporting functions for icc simulation and analysis.
 
 ### media
 Various media.
 
+### Structure of Optimization Modules: 
+The optimizer modules are composed of a _main_ function (is called outside the module) and several supporting functions which should only be called from within the module. Functions supporting multiple modules are placed in _utilities_.
+
+___ 
+## Interfaces
+The system is defined through two special classes, which serve as the primary interfaces (inputs and outputs) between the modules. 
+1. _SpacecraftSwarm_: Defines the swarm of spacecraft. 
+2. _SphericalHarmonicsGravityIntegrator_SBDT_: Defines the small body that the spacecraft orbit around and integrates trajectories using JPL's Small Body Dynamics Integrator (SBDT). 
+
+See the _examples_ directory for usage examples. 
 ___
 
 ## Dependencies
