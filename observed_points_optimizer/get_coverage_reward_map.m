@@ -18,23 +18,46 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function observable_points = get_observable_points(asteroid_vertices, sc_position)
-%GET_OBSERVABLE_POINTS Returns a vector of the asteroid vertex indicies
-%which are feasible for observation by the spacecraft in the given position
-%   
-%   Returns all points within n degrees of nadir
+function reward_map = get_coverage_reward_map(AsteroidModel, observable_points_map)
+%GET_COVERAGE_REWARD Defines the value of the observed points 
+%   reward_map{i}(j,k) defines the reward accociated with agent i observing
+%   vertex j at time k 
 
-%% Return All Points within n Degrees of Nadir
+flag_map = 2;
 
-rad_threshold = deg2rad(10); 
-Nv = size(asteroid_vertices,1);
+N = length(observable_points_map);
+pos_points = AsteroidModel.BodyModel.shape.vertices;
+Nv = size(pos_points,1);
+K = size(observable_points_map{1},2);
+reward_map = cell(1,N);
 
-off_nadir_angle = zeros(1,Nv);
-for i_v = 1:Nv
-    r_v = asteroid_vertices(i_v,:); % vector to asteroid vertex i_v from cg
-    r_vs = sc_position - r_v; % vector from vertex i_v to spacecraft
-    off_nadir_angle(i_v) = atan2(norm(cross(r_v, r_vs)), dot(r_v,r_vs));
+if flag_map==1
+    %% Random Map 
+    for i_sc = 1:N
+        reward_map{i_sc} = randi(10,Nv,K);
+    end
+elseif flag_map==2
+    %% Value points closer to center of gravity
+    location_reward = zeros(Nv,1); 
+    for i_v = 1:Nv
+        location_reward(i_v) = norm(pos_points(i_v,:))./1000; 
+    end
+    for i_sc=1:N
+        for k=1:K
+            reward_map{i_sc}(:,k) = location_reward;
+        end
+    end
+elseif flag_map==3
+    %% Value points further from center of gravity
+    location_reward = zeros(Nv,1); 
+    for i_v = 1:Nv
+        location_reward(i_v) = AsteroidModel.BodyModel.shape.maxRadius-norm(pos_points(i_v,:))./1000; 
+    end
+    for i_sc=1:N
+        for k=1:K
+            reward_map{i_sc}(:,k) = location_reward;
+        end
+    end
 end
-observable_points = find(off_nadir_angle<rad_threshold);
 
 end

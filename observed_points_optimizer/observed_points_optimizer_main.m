@@ -18,133 +18,115 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [map, observation_flow, observed_points, priority, reward] = observed_points_optimizer_main(varargin)
+function Swarm = observed_points_optimizer_main(AsteroidModel, Swarm, sc_optimized, sc_find_observable_pts)
 %OBSERVED_POINTS_OPTIMIZER  Determines which points the spacecraft will
-%observe, given their orbits.
+%observe given their orbits.
+%   Note: The third and fourth input arguments are optional. They provide 
+%   the capability for iterative use of the optmizer.  
 %
-%   Syntax: [map, observation_flow, observed_points, priority, reward] = observed_points_optimizer_main(SmallBodyParameters, time_vector, sc_obs_type, orbits, *observed_points) 
-%    *optional input 
-%
+%   Syntax: Swarm = observed_points_optimizer_main(AsteroidModel, Swarm, sc_optimized, sc_find_observable_pts)
+%    *optional input
+%   
 %   Inputs: 
-%    - SmallBodyParameters: Is a struct containing information about the 
-%      asteroid. 
-%    - time_vector [seconds]: [1 x K] vector containing the times at which the s/c
-%      orbits are sampled.
-%    - sc_obs_type: [1 x N] vector containing the observation type indicies
-%      which indicate the observation related capabilities of the s/c 
-%       - sc_obs_type(n) = 0 for carrier spacecraft
-%       - sc_obs_type(n) = 1 for all other spacecraft 
-%    - orbits: [K x 6 x N] array containing the best orbits of the s/c
-%    - *observed_points: [N x K] array indicating the points previously
-%      observed by the s/c, if determined.
-%       - observed_points(n,k) = -1 if the observation status of s/c n at
-%       time k is undetermined. Only undetermined points will be evaluated
-%       by this function.
-%       - if this input is not passed into the function, all points will be
-%       given an undetermined status 
+%    - AsteroidModel
+%    - Swarm
+%    - *sc_optimized: (optional) specifies the subset of agents whose
+%        observation points will be optimized.
+%        e.g. if sc_optimized = [1,3] then observation parameters will only
+%        be calculated for agents 1 and 3
+%    - *sc_find_observable_points: (optional) specifies the subset of
+%        agents in sc_optmized for which the "observable_points_map" will
+%        be computed. This should only be applied to agents whose observed
+%        points have already been calculated though a previous call to this
+%        function. 
 % 
 %   Outputs: 
-%    - map: [N x V] array 
-%       - map(n,v) indicates the number of times s/c n has observed 
-%         vertex v
-%    - observation_flow [bits/second]: [N x K] array
-%       - observation_flow(n,k) contains the data taken in by s/c
-%         n at time k 
-%    - observed_points: [N x K] array 
-%       - observed_points(n,k) contains either the point observed by 
-%         s/c n at time k if an observation is made, or 0 otherwise
-%    - priority [reward/(bit/second)]: [N x K] array
-%       - priority(n,k) is the reward (value) accociated with 
-%         observation_flow(n,k)
-%    - reward: sum(sum(priority.*observation_flow))
+%    - Swarm
+
+
+if nargin<3
+    sc_optimized=Swarm.which_trajectories_set(); % Optimization performed on these agents
+end
+if nargin<4
+    sc_find_observable_pts=sc_optimized; % Points to calculate observable_points_map for (should be subset of sc_optimized)
+end
 
 %% Define Parameters
-
 bits_per_point = 8*0.4*1e9; % 0.4GB, data collected at each point
+
+flag_optimization_approach = 2; % 0 returns nadir point (no optimization); 1 for sequential optmization (shortcut); 2 for batch optmization (optimal)
 
 %% Setup
 
-% Inputs 
-SmallBodyParameters = varargin{1};
-time_vector = varargin{2};
-sc_obs_type = varargin{3};
-orbits = varargin{4};
-K = length(time_vector); % number of time steps
-N = size(orbits,3); % number of spacecraft
-if nargin < 5
-    observed_points = -1.*ones(N,K); % non-recursive use 
-else
-    observed_points = varargin{5}; % recursive use 
-end
-
-% Load Sun State from time_vector
-sun_state_array = zeros(K, 3);
-
-% Propagate Asteroid State
-theta_SB = zeros(1, K);
-theta_SB(1) = SmallBodyParameters.rotation_at_t0;
-for i_time = 1:(K-1)
-    theta_SB(i_time+1) = theta_SB(i_time) + SmallBodyParameters.rotation_rate*(time_vector(i_time+1)-time_vector(i_time));
-end
+sc_type = Swarm.Parameters.types; % 0 for carrier; 1 for instrument carrying spacecraft
+K = Swarm.get_num_timesteps(); % number of time samples
+N = Swarm.get_num_spacecraft(); % number of spacecraft
+Nv = size(AsteroidModel.BodyModel.shape.vertices,1); % number of vertices in shape model
+asteroid_vertices = AsteroidModel.BodyModel.shape.vertices; % Verticies composing surface of asteroid
 
 %% Get Set of Feasible Observation Points at Each Timestep
-observable_points = cell(K,N);
+observable_points = Swarm.Observation.observable_points; 
 for i_time = 1:K
-    % Update the vertices on the asteroid to match the current state
-    time_since_epoch = time_vector(i_time)-time_vector(1);
-    R = rotation_matrix_at_t( time_since_epoch, SmallBodyParameters.rotation_rate, SmallBodyParameters.rotation_at_t0 );
-    asteroid_vertices = transpose(R*transpose(SmallBodyParameters.ShapeModel.Vertices));
-    
+    for i_sc = sc_find_observable_pts
+        if sc_type(i_sc) == 0
+            observable_points{i_sc, i_time} = []; % carrier spacecraft does not observe anything
+        else
+            if flag_optimization_approach==0
+                observable_points{i_sc, i_time} = get_nadir_point(asteroid_vertices, Swarm.rel_trajectory_array(i_time, 1:3, i_sc ) ) ;
+            else
+                observable_points{i_sc, i_time} = get_observable_points(asteroid_vertices, Swarm.rel_trajectory_array(i_time, 1:3, i_sc ) ) ;
+            end
+        end
+    end
+end
+
+% Create observable points map
+if flag_optimization_approach~=0
+    observable_points_map = cell(1,N);
     for i_sc = 1:N
-        if observed_points(i_sc, i_time) == -1 % only consider points that have not been evaluated yet
-            if sc_obs_type(i_sc) == 0
-                observable_points{i_time, i_sc} = []; % carrier spacecraft not allowed to observe
-            else
-                observable_points{i_time, i_sc} = get_observable_points(SmallBodyParameters.radius, asteroid_vertices, orbits(i_time, 1:3, i_sc ), sun_state_array(i_time, :), sc_obs_type(i_sc)) ;
-            end
+        observable_points_map{i_sc} = sparse(zeros(Nv,K));
+        for i_time = 1:K
+            observable_points_map{i_sc}(observable_points{i_sc, i_time}, i_time) = 1;
         end
     end
 end
 
-%% Choose Points to Observe from Feasible Set
-for i_sc = 1:N
-    for i_time = 1:K
-        if observed_points(i_sc, i_time) == -1 % only consider points that have not been evaluated yet
-            %% Choose observation point
-            if isempty(observable_points{i_time, i_sc})
-                observed_points(i_sc, i_time) = 0;
-            else
-                observed_points(i_sc, i_time) = observable_points{i_time, i_sc}(1); % just take first point in feasible set  
-            end
+Swarm.Observation.observable_points = observable_points;
+
+%% Define Coverage Reward Map 
+reward_map = cell(1,N);
+if flag_optimization_approach==0
+    for i_sc = sc_optimized
+        reward_map{i_sc} = ones(Nv, K);
+    end
+else
+    reward_map = get_coverage_reward_map(AsteroidModel, observable_points_map); 
+end
+
+%% Choose Observation Points
+if flag_optimization_approach==0
+    % Store observable points in observed points
+    for i_sc = sc_optimized
+        for i_time = 1:K
+            Swarm.Observation.observed_points(i_sc,i_time) = observable_points{i_sc, i_time}(1);
+            Swarm.Observation.priority(i_sc, i_time) = reward_map(observable_points{i_sc, i_time}(1), i_time);
         end
+    end
+elseif flag_optimization_approach==1 % Sequential optimization
+    for i_sc = sc_optimized
+        % Each agent optmizes its observation points individually, without
+        % consideration of the decisions of other agents
+        [Swarm.Observation.observed_points(i_sc,:), Swarm.Observation.priority(i_sc,:)] = single_agent_points_optimizer(observable_points_map{i_sc}, reward_map);
+    end
+else % Batch optimization
+    [added_observed_points, added_priority] = swarm_points_optimizer(observable_points_map, reward_map, sc_optimized);
+    for i_sc = sc_optimized
+        Swarm.Observation.observed_points(i_sc,:) = added_observed_points(i_sc,:); 
+        Swarm.Observation.priority(i_sc,:) = added_priority(i_sc,:); 
     end
 end
 
-%% Define Priority - i.e. observation reward / bit
-priority = get_coverage_reward(observed_points, sc_obs_type);
-
-%% Fill out the observation flow and map, using info from observed_points
-observation_flow = zeros(N,K);
-map = zeros(N,size(SmallBodyParameters.ShapeModel.Vertices,1));
-for i_sc = 1:N
-    for i_time = 1:K
-        % Store data flow
-        observation_flow(i_sc, i_time) = bits_per_point*sign(observed_points(i_sc, i_time)); % either equal to zero or bits_per_point
-        
-        % Update map
-        for i_pt = observed_points(i_sc, i_time)
-            if observed_points~=0 % if a point was observed, add it to the map
-                map(i_sc, i_pt) = map(i_sc, i_pt)+1;
-            end
-        end
-    end
-end
-
-%% Define Total Reward for each Orbit
-reward = zeros(i_sc, 1);
-for i_sc = 1:N
-    reward(i_sc,1) = sum(observation_flow(i_sc, :).*priority(i_sc, :));
-end
+%% Store Flow
+Swarm.Observation.flow = bits_per_point.*sign(Swarm.Observation.observed_points) ;
 
 end
-
