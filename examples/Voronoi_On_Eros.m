@@ -78,7 +78,7 @@ ErosModel = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt);
 % Define a few variables for convienience
 % G = ErosShapeModel;
 V = ErosModel.BodyModel.shape.vertices;   %G.Vertices;
-E = ErosModel.BodyModel.shape.edges;   % G.Faces;
+E = ErosModel.BodyModel.shape.faces;   % G.Faces;
 n_vertices = size(V,1);
 
 % Load the "neighbor_set" for Eros:
@@ -86,7 +86,7 @@ n_vertices = size(V,1);
 if isfile(strcat(ROOT_PATH,'/voronoi_coverage_optimizer/Eros_neighbor_set.mat'))
     load(strcat(ROOT_PATH,'/voronoi_coverage_optimizer/Eros_neighbor_set.mat'))
 else
-    neighbor_set = create_neighbor_set(ErosShapeModel);
+    neighbor_set = create_neighbor_set(V,E);
     save(strcat(ROOT_PATH,'/voronoi_coverage_optimizer/Eros_neighbor_set.mat'),'neighbor_set')
 end
 
@@ -113,7 +113,7 @@ if flag_demo == 1 % Call the algorithm, show the results
         % Boundaries
         plot3(V(voronoi_boundaries{i},1),V(voronoi_boundaries{i},2),V(voronoi_boundaries{i},3),'.','color', color_array(1+mod(i,6) ),'markersize', 14 )
         
-        % Nodes
+        % Node
         plot3(V(voronoi_nodes{i},1),V(voronoi_nodes{i},2),V(voronoi_nodes{i},3),'k.','markersize', 20)
         
         % Coverage Areas
