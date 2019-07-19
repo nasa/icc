@@ -18,7 +18,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function neighbor_set = create_neighbor_set(ShapeModel)
+function neighbor_set = create_neighbor_set(V,E)
 %CREATE_NEIGHBOR_SET processes shape model data into a cell of connected
 %nodes. Nodes are said to be connected if they share a face. 
 %   Syntax: neighbor_set = create_neighbor_set(ShapeModel)
@@ -34,9 +34,9 @@ function neighbor_set = create_neighbor_set(ShapeModel)
 %       e.g. neighbor_set{i} will contain all verticies sharing a face with
 %       vertex i 
 
-G = ShapeModel;
-V = G.Vertices;
-E = G.Faces;
+% G = ShapeModel;
+% V = G.Vertices;
+% E = G.Faces;
 n_vertices = size(V,1);
 n_faces    = size(E,1);
 vertex_set = 1:n_vertices;
