@@ -18,12 +18,12 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function reward_map = get_coverage_reward_map(AsteroidModel, observable_points_map)
-%GET_COVERAGE_REWARD Defines the value of the observed points 
+function reward_map = get_coverage_reward_map(AsteroidModel, observable_points_map, sc_type)
+%GET_COVERAGE_REWARD Defines the value of the observed points
 %   reward_map{i}(j,k) defines the reward accociated with agent i observing
-%   vertex j at time k 
+%   vertex j at time k
 
-flag_map = 2;
+
 
 N = length(observable_points_map);
 pos_points = AsteroidModel.BodyModel.shape.vertices;
@@ -31,33 +31,38 @@ Nv = size(pos_points,1);
 K = size(observable_points_map{1},2);
 reward_map = cell(1,N);
 
-if flag_map==1
-    %% Random Map 
-    for i_sc = 1:N
+for i_sc = 1:N
+    if ismember(2,sc_type{i_sc})
+        flag_map=2;
+    else
+        flag_map=3;
+    end
+    
+    
+    if flag_map==1
+        %% Random Map
         reward_map{i_sc} = randi(10,Nv,K);
-    end
-elseif flag_map==2
-    %% Value points closer to center of gravity
-    location_reward = zeros(Nv,1); 
-    for i_v = 1:Nv
-        location_reward(i_v) = norm(pos_points(i_v,:))./1000; 
-    end
-    for i_sc=1:N
+        
+    elseif flag_map==2
+        %% Value points closer to center of gravity
+        location_reward = zeros(Nv,1);
+        for i_v = 1:Nv
+            location_reward(i_v) = norm(pos_points(i_v,:))./1000;
+        end
+        for k=1:K
+            reward_map{i_sc}(:,k) = location_reward;
+        end
+    elseif flag_map==3
+        %% Value points further from center of gravity
+        location_reward = zeros(Nv,1);
+        for i_v = 1:Nv
+            location_reward(i_v) = AsteroidModel.BodyModel.shape.maxRadius-norm(pos_points(i_v,:))./1000;
+        end
         for k=1:K
             reward_map{i_sc}(:,k) = location_reward;
         end
     end
-elseif flag_map==3
-    %% Value points further from center of gravity
-    location_reward = zeros(Nv,1); 
-    for i_v = 1:Nv
-        location_reward(i_v) = AsteroidModel.BodyModel.shape.maxRadius-norm(pos_points(i_v,:))./1000; 
-    end
-    for i_sc=1:N
-        for k=1:K
-            reward_map{i_sc}(:,k) = location_reward;
-        end
-    end
+    
 end
 
 end
