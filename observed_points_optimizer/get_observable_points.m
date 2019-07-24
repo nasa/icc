@@ -26,7 +26,7 @@ function observable_points = get_observable_points(asteroid_vertices, sc_positio
 
 %% Return All Points within n Degrees of Nadir
 
-rad_threshold = deg2rad(10); 
+rad_threshold = deg2rad(13); 
 Nv = size(asteroid_vertices,1);
 
 off_nadir_angle = zeros(1,Nv);

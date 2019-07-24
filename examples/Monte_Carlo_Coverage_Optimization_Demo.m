@@ -47,15 +47,14 @@ addpath(strcat(ROOT_PATH,'/monte_carlo_coverage_optimizer'))
 n_spacecraft = 2 ; % Number of Spacecraft, not counting the carrier
 
 sc_types = cell(1,n_spacecraft);
-for i_sc = 1:n_spacecraft
-    sc_types{i_sc}  = 1; % Indicies for instruments on board - 0 for carrier, 1 for not carrier
-end 
+sc_types{1} = 1; 
+sc_types{2} = 2; 
 
 delta_t = 10*60; % [s]; simulation time step
 total_t = 1*24*60*60; % [s]; 1/2 day, total time of simulation
 time_vector = 0:delta_t:total_t; % sample times
 
-n_trial_orbits = 10 ;
+n_trial_orbits = 5 ;
 sc_max_memory = 8*20*1e9.*ones(1,n_spacecraft-1); % 20 GB max memory for instrument spacecraft
 sc_max_memory(1,n_spacecraft) = 8*10000*1e9; % Memory limit for carrier spacecraft
 
@@ -107,14 +106,16 @@ for i_time = 1:Swarm.get_num_timesteps()
     hold on
     for i_sc = 1:n_spacecraft
         if ~isempty(Swarm.Observation.observable_points{i_sc, i_time})
-            h_op(i_sc) = render_these_points_3d(ErosModel, Swarm.Observation.observable_points{i_sc, i_time}, 'color', 'y'); %#ok<*SAGROW>
-            render_these_points_3d(ErosModel, Swarm.Observation.observed_points(i_sc, i_time), 'color', color_array(i_sc))
+            h_op(i_sc) = render_these_points_3d(ErosModel, Swarm.Observation.observable_points{i_sc, i_time}, 'color', 'y', 'markersize', 3); %#ok<*SAGROW>
+            render_these_points_3d(ErosModel, Swarm.Observation.observed_points(i_sc, i_time), 'color', color_array(i_sc), 'markersize', 6);
+            h_line(i_sc) = plot3([Swarm.rel_trajectory_array(i_time,1,i_sc)./1000, ErosModel.BodyModel.shape.vertices(Swarm.Observation.observed_points(i_sc,i_time),1)], ...
+                [Swarm.rel_trajectory_array(i_time,2,i_sc)./1000, ErosModel.BodyModel.shape.vertices(Swarm.Observation.observed_points(i_sc,i_time),2)],...
+                [Swarm.rel_trajectory_array(i_time,3,i_sc)./1000, ErosModel.BodyModel.shape.vertices(Swarm.Observation.observed_points(i_sc,i_time),3)],'--','color',color_array(i_sc),'linewidth',0.5);
         end
     end
     h_sc = render_spacecraft_3d(Swarm.rel_trajectory_array(1:i_time,1:3,:)./1000,'color', color_array);
+    
     drawnow limitrate
-    pause(0.125)
-    delete(h_op)
-    delete(h_sc)
+    pause(0.125); delete(h_op); delete(h_sc); delete(h_line);
 end
-h_sc = render_spacecraft_3d(Swarm.rel_trajectory_array(1:i_time,1:3,:)./1000,'color', color_array);
+h_sc = render_spacecraft_3d(Swarm.rel_trajectory_array(1:i_time,1:3,:)./1000,'color', color_array, 'showSC', false);

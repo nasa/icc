@@ -50,7 +50,7 @@ end
 sc_max_memory = zeros(1,n_spacecraft); % not used, but must be defined
 
 delta_t = 10*60; % [s]; simulation time step
-total_t = 1*24*60*60; % [s]; 1 day, total time of simulation
+total_t = 0.5*24*60*60; % [s]; 1 day, total time of simulation
 time_vector = 0:delta_t:total_t; % sample times
 
 color_array = ['r', 'b', 'g', 'c', 'm'];
@@ -91,7 +91,8 @@ if Swarm.collision_with_asteroid(ErosModel)
 end
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%             Find Best Observation Points for Given Orbits               %
+%             Find Best Observation Points for Given Orbits
+%             %33
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Swarm = observed_points_optimizer_main(ErosModel, Swarm);
@@ -103,7 +104,7 @@ Swarm = observed_points_optimizer_main(ErosModel, Swarm);
 % Show Observed Points
 h1=figure(1);
 set(h1,'Color',[1 1 1]);
-set(h1,'units','normalized','outerposition',[0 0 1 1])
+set(h1,'units','normalized','outerposition',[0 0 1 1])   
 set(h1,'PaperPositionMode','auto');
 
 initialize_spatial_plot_3d()
@@ -116,13 +117,17 @@ if flag_simulation==1
         hold on
         for i_sc = 1:n_spacecraft
             if ~isempty(Swarm.Observation.observable_points{i_sc, i_time})
-                h_op(i_sc) = render_these_points_3d(ErosModel, Swarm.Observation.observable_points{i_sc, i_time}, 'color', 'y'); %#ok<*SAGROW>
-                render_these_points_3d(ErosModel, Swarm.Observation.observed_points(i_sc, i_time), 'color', color_array(i_sc))
+                h_op(i_sc) = render_these_points_3d(ErosModel, Swarm.Observation.observable_points{i_sc, i_time}, 'color', 'y', 'markersize', 3); %#ok<*SAGROW>
+                render_these_points_3d(ErosModel, Swarm.Observation.observed_points(i_sc, i_time), 'color', color_array(i_sc), 'markersize', 6);
+                h_line(i_sc) = plot3([Swarm.rel_trajectory_array(i_time,1,i_sc)./1000, ErosModel.BodyModel.shape.vertices(Swarm.Observation.observed_points(i_sc,i_time),1)], ...
+                [Swarm.rel_trajectory_array(i_time,2,i_sc)./1000, ErosModel.BodyModel.shape.vertices(Swarm.Observation.observed_points(i_sc,i_time),2)],...
+                [Swarm.rel_trajectory_array(i_time,3,i_sc)./1000, ErosModel.BodyModel.shape.vertices(Swarm.Observation.observed_points(i_sc,i_time),3)],'--','color',color_array(i_sc),'linewidth',0.5);
             end
         end
         h_sc = render_spacecraft_3d(Swarm.rel_trajectory_array(1:i_time,1:3,:)./1000,'color', color_array);
+
         drawnow limitrate
-        pause(0.125); delete(h_op); delete(h_sc);
+        pause(0.125); delete(h_op); delete(h_sc); delete(h_line);
     end
 elseif flag_simulation == 2
     render_observed_points_3d(ErosModel, Swarm);
