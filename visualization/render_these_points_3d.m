@@ -20,7 +20,7 @@ AsteroidModel = varargin{1}; % Asteroid Object
 obs_points = varargin{2}; % Which points to render
 pos_points = AsteroidModel.BodyModel.shape.vertices ; % Convert to [km] for plotting
 Nv = size(pos_points,1);
-
+markersize = 3;
 colorSpecified = false;
 showNotObserved = false;
 if nargin >= 3
@@ -31,6 +31,9 @@ if nargin >= 3
         end
         if strcmpi(varargin{i},'show_not_observed') || strcmpi(varargin{i},'showNotObserved')
             showNotObserved = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'markersize') || strcmpi(varargin{i},'marker_size')
+            markersize = varargin{i+1};
         end
     end
 end
@@ -45,7 +48,7 @@ if showNotObserved == true
     % Plot all of the points on the body which are not currently being observed
     not_observed_index = set_diff(1:Nv,obs_points);
     h(ns+1) = plot3(pos_points(not_observed_index,1),pos_points(not_observed_index,2),...
-        pos_points(not_observed_index,3),'ok','MarkerFaceColor','none','MarkerSize',5);
+        pos_points(not_observed_index,3),'ok','MarkerFaceColor','none','MarkerSize',markersize);
 end
 
 ns = 1;
@@ -53,7 +56,7 @@ observed_index = obs_points;
 if sum(observed_index)>0
     h(ns) = plot3(pos_points(observed_index,1),pos_points(observed_index,2),...
         pos_points(observed_index,3),'o','MarkerFaceColor',color_array(mod(ns,length(color_array))+1),...
-        'MarkerEdgeColor',color_array(mod(ns,length(color_array))+1),'MarkerSize',5);
+        'MarkerEdgeColor',color_array(mod(ns,length(color_array))+1),'MarkerSize',markersize);
 end
 
 end

@@ -28,6 +28,7 @@ if n_inputs > 1
         if strcmpi(varargin{i},'show_trail') || strcmpi(varargin{i},'showTrail')
             showTrail = varargin{i+1};
         end
+
     end
 end
 
@@ -40,11 +41,11 @@ hold on
 for i_sc = 1:n_spacecraft
     h(i_sc) = plot3( sc_position_array(end, 1, i_sc), sc_position_array(end, 2, i_sc), sc_position_array(end, 3, i_sc),...
         'o','MarkerFaceColor',color_array(mod(i_sc-1,length(color_array))+1), ...
-        'MarkerEdgeColor',color_array(mod(i_sc-1,length(color_array))+1),'MarkerSize',10);
+        'MarkerEdgeColor',color_array(mod(i_sc-1,length(color_array))+1),'MarkerSize',6);
     
     if showTrail == true % shows the entire orbital path
         h(2*i_sc+1) = plot3( sc_position_array(:, 1, i_sc), sc_position_array(:, 2, i_sc), sc_position_array(:, 3, i_sc),...
-            '-','Color',color_array(mod(i_sc-1,length(color_array))+1));
+            '-','Color',color_array(mod(i_sc-1,length(color_array))+1),'linewidth',1.5);
     end
 end
 
