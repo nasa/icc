@@ -39,8 +39,6 @@ else
 end
 addpath(genpath('EROS 433'))
 
-testSBDT = false; % TEMPORARY: SBDT crashes MATLAB on my computer, troubleshoot with README, then remove this line. 
-
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
 %           In-house spherical harmonics integrator.                      %

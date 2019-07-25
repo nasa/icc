@@ -26,27 +26,15 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [flows, effective_science, delivered_science, bandwidths_and_memories, dual_bandwidth_and_memory] = communication_optimizer(spacecraft, bandwidth_model)
+function [swarm] = communication_optimizer(swarm, bandwidth_model)
 
 % How to best get data from a number of science spacecraft to a carrier
 % s/c, given a network bandwidth model. Solves the problem as a
 % single-commodity flow, leveraging CVX.
 % Syntax:
-%  [flows, effective_science, delivered_science, bandwidths, dual_bandwidth, dual_memory] = communication_optimizer(spacecraft, bandwidth_model)
+%  [flows, effective_science, delivered_science, bandwidths, dual_bandwidth, dual_memory] = communication_optimizer(swarm, bandwidth_model)
 % Inputs:
-% * spacecraft, a struct with four fields.
-% - time is a vector of length K. It contains the time at which the s/c
-% orbits are sampled.
-% - orbits is a list of N vectors of length K.
-% orbits{i} is the vector of locations of spacecraft i.
-% orbits{i}(:, k) is the location of s/c i at time time(k).
-% - science is a matrix of size N-by-K.
-% science(i,k) is the amount of science (in bits) produced by
-% s/c k at time i.
-% - priority is a matrix of size N-by-K.
-% priority(i,k) is the value of one bit of science produced by
-% s/c k at time i.
-% - memory, a vector of size N. Memory(i) is the memory of s/c i.
+% * swarm is the object defined in swarm.m
 % * bandwidth_model is a function. bandwidth_model takes in a pair of
 % locations x1, x2 and returns a bandwidth (in bits) between the
 % spacecraft. If the bandwidth is not specified, a quadratic model
@@ -62,11 +50,11 @@ if nargin<2
     bandwidth_model = @(x1,x2) min(250000 * (100000/norm(x2-x1,2))^2, 100*1e6); 
 end
 
-K = length(spacecraft.time);
-N = length(spacecraft.orbits);
+K = swarm.get_num_timesteps();
+N = swarm.get_num_spacecraft();
 
 % We will never need more than this memory
-max_memory = sum(sum(spacecraft.science));
+max_memory = sum(sum(swarm.Observation.flow));
 
 % Compute bandwidths
 bandwidths_and_memories = zeros(K,N,N);
@@ -74,9 +62,9 @@ for k=1:K-1
     for i=1:N
         for j=1:N
             if j~=i
-                bandwidths_and_memories(k,i,j) = bandwidth_model(spacecraft.orbits{i}(:,k), spacecraft.orbits{j}(:,k))* (spacecraft.time(k+1)-spacecraft.time(k));
-            elseif ~isnan(spacecraft.memory(i)) && ~isinf(spacecraft.memory(i))
-                bandwidths_and_memories(k,i,j) = spacecraft.memory(i);
+                bandwidths_and_memories(k,i,j) = bandwidth_model(swarm.abs_trajectory_array(k,1:3,i), swarm.abs_trajectory_array(k,1:3,j))* (swarm.sample_times(k+1)-swarm.sample_times(k));
+            elseif ~isnan(swarm.Parameters.available_memory(i)) && ~isinf(swarm.Parameters.available_memory(i))
+                bandwidths_and_memories(k,i,j) = swarm.Parameters.available_memory(i);
             else
                 bandwidths_and_memories(k,i,j) = max_memory;
             end
@@ -91,7 +79,7 @@ cvx_begin quiet
     variable delivered_science(K) nonnegative
     dual variable dual_bandwidth_and_memory
     
-    maximize sum(sum(spacecraft.priority.*effective_science))
+    maximize sum(sum(swarm.Observation.priority.*effective_science))
     %maximize sum(delivered_science)
     
     subject to
@@ -130,12 +118,18 @@ cvx_begin quiet
     
     % Empty memory at the end
     for i=1:1:N
-        if ~isnan(spacecraft.memory(i)) && ~isinf(spacecraft.memory(i))
+        if ~isnan(swarm.Parameters.available_memory(i)) && ~isinf(swarm.Parameters.available_memory(i))
             flows(K,i,i) == 0;
         end
     end
     
     % Don't do more science than is available
-    effective_science<=spacecraft.science;
+    effective_science<=swarm.Observation.flow;
     
 cvx_end
+
+swarm.Communication.flow = flows;
+swarm.Communication.effective_source_flow = effective_science;
+swarm.Communication.bandwidths_and_memories = bandwidths_and_memories;
+swarm.Communication.dual_bandwidths_and_memories = dual_bandwidth_and_memory;
+swarm.Communication.delivered_science = delivered_science;
