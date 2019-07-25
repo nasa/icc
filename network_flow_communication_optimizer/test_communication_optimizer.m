@@ -126,6 +126,7 @@ end
 
 [swarm] = communication_optimizer(swarm);
 
+assert(swarm.is_valid());
 assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),0))
 assert(close_enough(sum(sum(sum(swarm.Communication.flow))),0))
 %% Test 2: one unit of science delivered immediately
@@ -163,10 +164,10 @@ swarm.Observation.flow(1,1) = 1;
 
 [swarm] = communication_optimizer(swarm);
 
+assert(swarm.is_valid());
 assert(close_enough(swarm.Communication.effective_source_flow(1,1),1))
 assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),1))
 assert(close_enough(swarm.Communication.flow(2,1,2),1))
-
 
 %% Test 3: two agents produce two units of science
 T = 3;
@@ -203,6 +204,7 @@ swarm.Observation.flow(2,1) = 1;
 
 [swarm] = communication_optimizer(swarm);
 
+assert(swarm.is_valid());
 assert(close_enough(swarm.Communication.effective_source_flow(1,1),1))
 assert(close_enough(swarm.Communication.effective_source_flow(2,1),1))
 assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),2))
@@ -244,10 +246,9 @@ bandwidth_model = @(x1,x2) .5;
 swarm.Observation.flow(1,1) = 1;
 swarm.Observation.flow(2,1) = 1;
 
-
 [swarm] = communication_optimizer(swarm,bandwidth_model);
 
-
+assert(swarm.is_valid());
 assert(close_enough(swarm.Communication.effective_source_flow(1,1),.5))
 assert(close_enough(swarm.Communication.effective_source_flow(2,1),.5))
 assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),1))
@@ -307,10 +308,9 @@ swarm.Observation.flow(2,1) = 1;
 swarm.Observation.priority(1,1) = 1;
 swarm.Observation.priority(2,1) = .9;
 
-
 [swarm] = communication_optimizer(swarm,bandwidth_model);
 
-
+assert(swarm.is_valid());
 assert(close_enough(swarm.Communication.effective_source_flow(1,1),1))
 assert(close_enough(swarm.Communication.effective_source_flow(2,1),0))
 assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),1))
@@ -372,9 +372,9 @@ swarm.Observation.flow(2,1) = 1;
 swarm.Observation.priority(1,1) = 1;
 swarm.Observation.priority(2,1) = 1.9;
 
-
 [swarm] = communication_optimizer(swarm,bandwidth_model);
 
+assert(swarm.is_valid());
 assert(close_enough(swarm.Communication.effective_source_flow(1,1),0))
 assert(close_enough(swarm.Communication.effective_source_flow(2,1),1))
 assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),1))
@@ -436,8 +436,9 @@ swarm.Observation.flow(1,1) = 1;
 bandwidth_model = @(x1,x2) 1*(norm(x1-x2)<1e4);
 % 1 bandwidth at time 3. 
 
-[swarm] = communication_optimizer(swarm,bandwidth_model);
 
+assert(swarm.is_valid());
+[swarm] = communication_optimizer(swarm,bandwidth_model);
 
 assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),1))
 assert(close_enough(swarm.Communication.flow(3,1,2),1))
