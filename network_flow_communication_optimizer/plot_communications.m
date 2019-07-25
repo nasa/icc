@@ -84,6 +84,9 @@ for t = 1:n_timesteps
     end
 end
 
+flows_to_carrier = swarm.Communication.flow(:,:,4);
+delivered_science = sum(flows_to_carrier,2);
+
 
 max_bandwidth = max(max(max(tmp_bandwidths)));
 
@@ -150,7 +153,7 @@ for time = 1:n_timesteps
         curr_memory = swarm.Communication.bandwidths_and_memories(time,sc1,sc1);
         if sc1 == n_spacecraft
             % If the sc is the carrier, also count the science we delivered
-            curr_memory = curr_memory+sum(swarm.Communication.delivered_science(1:time));
+            curr_memory = curr_memory+sum(delivered_science(1:time));
             ssymbol = 's';
             ssize = curr_memory/max_delivered*max_memory_marker_size +1;
         else

@@ -47,7 +47,6 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             obj.Communication.effective_source_flow = zeros(N, K); % [bits/s]; Contains the portion of obj.Observation.flow that actually reaches the carrier
             obj.Communication.bandwidths_and_memories = zeros(K, N, N);
             obj.Communication.dual_bandwidths_and_memories = zeros(K, N, N);
-            obj.Communication.delivered_science = zeros(K,1);
             
             obj.all_trajectories_set = false;
             obj.unset_trajectories = 1:N;
@@ -158,7 +157,7 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             elseif length(fieldnames(obj.Observation))~=4
                 warning('Extra fields added to object.Observation!')
                 valid = false;
-            elseif length(fieldnames(obj.Communication))~=5
+            elseif length(fieldnames(obj.Communication))~=4
                 warning('Extra fields added to object.Communication!')
                 valid = false;
             elseif ~isnumeric(obj.Observation.observed_points) || (size(obj.Observation.observed_points,1)~=N) || (size(obj.Observation.observed_points,2)~=K)
@@ -184,9 +183,6 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
                 valid = false;
             elseif ~isnumeric(obj.Communication.effective_source_flow) || (size(obj.Communication.effective_source_flow,1)~=N) || (size(obj.Communication.effective_source_flow,2)~=K)
                 warning('object.Communication.effective_source_flow should be [N x K] double!')
-                valid = false;
-            elseif ~isnumeric(obj.Communication.delivered_science) || (size(obj.Communication.delivered_science,1) ~= K) || (size(obj.Communication.delivered_science,2)~=1)
-                warning('object.Communication.delivered_science should be [N x 1] double!')
                 valid = false;
             end
             

@@ -101,16 +101,12 @@ cvx_begin quiet
     delivered_science(1) == 0;
     
     % Initial flows are nil - don't make up information
-    flows(1,:,:) == 0
+    flows(1,:,:) == 0;
     
-%     % Continuity for carrier
-%     for k=1:K
-%        sum(flows(k,:,N)) == delivered_science(k);  % Carrier does not transmit or generate science
-%     end
-%     % No need for carrier to memorize
-%     for k=1:K
-%         flows(k,N,N) == 0;
-%     end
+    % No need for carrier to memorize
+    for k=1:K
+        flows(k,N,N) == 0;
+    end
     
     % Do not violate bandwidth and memory constraints
 
@@ -132,4 +128,9 @@ swarm.Communication.flow = flows;
 swarm.Communication.effective_source_flow = effective_science;
 swarm.Communication.bandwidths_and_memories = bandwidths_and_memories;
 swarm.Communication.dual_bandwidths_and_memories = dual_bandwidth_and_memory;
-swarm.Communication.delivered_science = delivered_science;
+% swarm.Communication.delivered_science = delivered_science;
+
+flows_to_carrier = flows(:,:,4);
+delivered_science_recovered = sum(flows_to_carrier,2);
+
+assert(norm(delivered_science_recovered(1:end-1)-delivered_science(2:end))<1e-3)
