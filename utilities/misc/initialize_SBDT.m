@@ -17,7 +17,7 @@
 % are welcome and should be sent to the software's maintainer.                %
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [] = initialize_SBDT()
+function [constants] = initialize_SBDT()
 %INITIALIZE_SBDT 
 %   Assumes that SBDT_PATH is specified as a variable somewhere.
 %   If it isn't, defaults to a directory on Federico's computer.
@@ -29,6 +29,7 @@ end
 addpath(strcat(SBDT_PATH,'/Startup'));
 userModelsPath = strcat(SBDT_PATH,'/ExampleUserModels');
 constantsModel = 1;
-constants = addSBDT(SBDT_PATH, userModelsPath, constantsModel); %#ok<NASGU>
+global constants;
+constants = addSBDT(SBDT_PATH, userModelsPath, constantsModel);
 
 end

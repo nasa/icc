@@ -32,118 +32,142 @@ function [] = test_communication_optimizer()
 % Syntax: test_communication_optimizer()
 % Asserts if any tests fail.
 
+% Add base path with SpacecraftSwarm definition
+addpath(("../"));
+% Add SBDT
+addpath(genpath("../utilities/"));
+constants = initialize_SBDT();
+
 % Tolerance accepted in solver output
 assert_tol = 1e-10;
 close_enough = @(x,y) (abs(x-y)<=assert_tol);
+
+% Load Eros
+eros_sbdt = loadEros( constants, 1, 1, 3, 3 );
+ErosGravity = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt);
+GM = eros_sbdt.gravity.gm * 1e9;  % Convert to m from km
 %% Generate a simple test case
 
+% Set a repeatable RNG
 rng(0);
 
+% Set number of spacecraft and time
 sc_number = 3;
 T = 1000;
 t_stride=10;
+time_vector = (1:t_stride:T);
+
+% Set orbit radius
 orbit_radius = 50000;
 
-spacecraft = struct();
-time = (1:t_stride:T);
-sc_loc = cell(sc_number,1);
-sc_science = zeros(sc_number,length(time));
-sc_priority = zeros(sc_number,length(time));
-sc_memory = zeros(sc_number,1);
-
-
-planar_orbit = [orbit_radius.*cos(time/max(time)*2*pi); orbit_radius.*sin(time/max(time)*2*pi); 0*time];
-rotmat_x = @(angle) [1, 0, 0; 0, cos(angle), -sin(angle); 0, sin(angle), cos(angle)];
-
-for sc=1:sc_number
-    sc_loc{sc} = rotmat_x((sc-1)/sc_number*pi)*planar_orbit;
-    %plot3(sc_loc{sc}(1,:), sc_loc{sc}(2,:), sc_loc{sc}(3,:))
-    %hold all
-    sc_science(sc,:) = randn(size(time))+5;
-    sc_priority(sc,:) = rand(size(time));
-    sc_memory(sc) = 9999;
+% Initialize spacecraft types (currently not in use)
+sc_types = cell(1,sc_number);
+for sc =1:sc_number
+    sc_types{sc} = [1];
 end
+
+% Initialize spacecraft maximum memory
+sc_max_memory = 9999 * ones(1,sc_number);
+
+% Create swarm object
+swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
+
+% Create orbits
+sc_initial_state_array = zeros(sc_number, 6);
+rotmat_x = @(angle) [1, 0, 0; 0, cos(angle), -sin(angle); 0, sin(angle), cos(angle)];
+for sc = 1:sc_number
+    sc_initial_state_array(sc, 1:3) = [orbit_radius; 0; 0];
+    sc_orbital_vel = sqrt(GM/orbit_radius);    
+    sc_initial_state_array(sc, 4:6) = rotmat_x((sc-1)/sc_number*pi)*[0; sc_orbital_vel; 0;];
+end
+swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
+
+for sc = 1:sc_number
+    swarm.Observation.flow(sc,:) = randn(size(time_vector))+5;
+    swarm.Observation.priority(sc,:) = rand(size(time_vector));
+end
+
+assert(swarm.is_valid());
 
 bandwidth_model = @(x1,x2) min(250000 * ((100000/norm(x2-x1,2))^2+ 0.2*randn()), 100*1e6);
 
-spacecraft.time = time;
-spacecraft.orbits = sc_loc;
-spacecraft.science = sc_science;
-spacecraft.priority = sc_priority;
-spacecraft.memory = sc_memory;
 
-[network_flows, effective_science, delivered_science, bandwidths, dual_bandwidth_and_memory] = communication_optimizer(spacecraft, bandwidth_model);
+[swarm] = communication_optimizer(swarm, bandwidth_model);
 %% Test 1: no science, nothing is returned
 T = 2;
-t_stride=1;
+t_stride=.5;
 sc_number = 2;
 orbit_radius = 50000;
 
-spacecraft = struct();
-time = (1:t_stride:T);
-sc_loc = cell(sc_number,1);
-sc_science = zeros(sc_number,length(time));
-sc_priority = zeros(sc_number,length(time));
-sc_memory = zeros(sc_number,1);
-
-
-planar_orbit = [orbit_radius.*cos(time/max(time)*2*pi); orbit_radius.*sin(time/max(time)*2*pi); 0*time];
-rotmat_x = @(angle) [1, 0, 0; 0, cos(angle), -sin(angle); 0, sin(angle), cos(angle)];
-
-for sc=1:sc_number
-    sc_loc{sc} = rotmat_x((sc-1)/sc_number*pi)*planar_orbit;
-    sc_science(sc,:) = 0.0;
-    sc_priority(sc,:) = 1;
-    sc_memory(sc) = 9999;
+time_vector=(1:t_stride:T);
+sc_types = cell(1,sc_number);
+for sc =1:sc_number
+    sc_types{sc} = [1];
 end
-sc_science(1,1) = 0;
+sc_max_memory = 9999*ones(sc_number,1);
 
-spacecraft.time = time;
-spacecraft.orbits = sc_loc;
-spacecraft.science = sc_science;
-spacecraft.priority = sc_priority;
-spacecraft.memory = sc_memory;
+swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
 
-[network_flows, effective_science, delivered_science] = communication_optimizer(spacecraft);
+% Create orbits
+sc_initial_state_array = zeros(sc_number, 6);
+rotmat_x = @(angle) [1, 0, 0; 0, cos(angle), -sin(angle); 0, sin(angle), cos(angle)];
+for sc = 1:sc_number
+    sc_initial_state_array(sc, 1:3) = [orbit_radius; 0; 0];
+    sc_orbital_vel = sqrt(GM/orbit_radius);    
+    sc_initial_state_array(sc, 4:6) = rotmat_x((sc-1)/sc_number*pi)*[0; sc_orbital_vel; 0;];
+end
+swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
 
-assert(close_enough(sum(sum(effective_science)),0))
-assert(close_enough(sum(sum(sum(network_flows))),0))
+% Science
+for sc = 1:sc_number
+    swarm.Observation.flow(sc,:) = 0.;
+    swarm.Observation.priority(sc,:) = 1.;
+end
+
+[swarm] = communication_optimizer(swarm);
+
+assert(swarm.is_valid());
+assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),0))
+assert(close_enough(sum(sum(sum(swarm.Communication.flow))),0))
 %% Test 2: one unit of science delivered immediately
 T = 3;
 t_stride=1;
 orbit_radius = 50000;
 sc_number = 2;
 
-spacecraft = struct();
-time = (1:t_stride:T);
-sc_loc = cell(sc_number,1);
-sc_science = zeros(sc_number,length(time));
-sc_priority = zeros(sc_number,length(time));
-sc_memory = zeros(sc_number,1);
-
-
-planar_orbit = [orbit_radius.*cos(time/max(time)*2*pi); orbit_radius.*sin(time/max(time)*2*pi); 0*time];
-rotmat_x = @(angle) [1, 0, 0; 0, cos(angle), -sin(angle); 0, sin(angle), cos(angle)];
-
-for sc=1:sc_number
-    sc_loc{sc} = rotmat_x((sc-1)/sc_number*pi)*planar_orbit;
-    sc_science(sc,:) = 0.0;
-    sc_priority(sc,:) = 1;
-    sc_memory(sc) = 9999;
+time_vector=(1:t_stride:T);
+sc_types = cell(1,sc_number);
+for sc =1:sc_number
+    sc_types{sc} = [1];
 end
-sc_science(1,1) = 1;
+sc_max_memory = 9999*ones(sc_number,1);
 
-spacecraft.time = time;
-spacecraft.orbits = sc_loc;
-spacecraft.science = sc_science;
-spacecraft.priority = sc_priority;
-spacecraft.memory = sc_memory;
+swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
 
-[network_flows, effective_science, delivered_science] = communication_optimizer(spacecraft);
-assert(close_enough(effective_science(1,1),1))
-assert(close_enough(sum(sum(effective_science)),1))
-assert(close_enough(network_flows(2,1,2),1))
+% Create orbits
+sc_initial_state_array = zeros(sc_number, 6);
+rotmat_x = @(angle) [1, 0, 0; 0, cos(angle), -sin(angle); 0, sin(angle), cos(angle)];
+for sc = 1:sc_number
+    sc_initial_state_array(sc, 1:3) = [orbit_radius; 0; 0];
+    sc_orbital_vel = sqrt(GM/orbit_radius);    
+    sc_initial_state_array(sc, 4:6) = rotmat_x((sc-1)/sc_number*pi)*[0; sc_orbital_vel; 0;];
+end
+swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
 
+% Science
+for sc = 1:sc_number
+    swarm.Observation.flow(sc,:) = 0.;
+    swarm.Observation.priority(sc,:) = 1.;
+end
+
+swarm.Observation.flow(1,1) = 1;
+
+[swarm] = communication_optimizer(swarm);
+
+assert(swarm.is_valid());
+assert(close_enough(swarm.Communication.effective_source_flow(1,1),1))
+assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),1))
+assert(close_enough(swarm.Communication.flow(2,1,2),1))
 
 %% Test 3: two agents produce two units of science
 T = 3;
@@ -151,120 +175,147 @@ t_stride=1;
 orbit_radius = 50000;
 sc_number = 3;
 
-spacecraft = struct();
-time = (1:t_stride:T);
-sc_loc = cell(sc_number,1);
-sc_science = zeros(sc_number,length(time));
-sc_priority = zeros(sc_number,length(time));
-sc_memory = zeros(sc_number,1);
-
-
-planar_orbit = [orbit_radius.*cos(time/max(time)*2*pi); orbit_radius.*sin(time/max(time)*2*pi); 0*time];
-rotmat_x = @(angle) [1, 0, 0; 0, cos(angle), -sin(angle); 0, sin(angle), cos(angle)];
-
-for sc=1:sc_number
-    sc_loc{sc} = rotmat_x((sc-1)/sc_number*pi)*planar_orbit;
-    sc_science(sc,:) = 0.0;
-    sc_priority(sc,:) = 1;
-    sc_memory(sc) = 9999;
+time_vector=(1:t_stride:T);
+sc_types = cell(1,sc_number);
+for sc =1:sc_number
+    sc_types{sc} = [1];
 end
-sc_science(1,1) = 1;
-sc_science(2,1) = 1;
+sc_max_memory = 9999*ones(sc_number,1);
 
-spacecraft.time = time;
-spacecraft.orbits = sc_loc;
-spacecraft.science = sc_science;
-spacecraft.priority = sc_priority;
-spacecraft.memory = sc_memory;
+swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
 
-[network_flows, effective_science, delivered_science] = communication_optimizer(spacecraft);
-assert(close_enough(effective_science(1,1),1))
-assert(close_enough(effective_science(2,1),1))
-assert(close_enough(sum(sum(effective_science)),2))
-assert(close_enough(network_flows(2,1,3),1))
-assert(close_enough(network_flows(2,2,3),1))
+% Create orbits
+sc_initial_state_array = zeros(sc_number, 6);
+rotmat_x = @(angle) [1, 0, 0; 0, cos(angle), -sin(angle); 0, sin(angle), cos(angle)];
+for sc = 1:sc_number
+    sc_initial_state_array(sc, 1:3) = [orbit_radius; 0; 0];
+    sc_orbital_vel = sqrt(GM/orbit_radius);    
+    sc_initial_state_array(sc, 4:6) = rotmat_x((sc-1)/sc_number*pi)*[0; sc_orbital_vel; 0;];
+end
+swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
+
+% Science
+for sc = 1:sc_number
+    swarm.Observation.flow(sc,:) = 0.;
+    swarm.Observation.priority(sc,:) = 1.;
+end
+swarm.Observation.flow(1,1) = 1;
+swarm.Observation.flow(2,1) = 1;
+
+[swarm] = communication_optimizer(swarm);
+
+assert(swarm.is_valid());
+assert(close_enough(swarm.Communication.effective_source_flow(1,1),1))
+assert(close_enough(swarm.Communication.effective_source_flow(2,1),1))
+assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),2))
+assert(close_enough(swarm.Communication.flow(2,1,3),1))
+assert(close_enough(swarm.Communication.flow(2,2,3),1))
 
 %% Test 4: bandwidth constraints
 T = 3;
 t_stride=1;
 sc_number = 3;
 
-spacecraft = struct();
-time = (1:t_stride:T);
-sc_loc = cell(sc_number,1);
-sc_science = zeros(sc_number,length(time));
-sc_priority = zeros(sc_number,length(time));
-sc_memory = zeros(sc_number,1);
-
-for sc=1:sc_number
-    sc_science(sc,:) = 0.0;
-    sc_priority(sc,:) = 1;
-    sc_memory(sc) = 9999;
+time_vector=(1:t_stride:T);
+sc_types = cell(1,sc_number);
+for sc =1:sc_number
+    sc_types{sc} = [1];
 end
-sc_loc{1} = [1 1;0 0; 0 0;];
-sc_loc{2} = [1 1;0 0; 0 0;];
-sc_loc{3} = [1 1;0 0; 0 0;];
+sc_max_memory = 9999*ones(sc_number,1);
+
+swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
+
+% Create orbits
+sc_initial_state_array = zeros(sc_number, 6);
+rotmat_x = @(angle) [1, 0, 0; 0, cos(angle), -sin(angle); 0, sin(angle), cos(angle)];
+for sc = 1:sc_number
+    sc_initial_state_array(sc, 1:3) = [orbit_radius; 0; 0];
+    sc_orbital_vel = sqrt(GM/orbit_radius);    
+    sc_initial_state_array(sc, 4:6) = rotmat_x((sc-1)/sc_number*pi)*[0; sc_orbital_vel; 0;];
+end
+swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
+
+% Science
+for sc = 1:sc_number
+    swarm.Observation.flow(sc,:) = 0.;
+    swarm.Observation.priority(sc,:) = 1.;
+end
 
 bandwidth_model = @(x1,x2) .5;
 
-sc_science(1,1) = 1;
-sc_science(2,1) = 1;
+swarm.Observation.flow(1,1) = 1;
+swarm.Observation.flow(2,1) = 1;
 
-spacecraft.time = time;
-spacecraft.orbits = sc_loc;
-spacecraft.science = sc_science;
-spacecraft.priority = sc_priority;
-spacecraft.memory = sc_memory;
+[swarm] = communication_optimizer(swarm,bandwidth_model);
 
-[network_flows, effective_science, delivered_science] = communication_optimizer(spacecraft, bandwidth_model);
-assert(close_enough(effective_science(1,1),.5))
-assert(close_enough(effective_science(2,1),.5))
-assert(close_enough(sum(sum(effective_science)),1))
-assert(close_enough(network_flows(2,1,3),.5))
-assert(close_enough(network_flows(2,2,3),.5))
+assert(swarm.is_valid());
+assert(close_enough(swarm.Communication.effective_source_flow(1,1),.5))
+assert(close_enough(swarm.Communication.effective_source_flow(2,1),.5))
+assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),1))
+assert(close_enough(swarm.Communication.flow(2,1,3),.5))
+assert(close_enough(swarm.Communication.flow(2,2,3),.5))
 
 %% Test 5a: priorities, priorities...part 1
 T = 4;
 t_stride=1;
 sc_number = 4;
 
-spacecraft = struct();
-time = (1:t_stride:T);
-sc_loc = cell(sc_number,1);
-sc_science = zeros(sc_number,length(time));
-sc_priority = zeros(sc_number,length(time));
-sc_memory = zeros(sc_number,1);
-
-for sc=1:sc_number
-    sc_science(sc,:) = 0.0;
-    sc_priority(sc,:) = 1;
-    sc_memory(sc) = 9999;
+time_vector=(1:t_stride:T);
+sc_types = cell(1,sc_number);
+for sc =1:sc_number
+    sc_types{sc} = [1];
 end
-sc_loc{1} = [1 1 1 1; 0 0 0 0; 0 0 0 0;];
-sc_loc{2} = [1 1 1 1; 0 0 0 0; 0 0 0 0;];
-sc_loc{3} = [0 0 0 0; 0 0 0 0; 0 0 0 0;];
-sc_loc{4} = [1 1 1 1; 0 0 0 0; 0 0 0 0;];
+sc_max_memory = 9999*ones(sc_number,1);
 
-bandwidth_model = @(x1,x2) abs(x1(1) - x2(1));
-% 1 bandwidth between 1-3 and 2-3. 1 bandwidth between 3-4. 
+swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
 
-sc_science(1,1) = 1;
-sc_science(2,1) = 1;
-sc_priority(1,1) = 1;
-sc_priority(2,1) = .9;
+% % Create orbits
+sc_initial_state_array = zeros(sc_number, 6);
 
-spacecraft.time = time;
-spacecraft.orbits = sc_loc;
-spacecraft.science = sc_science;
-spacecraft.priority = sc_priority;
-spacecraft.memory = sc_memory;
+sc_initial_state_array(1, 1:3) = [orbit_radius; 0; 0];
+sc_orbital_vel = sqrt(GM/orbit_radius);    
+sc_initial_state_array(1, 4:6) = 	[0; sc_orbital_vel; 0;];
 
-[network_flows, effective_science, delivered_science, bandwidths] = communication_optimizer(spacecraft, bandwidth_model);
-assert(close_enough(effective_science(1,1),1))
-assert(close_enough(effective_science(2,1),0))
-assert(close_enough(sum(sum(effective_science)),1))
-assert(close_enough(network_flows(2,1,3),1))
-assert(close_enough(network_flows(3,3,4),1))
+sc_initial_state_array(2, 1:3) = [-orbit_radius; 0; 0];
+sc_orbital_vel = sqrt(GM/orbit_radius);    
+sc_initial_state_array(2, 4:6) = 	[0; -sc_orbital_vel; 0;];
+
+sc_initial_state_array(3, 1:3) = [0; orbit_radius; 0];
+sc_orbital_vel = sqrt(GM/orbit_radius);    
+sc_initial_state_array(3, 4:6) = 	[sc_orbital_vel; 0; 0;];
+
+sc_initial_state_array(4, 1:3) = [0; 2*orbit_radius; 0];
+sc_orbital_vel = sqrt(GM/(2*orbit_radius));    
+sc_initial_state_array(4, 4:6) = [sc_orbital_vel; 0; 0;];
+% 1 and 2 are 2 radii apart, 1-3 and 2-3 are 1.41 radii apart, 3-4 is 1
+% radius apart, 1-4 and 2-4 are 2.23 radii apart
+
+swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
+
+% Science
+for sc = 1:sc_number
+    swarm.Observation.flow(sc,:) = 0.;
+    swarm.Observation.priority(sc,:) = 1.;
+end
+
+
+bandwidth_model = @(x1,x2) 1*(norm(x1-x2)<1.5*orbit_radius);
+% 1 bandwidth between 1-3 and 2-3. 1 bandwidth between 3-4.
+% 0 bandwidth between 1-2, 1-4, 2-4
+
+swarm.Observation.flow(1,1) = 1;
+swarm.Observation.flow(2,1) = 1;
+swarm.Observation.priority(1,1) = 1;
+swarm.Observation.priority(2,1) = .9;
+
+[swarm] = communication_optimizer(swarm,bandwidth_model);
+
+assert(swarm.is_valid());
+assert(close_enough(swarm.Communication.effective_source_flow(1,1),1))
+assert(close_enough(swarm.Communication.effective_source_flow(2,1),0))
+assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),1))
+assert(close_enough(swarm.Communication.flow(2,1,3),1))
+assert(close_enough(swarm.Communication.flow(3,3,4),1))
 % assert(network_flows(2,2,3)==.5)
 
 %% Test 5b: priorities, priorities...part 2
@@ -272,87 +323,125 @@ T = 4;
 t_stride=1;
 sc_number = 4;
 
-spacecraft = struct();
-time = (1:t_stride:T);
-sc_loc = cell(sc_number,1);
-sc_science = zeros(sc_number,length(time));
-sc_priority = zeros(sc_number,length(time));
-sc_memory = zeros(sc_number,1);
 
-for sc=1:sc_number
-    sc_science(sc,:) = 0.0;
-    sc_priority(sc,:) = 1;
-    sc_memory(sc) = 9999;
+time_vector=(1:t_stride:T);
+sc_types = cell(1,sc_number);
+for sc =1:sc_number
+    sc_types{sc} = [1];
 end
-sc_loc{1} = [1 1 1 1; 0 0 0 0; 0 0 0 0;];
-sc_loc{2} = [1 1 1 1; 0 0 0 0; 0 0 0 0;];
-sc_loc{3} = [0 0 0 0; 0 0 0 0; 0 0 0 0;];
-sc_loc{4} = [1 1 1 1; 0 0 0 0; 0 0 0 0;];
+sc_max_memory = 9999*ones(sc_number,1);
 
-bandwidth_model = @(x1,x2) abs(x1(1) - x2(1));
-% 1 bandwidth between 1-3 and 2-3. 1 bandwidth between 3-4. 
+swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
 
-sc_science(1,1) = 1;
-sc_science(2,1) = 1;
-sc_priority(1,1) = 1;
-sc_priority(2,1) = 1.9;
+% % Create orbits
+sc_initial_state_array = zeros(sc_number, 6);
 
-spacecraft.time = time;
-spacecraft.orbits = sc_loc;
-spacecraft.science = sc_science;
-spacecraft.priority = sc_priority;
-spacecraft.memory = sc_memory;
+sc_initial_state_array(1, 1:3) = [orbit_radius; 0; 0];
+sc_orbital_vel = sqrt(GM/orbit_radius);    
+sc_initial_state_array(1, 4:6) = [0; sc_orbital_vel; 0;];
 
-[network_flows, effective_science, delivered_science, bandwidths] = communication_optimizer(spacecraft, bandwidth_model);
-assert(close_enough(effective_science(1,1),0))
-assert(close_enough(effective_science(2,1),1))
-assert(close_enough(sum(sum(effective_science)),1))
-assert(close_enough(network_flows(2,2,3),1))
-assert(close_enough(network_flows(3,3,4),1))
+sc_initial_state_array(2, 1:3) = [-orbit_radius; 0; 0];
+sc_orbital_vel = sqrt(GM/orbit_radius);    
+sc_initial_state_array(2, 4:6) = [0; -sc_orbital_vel; 0;];
+
+sc_initial_state_array(3, 1:3) = [0; orbit_radius; 0];
+sc_orbital_vel = sqrt(GM/orbit_radius);    
+sc_initial_state_array(3, 4:6) = [sc_orbital_vel; 0; 0;];
+
+sc_initial_state_array(4, 1:3) = [0; 2*orbit_radius; 0];
+sc_orbital_vel = sqrt(GM/(2*orbit_radius));    
+sc_initial_state_array(4, 4:6) = [sc_orbital_vel; 0; 0;];
+% 1 and 2 are 2 radii apart, 1-3 and 2-3 are 1.41 radii apart, 3-4 is 1
+% radius apart, 1-4 and 2-4 are 2.23 radii apart
+
+swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
+
+% Science
+for sc = 1:sc_number
+    swarm.Observation.flow(sc,:) = 0.;
+    swarm.Observation.priority(sc,:) = 1.;
+end
+
+
+bandwidth_model = @(x1,x2) 1*(norm(x1-x2)<1.5*orbit_radius);
+% 1 bandwidth between 1-3 and 2-3. 1 bandwidth between 3-4.
+% 0 bandwidth between 1-2, 1-4, 2-4
+
+swarm.Observation.flow(1,1) = 1;
+swarm.Observation.flow(2,1) = 1;
+swarm.Observation.priority(1,1) = 1;
+swarm.Observation.priority(2,1) = 1.9;
+
+[swarm] = communication_optimizer(swarm,bandwidth_model);
+
+assert(swarm.is_valid());
+assert(close_enough(swarm.Communication.effective_source_flow(1,1),0))
+assert(close_enough(swarm.Communication.effective_source_flow(2,1),1))
+assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),1))
+assert(close_enough(swarm.Communication.flow(2,2,3),1))
+assert(close_enough(swarm.Communication.flow(3,3,4),1))
 % assert(network_flows(2,2,3)==.5)
 
 %% Test 6: memorize
-T = 4;
-t_stride=1;
 orbit_radius = 50000;
 sc_number = 2;
-
-spacecraft = struct();
-time = (1:t_stride:T);
-sc_loc = cell(sc_number,1);
-sc_science = zeros(sc_number,length(time));
-sc_priority = zeros(sc_number,length(time));
-sc_memory = zeros(sc_number,1);
-
-
-planar_orbit = [orbit_radius.*cos(time/max(time)*2*pi); orbit_radius.*sin(time/max(time)*2*pi); 0*time];
-rotmat_x = @(angle) [1, 0, 0; 0, cos(angle), -sin(angle); 0, sin(angle), cos(angle)];
-
-for sc=1:sc_number
-    sc_science(sc,:) = 0.0;
-    sc_priority(sc,:) = 1;
-    sc_memory(sc) = 1;
+sc_types = cell(1,sc_number);
+for sc =1:sc_number
+    sc_types{sc} = [1];
 end
-sc_loc{1} = [1 1 1 1; 0 0 0 0; 0 0 0 0;];
-sc_loc{2} = [1 1 0 1; 0 0 0 0; 0 0 0 0;];
 
-bandwidth_model = @(x1,x2) abs(x1(1) - x2(1));
+orbital_period = 2*pi*sqrt(orbit_radius^3/GM);
+T=4/8*orbital_period;
+t_stride = T/4;
+time_vector=(1:t_stride:T);
+
+assert(length(time_vector) == 4)
+
+sc_max_memory = 1*ones(sc_number,1);
+
+swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
+
+% % Create orbits
+sc_initial_state_array = zeros(sc_number, 6);
+
+sc_initial_state_array(1, 1:3) = [orbit_radius; 0; 0];
+sc_orbital_vel = sqrt(GM/orbit_radius);    
+sc_initial_state_array(1, 4:6) = [0; sc_orbital_vel; 0;];
+
+sc_initial_state_array(2, 1:3) = [-orbit_radius; 0; 0];
+sc_orbital_vel = sqrt(GM/orbit_radius);    
+sc_initial_state_array(2, 4:6) = [0; sc_orbital_vel; 0;];
+
+% Spacecraft start at opposite sides of Eros on coplanar circular orbits
+% with same h. At time 3, they pass very close to each other.
+
+swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
+
+% close all
+% figure()
+% plot3(swarm.abs_trajectory_array(:,1,1),swarm.abs_trajectory_array(:,2,1),swarm.abs_trajectory_array(:,3,1))
+% hold all
+% plot3(swarm.abs_trajectory_array(:,1,2),swarm.abs_trajectory_array(:,2,2),swarm.abs_trajectory_array(:,3,2))
+% axis equal
+
+
+% Science
+for sc = 1:sc_number
+    swarm.Observation.flow(sc,:) = 0.;
+    swarm.Observation.priority(sc,:) = 1.;
+end
+
+swarm.Observation.flow(1,1) = 1;
+
+bandwidth_model = @(x1,x2) 1*(norm(x1-x2)<1e4);
 % 1 bandwidth at time 3. 
 
-sc_science(1,1) = 1;
 
-spacecraft.time = time;
-spacecraft.orbits = sc_loc;
-spacecraft.science = sc_science;
-spacecraft.priority = sc_priority;
-spacecraft.memory = sc_memory;
+assert(swarm.is_valid());
+[swarm] = communication_optimizer(swarm,bandwidth_model);
 
-[network_flows, effective_science, delivered_science, bandwidths] = communication_optimizer(spacecraft, bandwidth_model);
-% assert(effective_science(1,1)==1)
-assert(close_enough(sum(sum(effective_science)),1))
-assert(close_enough(network_flows(3,1,2),1))
-% assert(abs(network_flows(3,3,4)-1)<assert_tol)
-% assert(network_flows(2,2,3)==.5)
+assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),1))
+assert(close_enough(swarm.Communication.flow(3,1,2),1))
 
 disp("Tests succeeded!")
 return
