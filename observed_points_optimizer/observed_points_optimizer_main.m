@@ -21,13 +21,13 @@
 function Swarm = observed_points_optimizer_main(AsteroidModel, Swarm, sc_optimized, sc_find_observable_pts)
 %OBSERVED_POINTS_OPTIMIZER  Determines which points the spacecraft will
 %observe given their orbits.
-%   Note: The third and fourth input arguments are optional. They provide 
-%   the capability for iterative use of the optmizer.  
+%   Note: The third and fourth input arguments are optional. They provide
+%   the capability for iterative use of the optmizer.
 %
 %   Syntax: Swarm = observed_points_optimizer_main(AsteroidModel, Swarm, sc_optimized, sc_find_observable_pts)
 %    *optional input
-%   
-%   Inputs: 
+%
+%   Inputs:
 %    - AsteroidModel
 %    - Swarm
 %    - *sc_optimized: (optional) specifies the subset of agents whose
@@ -38,11 +38,13 @@ function Swarm = observed_points_optimizer_main(AsteroidModel, Swarm, sc_optimiz
 %        agents in sc_optmized for which the "observable_points_map" will
 %        be computed. This should only be applied to agents whose observed
 %        points have already been calculated though a previous call to this
-%        function. 
-% 
-%   Outputs: 
+%        function.
+%
+%   Outputs:
 %    - Swarm
-
+%
+% WARNING: current logic only supports case where spacecraft only carry a
+%  single instrument
 
 if nargin<3
     sc_optimized=Swarm.which_trajectories_set(); % Optimization performed on these agents
@@ -51,13 +53,25 @@ if nargin<4
     sc_find_observable_pts=sc_optimized; % Points to calculate observable_points_map for (should be subset of sc_optimized)
 end
 
-%% Define Parameters
-bits_per_point = 8*0.4*1e9; % 0.4GB, data collected at each point
-
+%% Options
 flag_optimization_approach = 2; % 0 returns nadir point (no optimization); 1 for sequential optmization (shortcut); 2 for batch optmization (optimal)
 
-%% Setup
+% %% Bits per point for each instrument
+% bits_per_point(1) = 8*0.4*1e9; % 0.4GB, data collected at each point
 
+
+%% Get Sun Position
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                         %
+%                   TO DO: Load Sun Position Here                         %
+%                                                                         %
+sun_position = zeros(3,1); % temporary                                    %
+%                                                                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+sun_position = zeros(3,1); % temporary
+
+
+%% Setup
 sc_type = Swarm.Parameters.types; % 0 for carrier; 1 for instrument carrying spacecraft
 K = Swarm.get_num_timesteps(); % number of time samples
 N = Swarm.get_num_spacecraft(); % number of spacecraft
@@ -65,7 +79,7 @@ Nv = size(AsteroidModel.BodyModel.shape.vertices,1); % number of vertices in sha
 asteroid_vertices = AsteroidModel.BodyModel.shape.vertices; % Verticies composing surface of asteroid
 
 %% Get Set of Feasible Observation Points at Each Timestep
-observable_points = Swarm.Observation.observable_points; 
+observable_points = Swarm.Observation.observable_points;
 for i_time = 1:K
     for i_sc = sc_find_observable_pts
         if ismember(0,sc_type{i_sc})
@@ -74,7 +88,7 @@ for i_time = 1:K
             if flag_optimization_approach==0
                 observable_points{i_sc, i_time} = get_nadir_point(asteroid_vertices, Swarm.rel_trajectory_array(i_time, 1:3, i_sc ) ) ;
             else
-                observable_points{i_sc, i_time} = get_observable_points(asteroid_vertices, Swarm.rel_trajectory_array(i_time, 1:3, i_sc ) ) ;
+                observable_points{i_sc, i_time} = get_observable_points(asteroid_vertices, Swarm.rel_trajectory_array(i_time, 1:3, i_sc ), sun_position, Swarm.Parameters.types{i_sc}) ;
             end
         end
     end
@@ -93,14 +107,14 @@ end
 
 Swarm.Observation.observable_points = observable_points;
 
-%% Define Coverage Reward Map 
+%% Define Coverage Reward Map
 reward_map = cell(1,N);
 if flag_optimization_approach==0
     for i_sc = sc_optimized
         reward_map{i_sc} = ones(Nv, K);
     end
 else
-    reward_map = get_coverage_reward_map(AsteroidModel, observable_points_map, Swarm.Parameters.types ); 
+    reward_map = get_coverage_reward_map(AsteroidModel, observable_points_map, Swarm.Parameters.types );
 end
 
 %% Choose Observation Points
@@ -121,12 +135,18 @@ elseif flag_optimization_approach==1 % Sequential optimization
 else % Batch optimization
     [added_observed_points, added_priority] = swarm_points_optimizer(observable_points_map, reward_map, sc_optimized);
     for i_sc = sc_optimized
-        Swarm.Observation.observed_points(i_sc,:) = added_observed_points(i_sc,:); 
-        Swarm.Observation.priority(i_sc,:) = added_priority(i_sc,:); 
+        Swarm.Observation.observed_points(i_sc,:) = added_observed_points(i_sc,:);
+        Swarm.Observation.priority(i_sc,:) = added_priority(i_sc,:);
     end
 end
 
-%% Store Flow
-Swarm.Observation.flow = bits_per_point.*sign(Swarm.Observation.observed_points) ;
+%% Calculate Observation Flow
+delta_t = Swarm.sample_times(2)-Swarm.sample_times(1);
+for i_sc = 1:Swarm.get_num_spacecraft()
+    [~, ~, ~, data_rate] = get_instrument_constraints(Swarm.Parameters.types{i_sc});
+    bits_per_point = data_rate*delta_t;
+    
+    Swarm.Observation.flow(i_sc,:) = bits_per_point.*sign(Swarm.Observation.observed_points(i_sc,:)) ;
+end
 
 end
