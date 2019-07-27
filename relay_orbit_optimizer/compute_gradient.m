@@ -18,23 +18,24 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [dk_dic] = compute_gradient(spacecraft, dual_bandwidths_and_memory, reference_distance, reference_bandwidth, max_bandwidth)
-N=length(spacecraft.orbits);
-if N == 0
-    disp('ERROR: no orbits')
-else
-    K = size(spacecraft.orbits{1},2);
+function [dk_dic] = compute_gradient(swarm, reference_distance, reference_bandwidth, max_bandwidth)
+if ~swarm.is_valid()
+    error("Swarm is not valid")
 end
+
+N=swarm.get_num_spacecraft();
+K = swarm.get_num_timesteps;
 % Derivative of goal function wrt bandwidth
-dk_dbandwidth = reshape(dual_bandwidths_and_memory,1,K*N*N);
+
+dk_dbandwidth = reshape(swarm.Communication.dual_bandwidths_and_memories,1,K*N*N);
 
 % Derivative of bandwidth wrt spacecraft location
 dbandwidth_dlocation_full = zeros(K,N,N,K,N,3);
 for k=1:K
     for i=1:N
         for j=1:N
-            x1 = spacecraft.orbits{i}(:,k);
-            x2 = spacecraft.orbits{j}(:,k);
+            x1 = swarm.abs_trajectory_array(k,1:3,i);
+            x2 = swarm.abs_trajectory_array(k,1:3,j);
             % Derivatives wrt all three directions are the same
             dbandwidth_dlocation_full(k,i,j,k,i,:) = diff_quadratic_comm_model_x1(x1, x2, reference_distance,reference_bandwidth,max_bandwidth);
             dbandwidth_dlocation_full(k,i,j,k,j,:) = diff_quadratic_comm_model_x2(x1, x2, reference_distance,reference_bandwidth,max_bandwidth);
@@ -46,10 +47,10 @@ dbandwidth_dlocation = reshape(dbandwidth_dlocation_full,[K*N*N,K*N*3]);
 
 % Derivative of sc location wrt initial conditions
 dlocation_dic_full = zeros(K,N,3,N,6);
-for sc = 1:length(spacecraft.state_transition_matrix)
+for sc = 1:N
     for t = 1:K
         for new_state = 1:1:3
-            dlocation_dic_full(t,sc,new_state,sc,:) = spacecraft.state_transition_matrix{sc}(new_state, :, t);
+            dlocation_dic_full(t,sc,new_state,sc,:) = swarm.state_transition_matrix(new_state, :, t, sc);
         end
     end
 end

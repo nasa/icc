@@ -84,8 +84,10 @@ for t = 1:n_timesteps
     end
 end
 
-flows_to_carrier = swarm.Communication.flow(:,:,4);
-delivered_science = sum(flows_to_carrier,2);
+flows_to_carrier = swarm.Communication.flow(:,:,end);
+flows_from_carrier = squeeze(swarm.Communication.flow(:,end,:));
+delivered_science = zeros(n_timesteps,1);
+delivered_science(2:end) = sum(flows_to_carrier(1:end-1,:),2)-sum(flows_from_carrier(2:end,:),2)+swarm.Communication.effective_source_flow(end,1:end-1)';
 
 
 max_bandwidth = max(max(max(tmp_bandwidths)));
@@ -167,6 +169,10 @@ for time = 1:n_timesteps
         
         for sc2 = 1:n_spacecraft
             link_color_index = ceil(bandwidth_duals(time,sc1,sc2)/(max_bandwidth_duals-min_bandwidth_duals)*(link_color_steps-1)+1);
+            if isnan(link_color_index) || link_color_index<1
+                warning("Problem is not communication-limited at all: all bandwidth duals are zero");
+                link_color_index = 1;
+            end
             % Plot the bandwidths
 %             lh = plot3([spacecraft.orbits{sc1}(1,time),spacecraft.orbits{sc2}(1,time)], ...
 %                 [spacecraft.orbits{sc1}(2,time),spacecraft.orbits{sc2}(2,time)], ...
@@ -177,6 +183,7 @@ for time = 1:n_timesteps
                 'Color','k', ...
                 'linewidth', (swarm.Communication.bandwidths_and_memories(time,sc1,sc2))/max_bandwidth*max_line_thickness+min_line_thickness);
             lh.Color = [link_colors(link_color_index,:),.3];
+            
             % Plot the actual info flow
             if swarm.Communication.flow(time,sc1,sc2)>0
                 plot3([abs_trajectory_array(time, 1, sc1), abs_trajectory_array(time, 1, sc2)], ...

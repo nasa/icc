@@ -26,63 +26,68 @@
 
 clear all; close all; clc;
 
+% Load things
 addpath(genpath('../utilities/'))
-initialize_SBDT()
+addpath(genpath('../small_body_dynamics/'))
+addpath(genpath('../network_flow_communication_optimizer/'))
+addpath(genpath('../relay_orbit_optimizer/'))
+addpath('../')
+constants = initialize_SBDT();
 
-% % a: between 40 and 100;
-% % e: between 0 and 0.5
-% % i: between -pi/2 and pi/2
-% % Omega: between -pi and pi
-% % omega: between -pi and pi
-% % theta: between -pi and pi
-% ub = [10, 0.5, pi/2, pi, pi, pi];
-% lb = [4, 0, -pi/2, -pi, -pi, -pi];
-% x0 = [50000, 0, 0, 0, 0, 0];
+eros_sbdt = loadEros( constants, 1, 1, 3, 3 );
+ErosGravity = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt);
+GM = eros_sbdt.gravity.gm * 1e9;  % Convert to m from km
 
-ub = [];
-lb = [];
+% Create a swarm object
+n_spacecraft = 4;
+time_bounds = [0:300:86400];
+sc_types = cell(n_spacecraft,1);
+max_memory = ones(n_spacecraft,1)*1e10; %1TB
 
-relay_parameters = [55*1e3,0,0.001,0,0,0];
-GM = 4.462754720040000e+05;
-[sc_location,sc_vel]=op2rv(...
-relay_parameters(1),relay_parameters(2),relay_parameters(3),...
-relay_parameters(4),relay_parameters(5),relay_parameters(6),...
-GM);
-relay_initial_condition = [sc_location; sc_vel];
+swarm = SpacecraftSwarm(time_bounds, sc_types, max_memory);
 
-% options = optimset('Display','iter');
-options = optimoptions('fmincon','SpecifyObjectiveGradient',true, 'Display', 'Iter');
-A = [];
-b = [];
-Aeq = [];
-beq = [];
+% Orbits
+sc_initial_state_array = zeros(n_spacecraft,6);
+% SC 1
+sc_location = [30*1e3;0;0];
+sc_orbital_vel = sqrt(GM/norm(sc_location));
+sc_vel = [0; sc_orbital_vel*sqrt(2)/2; sc_orbital_vel*sqrt(2)/2];
+sc_initial_state_array(1,:) = [sc_location; sc_vel];
+% SC 2
+sc_location = [30*1e3;0;0];
+sc_orbital_vel = sqrt(GM/norm(sc_location));
+sc_vel = [0; sc_orbital_vel; 0];
+sc_initial_state_array(2,:) = [sc_location; sc_vel];
+% Relay
+sc_location = [50*1e3;0;0];
+sc_orbital_vel = sqrt(GM/norm(sc_location));
+sc_vel = [0; sc_orbital_vel; 0];
+sc_initial_state_array(3,:) = [sc_location; sc_vel];
+% Carrier
+sc_location = [100*1e3;0;0];
+sc_orbital_vel = sqrt(GM/norm(sc_location));
+sc_vel = [0; sc_orbital_vel; 0];
+sc_initial_state_array(4,:) = [sc_location; sc_vel];
+% Integrate
+swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
 
-% Create an instance of the problem, so we only compute the fixed orbits
-% once
-[goal, spacecraft, gravity_model, ctime, GM] = comm_optimization_problem(relay_initial_condition, [0 : 300 : 86400], 0);
+% Science parameters
+swarm.Observation.flow = zeros(n_spacecraft,length(time_bounds));
+swarm.Observation.flow(1:2,:) = 1e9; %1Gb/time step
+swarm.Observation.priority = zeros(n_spacecraft,length(time_bounds));
+swarm.Observation.priority(1:2,:) = 1;
 
-% Scaling may or may not help
-location_scaling_factor = 1e-4;
-relay_initial_condition(1:3) = relay_initial_condition(1:3) * location_scaling_factor;
+% Bandwidth params
+bandwidth_parameters.reference_bandwidth = 250000;
+bandwidth_parameters.reference_distance = 100000;
+bandwidth_parameters.max_bandwidth = 100*1e6;
 
-% One test call to the cost function
-[goal] = relay_optimization_cost_function(spacecraft,relay_initial_condition, gravity_model,ctime,GM, location_scaling_factor);
-if isnan(goal)
-    error('ERROR: initial location is infeasible. fmincon will crash.')
-end
+% Try optimizing comms right now for sanity - maybe with wrong comms model
+[swarm] = communication_optimizer(swarm);
+% plot_communications(swarm, ErosGravity,true)
 
-% Proper cost function
-fun = @(params) relay_optimization_cost_function(spacecraft, params, gravity_model, ctime, GM, location_scaling_factor);
-% Nonlinear constraint
-max_distance = 120000;
-min_distance = 25000;
-nonlcon = @(params) communication_constraints(spacecraft,params, gravity_model,ctime,GM, max_distance, min_distance, location_scaling_factor);
+relay_orbit_indices = [3, 4];
 
-% Optimize!
-[x,fval,exitflag,output] = fmincon(fun,relay_initial_condition,A,b,Aeq,beq,lb,ub,nonlcon,options)
+[swarm] = relay_optimization(swarm, ErosGravity, bandwidth_parameters, relay_orbit_indices);
 
-% Rescale the inputs.
-x(1:3) = x(1:3) / location_scaling_factor;
-
-% Plot
-[goal] = comm_optimization_problem(x,[0 : 300 : 86400], true);
+plot_communications(swarm, ErosGravity,true)

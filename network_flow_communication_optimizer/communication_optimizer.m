@@ -26,19 +26,21 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [swarm] = communication_optimizer(swarm, bandwidth_model)
+function [swarm, goal] = communication_optimizer(swarm, bandwidth_model, data_scaling_factor)
 
 % How to best get data from a number of science spacecraft to a carrier
 % s/c, given a network bandwidth model. Solves the problem as a
 % single-commodity flow, leveraging CVX.
 % Syntax:
-%  [flows, effective_science, delivered_science, bandwidths, dual_bandwidth, dual_memory] = communication_optimizer(swarm, bandwidth_model)
+%  [flows, effective_science, delivered_science, bandwidths, dual_bandwidth, dual_memory] = communication_optimizer(swarm, bandwidth_model,data_scaling_factor)
 % Inputs:
 % * swarm is the object defined in swarm.m
 % * bandwidth_model is a function. bandwidth_model takes in a pair of
 % locations x1, x2 and returns a bandwidth (in bits) between the
 % spacecraft. If the bandwidth is not specified, a quadratic model
 % providing 250 kbps at 100 km is used.
+% * data_scaling_factor is a factor by which the data flows are scaled
+% internally. Useful to ensure the problem is well-conditioned.
 % Outputs:
 % * flows, a matrix of size K by N by N.
 %   flows(k,i,j) contains the data flow from s/c i to s/c j at time k.
@@ -46,6 +48,9 @@ function [swarm] = communication_optimizer(swarm, bandwidth_model)
 % * delivered_science
 % * bandwidths
 
+if nargin<3
+    data_scaling_factor = 1;
+end
 if nargin<2
     bandwidth_model = @(x1,x2) min(250000 * (100000/norm(x2-x1,2))^2, 100*1e6); 
 end
@@ -71,6 +76,11 @@ for k=1:K-1
         end
     end
 end
+
+% Scale the prblem
+bandwidths_and_memories = bandwidths_and_memories/data_scaling_factor;
+observation_flows = swarm.Observation.flow/data_scaling_factor;
+
 
 % Pose the problem
 cvx_begin quiet
@@ -120,17 +130,21 @@ cvx_begin quiet
     end
     
     % Don't do more science than is available
-    effective_science<=swarm.Observation.flow;
+    effective_science<=observation_flows;
     
 cvx_end
 
-swarm.Communication.flow = flows;
-swarm.Communication.effective_source_flow = effective_science;
-swarm.Communication.bandwidths_and_memories = bandwidths_and_memories;
-swarm.Communication.dual_bandwidths_and_memories = dual_bandwidth_and_memory;
-% swarm.Communication.delivered_science = delivered_science;
+swarm.Communication.flow = flows*data_scaling_factor;
+swarm.Communication.effective_source_flow = effective_science*data_scaling_factor;
+swarm.Communication.bandwidths_and_memories = bandwidths_and_memories*data_scaling_factor;
+swarm.Communication.dual_bandwidths_and_memories = dual_bandwidth_and_memory/data_scaling_factor;
 
-flows_to_carrier = flows(:,:,4);
-delivered_science_recovered = sum(flows_to_carrier,2);
+goal = sum(sum(swarm.Observation.priority.*swarm.Communication.effective_source_flow));
 
-assert(norm(delivered_science_recovered(1:end-1)-delivered_science(2:end))<1e-3)
+% Blueprint for recovering science_delivered. 
+flows_to_carrier = flows(:,:,end);
+flows_from_carrier = squeeze(flows(:,end,:));
+delivered_science_recovered = zeros(K,1);
+delivered_science_recovered(2:end) = sum(flows_to_carrier(1:end-1,:),2)-sum(flows_from_carrier(2:end,:),2)+effective_science(end,1:end-1)';
+
+assert(norm(delivered_science_recovered-delivered_science)<1e-3)
