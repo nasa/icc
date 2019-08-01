@@ -54,22 +54,10 @@ if nargin<4
 end
 
 %% Options
-flag_optimization_approach = 2; % 0 returns nadir point (no optimization); 1 for sequential optmization (shortcut); 2 for batch optmization (optimal)
-
-% %% Bits per point for each instrument
-% bits_per_point(1) = 8*0.4*1e9; % 0.4GB, data collected at each point
-
+flag_optimization_approach = 1; % 0 returns nadir point and unit reward (no optimization); 1 for batch optmization (optimal)
 
 %% Get Sun Position
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                         %
-%                   TO DO: Load Sun Position Here                         %
-%                                                                         %
-sun_position = zeros(3,1); % temporary                                    %
-%                                                                         %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-sun_position = zeros(3,1); % temporary
-
+sun_state_array = get_sun_state(Swarm.sample_times); % 
 
 %% Setup
 sc_type = Swarm.Parameters.types; % 0 for carrier; 1 for instrument carrying spacecraft
@@ -88,7 +76,7 @@ for i_time = 1:K
             if flag_optimization_approach==0
                 observable_points{i_sc, i_time} = get_nadir_point(asteroid_vertices, Swarm.rel_trajectory_array(i_time, 1:3, i_sc ) ) ;
             else
-                observable_points{i_sc, i_time} = get_observable_points(asteroid_vertices, Swarm.rel_trajectory_array(i_time, 1:3, i_sc ), sun_position, Swarm.Parameters.types{i_sc}) ;
+                observable_points{i_sc, i_time} = get_observable_points(asteroid_vertices, Swarm.rel_trajectory_array(i_time, 1:3, i_sc ), sun_state_array(1:3,i_time), Swarm.Parameters.types{i_sc}) ;
             end
         end
     end
@@ -118,19 +106,13 @@ else
 end
 
 %% Choose Observation Points
-if flag_optimization_approach==0
+if flag_optimization_approach==0 
     % Store observable points in observed points
     for i_sc = sc_optimized
         for i_time = 1:K
             Swarm.Observation.observed_points(i_sc,i_time) = observable_points{i_sc, i_time}(1);
-            Swarm.Observation.priority(i_sc, i_time) = reward_map(observable_points{i_sc, i_time}(1), i_time);
+            Swarm.Observation.priority(i_sc, i_time) = reward_map{i_sc}(observable_points{i_sc, i_time}(1), i_time);
         end
-    end
-elseif flag_optimization_approach==1 % Sequential optimization
-    for i_sc = sc_optimized
-        % Each agent optmizes its observation points individually, without
-        % consideration of the decisions of other agents
-        [Swarm.Observation.observed_points(i_sc,:), Swarm.Observation.priority(i_sc,:)] = single_agent_points_optimizer(observable_points_map{i_sc}, reward_map);
     end
 else % Batch optimization
     [added_observed_points, added_priority] = swarm_points_optimizer(observable_points_map, reward_map, sc_optimized);
