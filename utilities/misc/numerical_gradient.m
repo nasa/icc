@@ -12,12 +12,14 @@ if length(increment)==1
     increment = increment*ones(size(linearization_point));
 end
 gradient = zeros(size(linearization_point));
-for entry = 1:length(linearization_point)
+parfor entry = 1:length(linearization_point)
     fprintf("%d/%d: ", entry, length(linearization_point));
     perturbation = zeros(size(linearization_point));
     perturbation(entry) = increment(entry);
-    gradient(entry) = (fun_handle(linearization_point+perturbation) - fun_handle(linearization_point-perturbation))/(2*increment(entry));
-    fprintf("g %d \n", gradient(entry));
-    disp(perturbation)
-    disp(linearization_point+perturbation)
+    try
+       gradient(entry) = (fun_handle(linearization_point+perturbation) - fun_handle(linearization_point-perturbation))/(2*increment(entry));
+    catch
+       gradient(entry)= NaN;
+       warning("No gradient could be computed at point "+ sprintf(" %d", linearization_point+perturbation))
+    end
 end
