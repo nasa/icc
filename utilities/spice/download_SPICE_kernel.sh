@@ -16,14 +16,14 @@ mkdir -p $NAIF_PATH/naif/generic_kernels/spk/asteroids/
 mv a433.bsp $NAIF_PATH/naif/generic_kernels/spk/asteroids/
 
 echo "Downloading leap seconds kernel"
-mkdir -p naif/generic_kernels/lsk/
-wget -q --show-progress ftp://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/naif0012.tls -P $NAIF_PATH/naif/generic_kernels/lsk/
+mkdir -p "${NAIF_PATH}/naif/generic_kernels/lsk/"
+wget -q --show-progress ftp://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/naif0012.tls -P "${NAIF_PATH}/naif/generic_kernels/lsk/"
 
 echo "Downloading generic constants kernel"
-mkdir -p naif/generic_kernels/pck/
-wget -q --show-progress ftp://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00010.tpc -P $NAIF_PATH/naif/generic_kernels/pck/
-wget -q --show-progress ftp://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/gm_de431.tpc -P $NAIF_PATH/naif/generic_kernels/pck/
+mkdir -p "${NAIF_PATH}/naif/generic_kernels/pck/"
+wget -q --show-progress ftp://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00010.tpc -P "${NAIF_PATH}/naif/generic_kernels/pck/"
+wget -q --show-progress ftp://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/gm_de431.tpc -P "${NAIF_PATH}/naif/generic_kernels/pck/"
 
 echo "Downloading planets kernel"
-mkdir -p naif/generic_kernels/spk/planets/
-wget -q --show-progress ftp://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de435.bsp -P $NAIF_PATH/naif/generic_kernels/spk/planets/
+mkdir -p "${NAIF_PATH}/naif/generic_kernels/spk/planets/"
+wget -q --show-progress ftp://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de435.bsp -P "${NAIF_PATH}/naif/generic_kernels/spk/planets/"

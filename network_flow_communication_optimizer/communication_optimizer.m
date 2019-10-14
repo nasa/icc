@@ -62,21 +62,29 @@ N = swarm.get_num_spacecraft();
 max_memory = sum(sum(swarm.Observation.flow));
 
 % Compute bandwidths
-bandwidths_and_memories = zeros(K,N,N);
-for k=1:K-1
-    for i=1:N
-        for j=1:N
-            if j~=i
-                bandwidths_and_memories(k,i,j) = bandwidth_model(swarm.abs_trajectory_array(k,1:3,i), swarm.abs_trajectory_array(k,1:3,j))* (swarm.sample_times(k+1)-swarm.sample_times(k));
-            elseif ~isnan(swarm.Parameters.available_memory(i)) && ~isinf(swarm.Parameters.available_memory(i))
-                bandwidths_and_memories(k,i,j) = swarm.Parameters.available_memory(i);
-            else
-                bandwidths_and_memories(k,i,j) = max_memory;
+if isa(bandwidth_model,'function_handle')
+    bandwidths_and_memories = zeros(K,N,N);
+    for k=1:K-1
+        for i=1:N
+            for j=1:N
+                if j~=i
+                    bandwidths_and_memories(k,i,j) = bandwidth_model(swarm.abs_trajectory_array(k,1:3,i), swarm.abs_trajectory_array(k,1:3,j))* (swarm.sample_times(k+1)-swarm.sample_times(k));
+                elseif ~isnan(swarm.Parameters.available_memory(i)) && ~isinf(swarm.Parameters.available_memory(i))
+                    bandwidths_and_memories(k,i,j) = swarm.Parameters.available_memory(i);
+                else
+                    bandwidths_and_memories(k,i,j) = max_memory;
+                end
             end
         end
     end
+elseif isa(bandwidth_model,'double')
+    bandwidths_and_memories = bandwidth_model;
+    assert(size(bandwidths_and_memories,1)==K)
+    assert(size(bandwidths_and_memories,2)==N)
+    assert(size(bandwidths_and_memories,3)==N)
+else
+    error("Bandwidth model type not recognized (should be function handle or double)")
 end
-
 % Scale the prblem
 bandwidths_and_memories = bandwidths_and_memories/data_scaling_factor;
 observation_flows = swarm.Observation.flow/data_scaling_factor;
@@ -137,7 +145,7 @@ cvx_end
 swarm.Communication.flow = flows*data_scaling_factor;
 swarm.Communication.effective_source_flow = effective_science*data_scaling_factor;
 swarm.Communication.bandwidths_and_memories = bandwidths_and_memories*data_scaling_factor;
-swarm.Communication.dual_bandwidths_and_memories = dual_bandwidth_and_memory/data_scaling_factor;
+swarm.Communication.dual_bandwidths_and_memories = dual_bandwidth_and_memory;  % Effective_flow is reduced by data_scaling_factor, but so is the cost.
 
 goal = sum(sum(swarm.Observation.priority.*swarm.Communication.effective_source_flow));
 

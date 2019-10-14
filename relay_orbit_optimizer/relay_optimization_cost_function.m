@@ -71,7 +71,7 @@ end
 
 bandwidth_model = @(x1,x2) min(bandwidth_parameters.reference_bandwidth * (bandwidth_parameters.reference_distance/norm(x2-x1,2))^2, bandwidth_parameters.max_bandwidth*1e6); 
 
-data_scaling_factor = 1;
+data_scaling_factor = 1e6;
 [swarm, goal] = communication_optimizer(swarm, bandwidth_model,data_scaling_factor);
 
 

@@ -25,16 +25,22 @@ classdef SphericalHarmonicsGravityIntegrator_SBDT
     
     properties
         BodyModel
+        constants
     end
     
     methods
-        function obj = SphericalHarmonicsGravityIntegrator_SBDT(BodyModel)
-            % Constructor. Takes one input, BodyModel, a model of the 
-            % asteroid in SBDT format.
+        function obj = SphericalHarmonicsGravityIntegrator_SBDT(BodyModel, constants)
+            % Constructor. Takes two inputs:
+            %  BodyModel, a model of the asteroid in SBDT format.
+            %  constants, SBDT constants
+            if nargin<2
+                constants = initialize_SBDT(); 
+            end
             if nargin<1
                 BodyModel = loadEros( constants, 1, 1, 4, 3 );
             end
             obj.BodyModel = BodyModel;
+            obj.constants = constants;
         end
         
         function [time, absolute_traj,relative_traj, mode, state_transition_matrix] = integrate(obj,time_horizon,start_state,mode)
@@ -101,12 +107,11 @@ classdef SphericalHarmonicsGravityIntegrator_SBDT
             % - state_transition_matrix, the state transition matrix (see
             %    Scheeres)
             
-            global constants
-            sun = loadSun(constants, 1, 1, 1, 1);
+            sun = loadSun(obj.constants, 1, 1, 1, 1);
             simControls = [];
             partials.names = {'x'};
             [ time, absolute_traj, partials, ~, ~ ] = ...
-                Inertial2BP_wPartials( time_horizon, start_state/1e3, [], constants, ...
+                Inertial2BP_wPartials( time_horizon, start_state/1e3, [], obj.constants, ...
                            {sun;obj.BodyModel}, [], partials, simControls );
             absolute_traj = absolute_traj'*1e3;
             state_transition_matrix = partials.dxf_dp{1};
@@ -135,12 +140,11 @@ classdef SphericalHarmonicsGravityIntegrator_SBDT
             start_state_relative(1:3) = (Rot_i2b*(start_state_absolute(1:3)));
             start_state_relative(4:6) = (Rot_i2b*(start_state_absolute(4:6) - cross(omega,start_state_absolute(1:3))));
             
-            global constants
-            sun = loadSun(constants, 1, 1, 1, 1);
+            sun = loadSun(obj.constants, 1, 1, 1, 1);
             simControls = [];
             partials.names = {'x'};
             [ time, relative_traj, partials, ~, ~ ] = ...
-                Rot2BP_wPartials( time_horizon, start_state_relative, [], constants, ...
+                Rot2BP_wPartials( time_horizon, start_state_relative, [], obj.constants, ...
                                    {sun;obj.BodyModel}, [], partials, simControls );
             relative_traj = relative_traj'*1e3;
             state_transition_matrix = partials.dxf_dp{1};
