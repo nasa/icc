@@ -55,3 +55,6 @@ codegen/
 
 # Octave session info
 octave-workspace
+
+# MATLAB data files
+*.mat
