@@ -16,7 +16,8 @@ function [h] = render_spacecraft_3d(varargin)
 n_inputs = max(size(varargin));
 sc_position_array = varargin{1}; % Convert to [km] for plotting 
 n_spacecraft = size(sc_position_array,3);
-
+markersize = 6; 
+linewidth = 1; 
 colorSpecified = false;
 showTrail = true;
 if n_inputs > 1
@@ -28,7 +29,12 @@ if n_inputs > 1
         if strcmpi(varargin{i},'show_trail') || strcmpi(varargin{i},'showTrail')
             showTrail = varargin{i+1};
         end
-
+        if strcmpi(varargin{i},'markersize') || strcmpi(varargin{i},'marker_size')
+            markersize = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'linewidth') || strcmpi(varargin{i},'line_width')
+            linewidth = varargin{i+1};
+        end
     end
 end
 
@@ -39,13 +45,13 @@ end
 %% Plot
 hold on 
 for i_sc = 1:n_spacecraft
-    h(i_sc) = plot3( sc_position_array(end, 1, i_sc), sc_position_array(end, 2, i_sc), sc_position_array(end, 3, i_sc),...
+    h(2*i_sc+2) = plot3( sc_position_array(end, 1, i_sc), sc_position_array(end, 2, i_sc), sc_position_array(end, 3, i_sc),...
         'o','MarkerFaceColor',color_array(mod(i_sc-1,length(color_array))+1), ...
-        'MarkerEdgeColor',color_array(mod(i_sc-1,length(color_array))+1),'MarkerSize',6);
+        'MarkerEdgeColor',color_array(mod(i_sc-1,length(color_array))+1),'MarkerSize',markersize);
     
     if showTrail == true % shows the entire orbital path
         h(2*i_sc+1) = plot3( sc_position_array(:, 1, i_sc), sc_position_array(:, 2, i_sc), sc_position_array(:, 3, i_sc),...
-            '-','Color',color_array(mod(i_sc-1,length(color_array))+1),'linewidth',1.5);
+            '-','Color',color_array(mod(i_sc-1,length(color_array))+1),'linewidth',linewidth);
     end
 end
 
