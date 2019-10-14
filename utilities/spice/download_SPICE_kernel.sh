@@ -20,7 +20,7 @@ mkdir -p "${NAIF_PATH}/naif/generic_kernels/lsk/"
 wget -q --show-progress ftp://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/naif0012.tls -P "${NAIF_PATH}/naif/generic_kernels/lsk/"
 
 echo "Downloading generic constants kernel"
-mkdir -p "${NAIF_PATH}/naif/generic_kernels/pck/"a
+mkdir -p "${NAIF_PATH}/naif/generic_kernels/pck/"
 wget -q --show-progress ftp://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00010.tpc -P "${NAIF_PATH}/naif/generic_kernels/pck/"
 wget -q --show-progress ftp://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/gm_de431.tpc -P "${NAIF_PATH}/naif/generic_kernels/pck/"
 
