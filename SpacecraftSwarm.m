@@ -2,7 +2,7 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
     %SWARMTRAJECTORY Stores and manipulates swarm data
     
     %% Properties
-    properties(SetAccess=public, GetAccess=public)
+    properties(SetAccess=private, GetAccess=public)
         % Trajectory arrays must be set through set methods. 
         % Parameters and sample_times cannot be altered
         % EDITED by Federico for debugging. Please restore
