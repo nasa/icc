@@ -11,10 +11,13 @@ assert(length(increment)==1 || all(size(linearization_point) == size(increment))
 if length(increment)==1
     increment = increment*ones(size(linearization_point));
 end
-gradient = zeros(size(linearization_point));
+
+gradient = zeros(length(linearization_point),1);
+
 parfor entry = 1:length(linearization_point)
     fprintf("%d/%d: ", entry, length(linearization_point));
-    perturbation = zeros(size(linearization_point));
+    % We perturb along one direction only.
+    perturbation = zeros(length(linearization_point),1);
     perturbation(entry) = increment(entry);
     try
        gradient(entry) = (fun_handle(linearization_point+perturbation) - fun_handle(linearization_point-perturbation))/(2*increment(entry));
