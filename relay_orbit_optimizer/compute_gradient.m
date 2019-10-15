@@ -36,10 +36,15 @@ for k=1:K
         for j=1:N
             x1 = swarm.abs_trajectory_array(k,1:3,i);
             x2 = swarm.abs_trajectory_array(k,1:3,j);
+            if k<K
+                temp_time_step = swarm.sample_times(k+1)-swarm.sample_times(k);
+            else
+                temp_time_step = swarm.sample_times(k)-swarm.sample_times(k-1);
+            end
             % Derivatives wrt all three directions are vectorized
             for dir=1:3
-                dbandwidth_dlocation_full(k,i,j,k,i,dir) = diff_quadratic_comm_model_x1(x1, x2, dir, reference_distance,reference_bandwidth,max_bandwidth);
-                dbandwidth_dlocation_full(k,i,j,k,j,dir) = diff_quadratic_comm_model_x2(x1, x2, dir, reference_distance,reference_bandwidth,max_bandwidth);
+                dbandwidth_dlocation_full(k,i,j,k,i,dir) = diff_quadratic_comm_model_x1(x1, x2, dir, reference_distance,reference_bandwidth,max_bandwidth)*temp_time_step;
+                dbandwidth_dlocation_full(k,i,j,k,j,dir) = diff_quadratic_comm_model_x2(x1, x2, dir, reference_distance,reference_bandwidth,max_bandwidth)*temp_time_step;
             end
         end
     end
@@ -57,11 +62,15 @@ for sc = 1:N
     end
 end
 
-dlocation_dic = reshape(dlocation_dic_full,[K*N*3,6,N]);
+dlocation_dic_mat = reshape(dlocation_dic_full,[K*N*3,N,6]);
+dlocation_dic = cell(N,1);
+for sc=1:N
+    dlocation_dic{sc} = reshape(dlocation_dic_mat(:,sc,:),[K*N*3,6]);
+end
 
 dk_dic = cell(N,1);
 for sc = 1:N
-    dk_dic{sc} = dk_dbandwidth*dbandwidth_dlocation*dlocation_dic(:,:,sc);
+    dk_dic{sc} = dk_dbandwidth*dbandwidth_dlocation*dlocation_dic{sc};
 end
 end
 

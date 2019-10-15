@@ -26,7 +26,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [goal, gradient] = relay_optimization_cost_function(swarm,relay_orbit_index, sc_initial_condition_vector, initial_condition_scaling_factor, gravity_model, bandwidth_parameters)
+function [goal, gradient, dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dlocation_dic] = relay_optimization_cost_function(swarm,relay_orbit_index, sc_initial_condition_vector, initial_condition_scaling_factor, gravity_model, bandwidth_parameters)
 % Cost function for GBO.
 % Inputs
 % - Swarm, a structure describing the current state of the system
@@ -76,7 +76,7 @@ data_scaling_factor = 1e6;
 
 
 if nargout>1  % compute gradient
-    dgoal_dic = compute_gradient(swarm, bandwidth_parameters.reference_distance, bandwidth_parameters.reference_bandwidth, bandwidth_parameters.max_bandwidth);
+    [dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dlocation_dic] = compute_gradient(swarm, bandwidth_parameters.reference_distance, bandwidth_parameters.reference_bandwidth, bandwidth_parameters.max_bandwidth);
     gradient = zeros(size(sc_initial_condition_vector));
     for relay_sc = 1:length(relay_orbit_index)
         offset = 6*(relay_sc-1);
