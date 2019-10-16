@@ -113,6 +113,13 @@ classdef SphericalHarmonicsGravityIntegrator_SBDT
             [ time, absolute_traj, partials, ~, ~ ] = ...
                 Inertial2BP_wPartials( time_horizon, start_state/1e3, [], obj.constants, ...
                            {sun;obj.BodyModel}, [], partials, simControls );
+            if length(time_horizon)>2
+                if length(time_horizon)~=length(time)
+                    warning("WARNING: Rot2BP_wPartials does not honor time")
+                    warning("Requested time: %d to %d. Integrated time: %d to %d",time_horizon(1), time_horizon(end), time(1), time(end));
+                end
+%                 assert(length(time_horizon)==length(time), "ERROR: Rot2BP_wPartials does not honor time")
+            end
             absolute_traj = absolute_traj'*1e3;
             state_transition_matrix = partials.dxf_dp{1};
 
@@ -146,6 +153,9 @@ classdef SphericalHarmonicsGravityIntegrator_SBDT
             [ time, relative_traj, partials, ~, ~ ] = ...
                 Rot2BP_wPartials( time_horizon, start_state_relative, [], obj.constants, ...
                                    {sun;obj.BodyModel}, [], partials, simControls );
+            if length(time_horizon)>2
+                assert(length(time_horizon)==length(time), "ERROR: Rot2BP_wPartials does not honor time")
+            end
             relative_traj = relative_traj'*1e3;
             state_transition_matrix = partials.dxf_dp{1};
         end

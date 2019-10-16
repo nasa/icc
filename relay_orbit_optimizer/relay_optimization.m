@@ -41,8 +41,7 @@ initialize_SBDT();
 % Empty inputs to the optimizer
 ub = [];
 lb = [];
-options = optimoptions('fmincon',...
-    'SpecifyObjectiveGradient',true,...
+options = optimoptions('fmincon',... %     'SpecifyObjectiveGradient',true,...
     'Display', 'Iter',...
     'CheckGradients', true, ...
     'UseParallel', true, ...
@@ -74,14 +73,15 @@ fun = @(params) relay_optimization_cost_function(swarm, relay_orbit_indices, par
 
 % Try calling the "proper cost function"
 [goal, gradient] = fun(relay_initial_condition);
-num_gradient = numerical_gradient(fun, relay_initial_condition, 1e-4);
+% num_gradient = numerical_gradient(fun, relay_initial_condition, 1e-4);
 
 
 % Nonlinear constraint
 max_distance = 120000;
 min_distance = 25000;
 % nonlcon = @(params) communication_constraints(spacecraft,params, gravity_model,ctime,GM, max_distance, min_distance, optvar_scaling_factor);
-nonlcon = [];
+nonlcon = @(params) communication_constraints(swarm,relay_orbit_indices, params, optvar_scaling_factor, gravity_model, max_distance, min_distance);
+% nonlcon = [];
 
 
 % Optimize!
