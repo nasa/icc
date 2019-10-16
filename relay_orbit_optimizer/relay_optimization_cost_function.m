@@ -66,7 +66,14 @@ end
 
 for relay_sc = 1:length(relay_orbit_index)
     i_sc = relay_orbit_index(relay_sc);
-    swarm.integrate_trajectory(i_sc, gravity_model, sc_initial_condition(:, relay_sc)', 'absolute');
+    try
+        swarm.integrate_trajectory(i_sc, gravity_model, sc_initial_condition(:, relay_sc)', 'absolute');
+    catch
+        warning("ERROR: something went wrong with integrating the trajectory. Inspect the warnings above.")
+        goal = inf;
+        gradient = nan;
+        return
+    end
 end
 
 bandwidth_model = @(x1,x2) min(bandwidth_parameters.reference_bandwidth * (bandwidth_parameters.reference_distance/norm(x2-x1,2))^2, bandwidth_parameters.max_bandwidth*1e6); 
