@@ -58,3 +58,8 @@ octave-workspace
 
 # MATLAB data files
 *.mat
+
+# SPICE folder and downloader
+/utilities/spice/naif
+/utilities/spice/smb_spk*
+
