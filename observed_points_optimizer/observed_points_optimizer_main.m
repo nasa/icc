@@ -131,6 +131,8 @@ else % Batch optimization
             Swarm.Observation.observed_points(i_sc,:) = added_observed_points(i_sc,:);
             Swarm.Observation.priority(i_sc,:) = added_priority(i_sc,:);
         end
+    else
+        disp('Skipping intlinprog!')
     end
 end
 
