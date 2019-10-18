@@ -10,8 +10,7 @@ SBDT_PATH =  strcat(ROOT_PATH, '/../SBDT') ;
 
 % Store location of NAIF as global
 global NAIF_PATH
-% NAIF_PATH =  strcat(ROOT_PATH, '/utilities/spice') ; 
-NAIF_PATH = strcat('/Users/bandyopa/JPL Work/Amir JP ICC 2018/NAIF_PATH');
+NAIF_PATH =  strcat(ROOT_PATH, '/utilities/spice') ; 
 
 % Add MICE to path 
 addpath(genpath(strcat(ROOT_PATH, '/../mice/'))); 
