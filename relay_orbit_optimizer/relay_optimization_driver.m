@@ -40,7 +40,7 @@ GM = eros_sbdt.gravity.gm * 1e9;  % Convert to m from km
 
 % Create a swarm object
 n_spacecraft = 4;
-time_bounds = [0:300:86400];
+time_bounds = [0:300:86400*2];
 sc_types = cell(n_spacecraft,1);
 max_memory = ones(n_spacecraft,1)*1e10; %1TB
 
@@ -49,12 +49,12 @@ swarm = SpacecraftSwarm(time_bounds, sc_types, max_memory);
 % Orbits
 sc_initial_state_array = zeros(n_spacecraft,6);
 % SC 1
-sc_location = [30*1e3;0;0];
+sc_location = [25*1e3;0;0];
 sc_orbital_vel = sqrt(GM/norm(sc_location));
 sc_vel = [0; sc_orbital_vel*sqrt(2)/2; sc_orbital_vel*sqrt(2)/2];
 sc_initial_state_array(1,:) = [sc_location; sc_vel];
 % SC 2
-sc_location = [30*1e3;0;0];
+sc_location = [25*1e3;0;0];
 sc_orbital_vel = sqrt(GM/norm(sc_location));
 sc_vel = [0; sc_orbital_vel; 0];
 sc_initial_state_array(2,:) = [sc_location; sc_vel];
@@ -82,12 +82,17 @@ bandwidth_parameters.reference_bandwidth = 250000;
 bandwidth_parameters.reference_distance = 100000;
 bandwidth_parameters.max_bandwidth = 100*1e6;
 
-% Try optimizing comms right now for sanity - maybe with wrong comms model
+% Try optimizing comms right now for sanity
 [swarm] = communication_optimizer(swarm);
 % plot_communications(swarm, ErosGravity,true)
 
 relay_orbit_indices = [3, 4];
 
+% Call the optimizer
+disp("Optimizing")
 [swarm] = relay_optimization(swarm, ErosGravity, bandwidth_parameters, relay_orbit_indices);
 
+% Plot the result
 plot_communications(swarm, ErosGravity,true)
+
+save(strcat('relay_optimization_', datestr(datetime,"yyyymmdd_HHMMSS")))

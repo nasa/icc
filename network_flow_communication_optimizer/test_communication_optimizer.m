@@ -33,7 +33,7 @@ function [] = test_communication_optimizer()
 % Asserts if any tests fail.
 
 % Add base path with SpacecraftSwarm definition
-addpath(("../"));
+addpath(genpath("../"));
 % Add SBDT
 addpath(genpath("../utilities/"));
 constants = initialize_SBDT();

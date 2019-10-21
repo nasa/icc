@@ -23,7 +23,7 @@ function [constants] = initialize_SBDT()
 %   If it isn't, defaults to a directory on Federico's computer.
 global SBDT_PATH
 if isempty(SBDT_PATH)
-    SBDT_PATH = '/Users/frossi/Documents/JPL/ICC/SBDT';
+    SBDT_PATH = '/home/frossi/Documents/JPL/ICC/SBDT';
 end
 
 addpath(strcat(SBDT_PATH,'/Startup'));
