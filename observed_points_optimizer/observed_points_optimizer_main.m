@@ -57,7 +57,7 @@ end
 flag_optimization_approach = 1; % 0 returns nadir point and unit reward (no optimization); 1 for batch optmization (optimal)
 
 %% Get Sun Position
-sun_state_array = get_sun_state(Swarm.sample_times); % 
+sun_state_array = get_sun_state(Swarm.sample_times); %
 
 %% Setup
 sc_type = Swarm.Parameters.types; % 0 for carrier; 1 for instrument carrying spacecraft
@@ -106,7 +106,7 @@ else
 end
 
 %% Choose Observation Points
-if flag_optimization_approach==0 
+if flag_optimization_approach==0
     % Store observable points in observed points
     for i_sc = sc_optimized
         for i_time = 1:K
@@ -115,10 +115,25 @@ if flag_optimization_approach==0
         end
     end
 else % Batch optimization
-    [added_observed_points, added_priority] = swarm_points_optimizer(observable_points_map, reward_map, sc_optimized);
+   
+    % Extract list of observed vertices:
+    observable_vertices = [];
     for i_sc = sc_optimized
-        Swarm.Observation.observed_points(i_sc,:) = added_observed_points(i_sc,:);
-        Swarm.Observation.priority(i_sc,:) = added_priority(i_sc,:);
+        for k = 1:K
+            observable_vertices = unique([observable_vertices; find(observable_points_map{i_sc}(:,k)==1)]);
+        end
+    end
+    n_observed_vertices = length(observable_vertices);
+    
+    if n_observed_vertices > 0   % to avoid calling the intlinprog when n_observed_vertices == 0
+        [added_observed_points, added_priority] = swarm_points_optimizer(observable_points_map, reward_map, sc_optimized);
+        for i_sc = sc_optimized
+            Swarm.Observation.observed_points(i_sc,:) = added_observed_points(i_sc,:);
+            Swarm.Observation.priority(i_sc,:) = added_priority(i_sc,:);
+        end
+    else
+        disp('Skipping intlinprog!')
+
     end
 end
 
