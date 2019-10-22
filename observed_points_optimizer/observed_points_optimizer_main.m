@@ -115,7 +115,7 @@ if flag_optimization_approach==0
         end
     end
 else % Batch optimization
-    
+   
     % Extract list of observed vertices:
     observable_vertices = [];
     for i_sc = sc_optimized
@@ -133,6 +133,7 @@ else % Batch optimization
         end
     else
         disp('Skipping intlinprog!')
+
     end
 end
 

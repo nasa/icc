@@ -22,6 +22,7 @@ function Swarm = monte_carlo_coverage_optimizer_main(AsteroidModel, Swarm, n_tri
 %MONTE_CARLO_COVERAGE_OPTIMIZER  Generates a set of random orbits, and
 %assigns one of these orbits to each instrument carrying spacecraft in the
 %swarm. (does not set carrier orbit)
+
 %   The orbits are chosen sequentially (one spacecraft after another)
 %   such that the overall coverage reward is maximized on each iteration.
 %
@@ -43,6 +44,7 @@ trial_swarm = cell(1,n_trial_orbits); % cell array of Swarm copies
 trial_initial_states = initialize_random_orbits(n_trial_orbits, AsteroidModel); % set of orbit ICs that we will choose from
 best_orbits_set = []; % indices of best orbits from trial_initial_states
 iter = 0;
+
 max_iter = sum((n_trial_orbits-N+1):n_trial_orbits);
 h = waitbar(iter/max_iter,'Finding orbits...');
 
@@ -55,6 +57,7 @@ for i_sc = setdiff(1:N, Swarm.get_indicies_of_type(0))
         if (trial_swarm{i_orbit}.get_coverage_reward() > best_reward) || (reset_reward==true) % keep track of the best trial swarm
             reset_reward = false;
             best_reward = trial_swarm{i_orbit}.get_coverage_reward();
+
             best_swarm = trial_swarm{i_orbit}.copy();
             best_orbit = i_orbit;
         end

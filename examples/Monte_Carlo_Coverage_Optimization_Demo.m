@@ -55,6 +55,7 @@ total_t = 1*24*60*60; % [s]; 1/2 day, total time of simulation
 time_vector = 0:delta_t:total_t; % sample times
 
 n_trial_orbits = 10 ;
+
 sc_max_memory = 8*20*1e9.*ones(1,n_spacecraft-1); % 20 GB max memory for instrument spacecraft
 sc_max_memory(1,n_spacecraft) = 8*10000*1e9; % Memory limit for carrier spacecraft
 
