@@ -5,8 +5,6 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
     properties(SetAccess=private, GetAccess=public)
         % Trajectory arrays must be set through set methods. 
         % Parameters and sample_times cannot be altered
-        % EDITED by Federico for debugging. Please restore
-        % SetAccess=private in prod
         
         abs_trajectory_array % [N_TIMESTEPS x 6 x N_SPACECRAFT] Array containing the trajectory of the spacecraft in absolute frame
         rel_trajectory_array % [N_TIMESTEPS x 6 x N_SPACECRAFT] Array containing the trajectory of the spacecraft in relative frame
