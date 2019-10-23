@@ -16,7 +16,7 @@
 % export  licenses,  or  other  export  authority  as may be required  before %
 % exporting  such  information  to  foreign  countries or providing access to %
 % foreign persons.                                                            %
-%                                                                             %
+%                                                                             %cd
 % This  software  is a copy  and  may not be current.  The latest  version is %
 % maintained by and may be obtained from the Mobility  and  Robotics  Sytstem %
 % Section (347) at the Jet  Propulsion  Laboratory.   Suggestions and patches %
@@ -48,32 +48,38 @@ swarm = SpacecraftSwarm(time_bounds, sc_types, max_memory);
 
 % Orbits
 sc_initial_state_array = zeros(n_spacecraft,6);
+spacecraft_no = 1;
 % SC 1
 sc_location = [25*1e3;0;0];
 sc_orbital_vel = sqrt(GM/norm(sc_location));
 sc_vel = [0; sc_orbital_vel*sqrt(2)/2; sc_orbital_vel*sqrt(2)/2];
-sc_initial_state_array(1,:) = [sc_location; sc_vel];
-% SC 2
+sc_initial_state_array(spacecraft_no,:) = [sc_location; sc_vel];
+spacecraft_no = spacecraft_no+1;
+SC 2
 sc_location = [25*1e3;0;0];
 sc_orbital_vel = sqrt(GM/norm(sc_location));
 sc_vel = [0; sc_orbital_vel; 0];
-sc_initial_state_array(2,:) = [sc_location; sc_vel];
+sc_initial_state_array(spacecraft_no,:) = [sc_location; sc_vel];
+spacecraft_no = spacecraft_no+1;
+
 % Relay
 sc_location = [50*1e3;0;0];
 sc_orbital_vel = sqrt(GM/norm(sc_location));
 sc_vel = [0; sc_orbital_vel; 0];
-sc_initial_state_array(3,:) = [sc_location; sc_vel];
+sc_initial_state_array(spacecraft_no,:) = [sc_location; sc_vel];
+spacecraft_no = spacecraft_no+1;
+
 % Carrier
 sc_location = [100*1e3;0;0];
 sc_orbital_vel = sqrt(GM/norm(sc_location));
 sc_vel = [0; sc_orbital_vel; 0];
-sc_initial_state_array(4,:) = [sc_location; sc_vel];
+sc_initial_state_array(spacecraft_no,:) = [sc_location; sc_vel];
 % Integrate
 swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
 
 % Science parameters
 swarm.Observation.flow = zeros(n_spacecraft,length(time_bounds));
-swarm.Observation.flow(1:2,:) = 1e9; %1Gb/time step
+swarm.Observation.flow(1,:) = 1e9; %1Gb/time step
 swarm.Observation.priority = zeros(n_spacecraft,length(time_bounds));
 swarm.Observation.priority(1:2,:) = 1;
 
@@ -86,11 +92,13 @@ bandwidth_parameters.max_bandwidth = 100*1e6;
 [swarm] = communication_optimizer(swarm);
 % plot_communications(swarm, ErosGravity,true)
 
-relay_orbit_indices = [3, 4];
+relay_orbit_indices = [2];
+
+max_optimization_time = 1800;
 
 % Call the optimizer
 disp("Optimizing")
-[swarm] = relay_optimization(swarm, ErosGravity, bandwidth_parameters, relay_orbit_indices);
+[swarm] = relay_optimization(swarm, ErosGravity, bandwidth_parameters, relay_orbit_indices, max_optimization_time);
 
 % Plot the result
 plot_communications(swarm, ErosGravity,true)

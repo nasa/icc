@@ -24,7 +24,26 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [swarm] = relay_optimization(swarm, gravity_model, bandwidth_parameters, relay_orbit_indices)
+function [swarm] = relay_optimization(swarm, gravity_model, bandwidth_parameters, relay_orbit_indices, max_optimization_time)
+% Optimizes relay orbits by using a gradient-based trust region algorithm.
+% Syntax: [swarm] = relay_optimization(swarm, gravity_model, bandwidth_parameters, relay_orbit_indices. max_optimization_time)
+% Inputs:
+%  - swarm, a SpacecraftSwarm object
+%  - gravity_model, a GravityField object as used by SpacecraftSwarm
+%  - bandwidth_parameters, a struct with three parameters:
+%    - reference_bandwidth, the bandwidth at a given reference distance
+%    - reference_distance, the reference distanc3e
+%    - max_bandwidth, the maximum available bandwidth at close range
+%     The model assumes a quadratic bandwidth model
+%  - relay_orbit_indices, a list of indices identifying what orbits should
+%     be optimized. 
+%  - max_optimization_time, the maximum time allocated to fmincon.
+% Output:
+%  - swarm, a SpacecraftSwarm object with updated orbits.
+
+if nargin<4
+    max_optimization_time = inf;
+end
 
 if nargin<3
     relay_orbit_indices = [3];
@@ -77,15 +96,21 @@ fun = @(params) relay_optimization_cost_function(swarm, relay_orbit_indices, par
 
 
 % Nonlinear constraint
+% TODO de-hardcode
 max_distance = 120000;
 min_distance = 25000;
 % nonlcon = @(params) communication_constraints(spacecraft,params, gravity_model,ctime,GM, max_distance, min_distance, optvar_scaling_factor);
 nonlcon = @(params) communication_constraints(swarm,relay_orbit_indices, params, optvar_scaling_factor, gravity_model, max_distance, min_distance);
 % nonlcon = [];
 
+% Stop function - to enforce stop after a given amount of time
+start_time=tic;
+stop_fun = @(x,optimValues,state) stop_function(x,optimValues,state, start_time, max_optimization_time);
+options.OutputFcn = stop_fun;
 
 % Optimize!
 [x,fval,exitflag,output] = fmincon(fun,relay_initial_condition,A,b,Aeq,beq,lb,ub,nonlcon,options);
+
 
 % Add the inputs to the swarm
 for relay_sc =1:length(relay_orbit_indices)
@@ -94,4 +119,13 @@ for relay_sc =1:length(relay_orbit_indices)
     relay_initial_condition = (x(1+offset:6+offset)./optvar_scaling_factor)';
     swarm.integrate_trajectory(relay_orbit_indices(relay_sc), gravity_model, relay_initial_condition, 'absolute');
 end
+end
 
+function [stop] = stop_function(x,optimValues,state, start_time, max_time)
+    time_elapsed = toc(start_time);
+    if time_elapsed>max_time
+        stop=1;
+    else
+        stop=0;
+    end
+end

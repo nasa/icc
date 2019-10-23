@@ -2,7 +2,9 @@
 Contains MATLAB simulation and optimization code for spacecraft orbiting small Solar System Bodies.
 ___
 ## Quickstart
-The examples folder contains example _main_ scripts, which demonstrate usage of the provided modules. The scripts should be executed from within this folder. 
+The examples folder contains example _main_ scripts, which demonstrate usage of the provided modules. The scripts should be executed from within this folder.
+
+Make sure to set the environment variable `SBDT_PATH` to the path to the SBDT folder. On UNIX systems, add the line `export SBDT_PATH="path/to/your/SBDT"` to `~/.bashrc` or equivalent.
 ___
 ## Modules 
 ### small_body_dynamics
