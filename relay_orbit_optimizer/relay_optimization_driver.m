@@ -55,7 +55,7 @@ sc_orbital_vel = sqrt(GM/norm(sc_location));
 sc_vel = [0; sc_orbital_vel*sqrt(2)/2; sc_orbital_vel*sqrt(2)/2];
 sc_initial_state_array(spacecraft_no,:) = [sc_location; sc_vel];
 spacecraft_no = spacecraft_no+1;
-SC 2
+% SC 2
 sc_location = [25*1e3;0;0];
 sc_orbital_vel = sqrt(GM/norm(sc_location));
 sc_vel = [0; sc_orbital_vel; 0];
@@ -94,7 +94,7 @@ bandwidth_parameters.max_bandwidth = 100*1e6;
 
 relay_orbit_indices = [2];
 
-max_optimization_time = 1800;
+max_optimization_time = 150;
 
 % Call the optimizer
 disp("Optimizing")
