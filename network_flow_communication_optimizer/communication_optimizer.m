@@ -130,7 +130,7 @@ swarm.Communication.bandwidths_and_memories = bandwidths_and_memories;
 swarm.Communication.dual_bandwidths_and_memories = dual_bandwidth_and_memory;
 % swarm.Communication.delivered_science = delivered_science;
 
-flows_to_carrier = flows(:,:,4);
-delivered_science_recovered = sum(flows_to_carrier,2);
-
-assert(norm(delivered_science_recovered(1:end-1)-delivered_science(2:end))<1e-3)
+% % Blueprint to recover the amount of science delivered. 
+% flows_to_carrier = flows(:,:,4);
+% delivered_science_recovered = sum(flows_to_carrier,2);
+% assert(norm(delivered_science_recovered(1:end-1)-delivered_science(2:end))<1e-3)
