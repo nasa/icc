@@ -42,6 +42,7 @@ ___
 
 ## Dependencies
 - [CVX](http://cvxr.com/cvx/). The academic version with the Mosek solver is highly recommended.
+> **WARNING**: The communication optimization problem is known to falsely return infeasible with the SDPT3 solver. please use Mosek (if available) or SeDuMi.
 - JPL's [Small Body Dynamics Toolkit (SBDT)](https://engineering.purdue.edu/people/kathleen.howell.1/Publications/Conferences/2015_AAS_SBDT.pdf). SBDT is not open-source. A license can be requested from [download.jpl.nasa.gov](download.jpl.nasa.gov) mentioning NTR-49005. 
 - NASA's [SPICE](https://naif.jpl.nasa.gov/naif/aboutspice.html) MATLAB toolkit (MICE), available at [this link](https://naif.jpl.nasa.gov/naif/toolkit_MATLAB.html).
 

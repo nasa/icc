@@ -157,10 +157,10 @@ for time = 1:n_timesteps
             % If the sc is the carrier, also count the science we delivered
             curr_memory = curr_memory+sum(delivered_science(1:time));
             ssymbol = 's';
-            ssize = curr_memory/max_delivered*max_memory_marker_size +1;
+            ssize = curr_memory/(max_delivered+eps)*max_memory_marker_size +1;
         else
             ssymbol = '.';
-            ssize = curr_memory/max_memory*max_memory_marker_size +1;
+            ssize = curr_memory/(max_memory+eps)*max_memory_marker_size +1;
         end
         % plot3(spacecraft.orbits{sc1}(1,time),spacecraft.orbits{sc1}(2,time),spacecraft.orbits{sc1}(3,time), ...
         plot3(abs_trajectory_array(time, 1, sc1), abs_trajectory_array(time, 2, sc1), abs_trajectory_array(time, 3, sc1), ...
@@ -181,7 +181,7 @@ for time = 1:n_timesteps
                 [abs_trajectory_array(time, 2, sc1), abs_trajectory_array(time, 2, sc2)], ...
                 [abs_trajectory_array(time, 3, sc1), abs_trajectory_array(time, 3, sc2)], ...
                 'Color','k', ...
-                'linewidth', (swarm.Communication.bandwidths_and_memories(time,sc1,sc2))/max_bandwidth*max_line_thickness+min_line_thickness);
+                'linewidth', (swarm.Communication.bandwidths_and_memories(time,sc1,sc2))/(max_bandwidth+eps)*max_line_thickness+min_line_thickness);
             lh.Color = [link_colors(link_color_index,:),.3];
             
             % Plot the actual info flow
@@ -191,7 +191,7 @@ for time = 1:n_timesteps
                     [abs_trajectory_array(time, 3, sc1), abs_trajectory_array(time, 3, sc2)], ...
                     ':', ...
                     'Color', link_colors(link_color_index,:), ...
-                    'linewidth', (swarm.Communication.flow(time,sc1,sc2))/max_bandwidth*max_line_thickness+min_line_thickness);
+                    'linewidth', (swarm.Communication.flow(time,sc1,sc2))/(max_bandwidth+eps)*max_line_thickness+min_line_thickness);
                 hold all;
             end
             
