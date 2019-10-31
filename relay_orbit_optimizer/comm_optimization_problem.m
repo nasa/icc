@@ -26,7 +26,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Create four orbits - two science, one relay, one carrier. Optimize comms.
-function [goal, spacecraft, ErosGravity, time_bounds, GM, dgoal_dic] = comm_optimization_problem(relay_initial_condition,time_bounds,plot_flag)
+function [goal, swarm, ErosGravity, GM, dgoal_dic] = comm_optimization_problem(relay_initial_condition,time_bounds,plot_flag)
 if nargin<3
     plot_flag = false;
 end
@@ -46,109 +46,73 @@ addpath(genpath('../small_body_dynamics'))
 addpath('../network_flow_communication_optimizer')
 addpath('../relay_orbit_optimizer')
 addpath(genpath('../utilities'))
+addpath('../')
 
-global SBDT_PATH
-if isempty(SBDT_PATH)
-    fprintf("ERROR: specify SBDT path as a global variable. Returning...\n")
-    return
-end
-userModelsPath = strcat(SBDT_PATH,'/ExampleUserModels');
-constantsModel = 1;
-addpath(strcat(SBDT_PATH,'/Startup'));
 global constants
-constants = addSBDT(SBDT_PATH, userModelsPath, constantsModel);
+constants = initialize_SBDT();
 
 eros_sbdt = loadEros( constants, 1, 1, 3, 3 );
 ErosGravity = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt);
 GM = eros_sbdt.gravity.gm * 1e9;  % Convert to m from km
 
 % Initialize a base case
+
+n_spacecraft = 4;
+sc_types = cell(n_spacecraft,1);
+% max_memory = inf(n_spacecraft,1);
+max_memory = ones(n_spacecraft,1)*1e10; %1TB
+max_memory(end) = 0; % Force to store delivered science right away
+
+swarm = SpacecraftSwarm(time_bounds, sc_types, max_memory);
+
+sc_initial_state_array = zeros(n_spacecraft,6);
+% SC 1
 sc_location = [30*1e3;0;0];
-sc_radius = norm(sc_location);
-sc_orbital_vel = sqrt(GM/sc_radius);
+sc_orbital_vel = sqrt(GM/norm(sc_location));
 sc_vel = [0; sc_orbital_vel*sqrt(2)/2; sc_orbital_vel*sqrt(2)/2];
-sc_state = [sc_location; sc_vel];
-% [time_sc1,abs_traj_sc1,rel_traj_sc1] = ErosGravity.integrate(time_bounds,sc_state);
-[time_sc1,abs_traj_sc1,state_transition_matrix_sc1] = ErosGravity.integrate_absolute(time_bounds,sc_state);
-
+sc_initial_state_array(1,:) = [sc_location; sc_vel];
+% SC 2
 sc_location = [30*1e3;0;0];
-sc_radius = norm(sc_location);
-sc_orbital_vel = sqrt(GM/sc_radius);
+sc_orbital_vel = sqrt(GM/norm(sc_location));
 sc_vel = [0; sc_orbital_vel; 0];
-sc_state = [sc_location; sc_vel];
-% [time_sc2,abs_traj_sc2,rel_traj_sc2] = ErosGravity.integrate(time_bounds,sc_state);
-[time_sc2,abs_traj_sc2,state_transition_matrix_sc2] = ErosGravity.integrate_absolute(time_bounds,sc_state);
-
-sc_state = relay_initial_condition;
-% [time_re,abs_traj_re,rel_traj_re] = ErosGravity.integrate(time_bounds,sc_state);
-[time_re,abs_traj_re,state_transition_matrix_re] = ErosGravity.integrate_absolute(time_bounds,sc_state);
-
-
+sc_initial_state_array(2,:) = [sc_location; sc_vel];
+% Relay
+sc_initial_state_array(3,:) = relay_initial_condition;
+% Carrier
 sc_location = [100*1e3;0;0];
-sc_radius = norm(sc_location);
-sc_orbital_vel = sqrt(GM/sc_radius);
+sc_orbital_vel = sqrt(GM/norm(sc_location));
 sc_vel = [0; sc_orbital_vel; 0];
-sc_state = [sc_location; sc_vel];
+sc_initial_state_array(4,:) = [sc_location; sc_vel];
 
-% [time_ca,abs_traj_ca,rel_traj_ca] = ErosGravity.integrate(time_bounds,sc_state);
-[time_ca,abs_traj_ca,state_transition_matrix_ca] = ErosGravity.integrate_absolute(time_bounds,sc_state);
 
+swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
 
 % Plot
 
 if plot_flag
     AbsoluteTrajPlot= figure();
-%     RelativeTrajPlot=figure();
-    ErosGravity.plot_absolute_traj(time_bounds,abs_traj_sc1, false, AbsoluteTrajPlot)
-    ErosGravity.plot_absolute_traj(time_bounds,abs_traj_sc2, false, AbsoluteTrajPlot)
-    ErosGravity.plot_absolute_traj(time_bounds,abs_traj_re, false, AbsoluteTrajPlot)
-    ErosGravity.plot_absolute_traj(time_bounds,abs_traj_ca, false, AbsoluteTrajPlot)
+    RelativeTrajPlot=figure();
+    
+    ErosGravity.plot_absolute_traj(swarm.sample_times,swarm.abs_trajectory_array(:,:,1), false, AbsoluteTrajPlot)
+    ErosGravity.plot_absolute_traj(time_bounds,swarm.abs_trajectory_array(:,:,2), false, AbsoluteTrajPlot)
+    ErosGravity.plot_absolute_traj(time_bounds,swarm.abs_trajectory_array(:,:,3), false, AbsoluteTrajPlot)
+    ErosGravity.plot_absolute_traj(time_bounds,swarm.abs_trajectory_array(:,:,4), false, AbsoluteTrajPlot)
 
-%     ErosGravity.plot_relative_traj(time_bounds,rel_traj_sc1, 1, RelativeTrajPlot)
-%     ErosGravity.plot_relative_traj(time_bounds,rel_traj_sc2, 1, RelativeTrajPlot)
-%     ErosGravity.plot_relative_traj(time_bounds,rel_traj_re, 1, RelativeTrajPlot)
-%     ErosGravity.plot_relative_traj(time_bounds,rel_traj_ca, 1, RelativeTrajPlot)
+    ErosGravity.plot_relative_traj(swarm.sample_times,swarm.rel_trajectory_array(:,:,1), false, RelativeTrajPlot)
+    ErosGravity.plot_relative_traj(time_bounds,swarm.rel_trajectory_array(:,:,2), false, RelativeTrajPlot)
+    ErosGravity.plot_relative_traj(time_bounds,swarm.rel_trajectory_array(:,:,3), false, RelativeTrajPlot)
+    ErosGravity.plot_relative_traj(time_bounds,swarm.rel_trajectory_array(:,:,4), false, RelativeTrajPlot)
+
 end
 
 %% Comm optimization
-% Inputs:
-% * spacecraft, a struct with four fields.
-% - time is a vector of length K. It contains the time at which the s/c
-% orbits are sampled.
-% - locations is a list of N vectors of length K.
-% orbits{i} is the vector of locations of spacecraft i.
-% orbits{i}(:, k) is the location of s/c i at time time(k).
-% - science is a matrix of size N-by-K.
-% science(i,k) is the amount of science (in bits) produced by
-% s/c k at time i.
-% - priority is a matrix of size N-by-K.
-% priority(i,k) is the value of one bit of science produced by
-% s/c k at time i.
 
-spacecraft = struct();
-spacecraft.time = time_bounds;
-spacecraft.orbits = cell(4,1);
-spacecraft.orbits{1} = abs_traj_sc1(:,1:3)';
-spacecraft.orbits{2} = abs_traj_sc2(:,1:3)';
-spacecraft.orbits{3} = abs_traj_re(:,1:3)';
-spacecraft.orbits{4} = abs_traj_ca(:,1:3)';
-% State transition matrix is not used by communication optimizer - but this
-% is a good place to store it
-spacecraft.state_transition_matrix{1} = state_transition_matrix_sc1;
-spacecraft.state_transition_matrix{2} = state_transition_matrix_sc2;
-spacecraft.state_transition_matrix{3} = state_transition_matrix_re;
-spacecraft.state_transition_matrix{4} = state_transition_matrix_ca;
-%
-spacecraft.velocities{1} = abs_traj_sc1(:,4:6)';
-spacecraft.velocities{2} = abs_traj_sc2(:,4:6)';
-spacecraft.velocities{3} = abs_traj_re(:,4:6)';
-spacecraft.velocities{4} = abs_traj_ca(:,4:6)';
-spacecraft.science = zeros(4,length(time_bounds));
-spacecraft.science(1:2,:) = 1e9; %1Gb/time step
-spacecraft.priority = zeros(4,length(time_bounds));
-spacecraft.priority(1:2,:) = 1;
-spacecraft.memory = ones(4,1)*1e10; %1TB
-spacecraft.memory(end) = 0; % Force to store delivered science right away
+swarm.Observation.flow = zeros(n_spacecraft,length(time_bounds));
+swarm.Observation.flow(1:2,:) = 1e9; %1Gb/time step
+
+swarm.Observation.priority = zeros(n_spacecraft,length(time_bounds));
+swarm.Observation.priority(1:2,:) = 1;
+
 record_video = plot_flag;
 videoname = ['comm_optimization_problem_',datestr(now,'yyyymmdd_HHMMSS'),'.avi'];
 
@@ -159,19 +123,22 @@ max_bandwidth = 100*1e6;
 bandwidth_model = @(x1, x2) quadratic_comm_model(x1, x2, reference_distance,reference_bandwidth,max_bandwidth);
 %bandwidth_model = @(x1,x2) min(reference_bandwidth * (reference_distance/norm(x2-x1,2))^2, max_bandwidth)
 
-[flows, effective_science, delivered_science, bandwidths, dual_bandwidths_and_memory] = communication_optimizer(spacecraft, bandwidth_model);
+% [flows, effective_science, delivered_science, bandwidths, dual_bandwidths_and_memory] = communication_optimizer(spacecraft, bandwidth_model);
 
-goal = sum(delivered_science);
+[swarm] = communication_optimizer(swarm, bandwidth_model);
+
+goal = sum(sum(swarm.Observation.priority.*swarm.Communication.effective_source_flow));
+
+% goal = sum(swarm.Communication.delivered_science);
 %goal2 = sum(sum(effective_science))
-fraction_of_possible = goal/sum(sum(spacecraft.science));
+fraction_of_possible = goal/sum(sum(swarm.Observation.priority.*swarm.Observation.flow));
 
 %% Compute gradient wrt initial conditions
-dgoal_dic = compute_gradient(spacecraft, dual_bandwidths_and_memory, reference_distance, reference_bandwidth, max_bandwidth);
-
+dgoal_dic = compute_gradient(swarm, reference_distance, reference_bandwidth, max_bandwidth);
 
 %% Plotting
 if plot_flag
-    plot_communications(spacecraft, flows, effective_science, delivered_science, bandwidths, dual_bandwidths_and_memory, ErosGravity,record_video, videoname )
+    plot_communications(swarm, ErosGravity,record_video, videoname )
 end
 
 end

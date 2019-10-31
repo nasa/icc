@@ -7,9 +7,11 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
         % Parameters and sample_times cannot be altered
         
         abs_trajectory_array % [N_TIMESTEPS x 6 x N_SPACECRAFT] Array containing the trajectory of the spacecraft in absolute frame
-        rel_trajectory_array % [N_TIMESTEPS x 6 x N_SPACECRAFT] Array containing the trajectory of the spacecraft in absolute frame
+        rel_trajectory_array % [N_TIMESTEPS x 6 x N_SPACECRAFT] Array containing the trajectory of the spacecraft in relative frame
         sample_times % [s] Sample times for the trajectory, observation, and communication flow
         Parameters % Fixed properties of spacecraft
+        state_transition_matrix % [6 x 6 x N_TIMESTEPS x N_SPACECRAFT] Array containing the state transition matrix of the spacecraft
+        state_transition_matrix_frame % {N_SPACECRAFT} Cell array containing the frame in which the STM was computed
         
     end
     
@@ -33,6 +35,8 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             obj.abs_trajectory_array = zeros(K, 6, N); % Spacecraft trajectories in absolute frame
             obj.rel_trajectory_array = zeros(K, 6, N); % Spacecraft trajectories in relative frame
             obj.sample_times = time_vector; % [s]; Sample times: all time dependent variables in sync with this
+            obj.state_transition_matrix = zeros(6,6,K,N); % Array containing the state transition matrix of the spacecraft
+            obj.state_transition_matrix_frame = cell(N,1);
             
             obj.Parameters.available_memory = sc_max_memory; % [bits]; [1 x N] vector of the memory capacity of each spacecraft
             obj.Parameters.types = sc_types; % [1 x N] cell containing the list of instruments (indices) carried by each spacecraft
@@ -57,15 +61,12 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
         
         %%%%%%%%%%%%%%%%%% Integrate all trajectories %%%%%%%%%%%%%%%%%%%%%
         function obj = integrate_trajectories(obj,ErosGravity, sc_initial_state_array, abs_or_rel)
-            obj.all_trajectories_set = true;
-            obj.unset_trajectories = []; 
             if nargin<4
                 abs_or_rel = 'absolute'; % which frame to conduct the integration in
             end
             for i_sc = 1:size(sc_initial_state_array,1)
-                [~, abs_traj, rel_traj] = ErosGravity.integrate(obj.sample_times, transpose(sc_initial_state_array(i_sc, :)), abs_or_rel );
-                obj.abs_trajectory_array(:,:,i_sc) = abs_traj;
-                obj.rel_trajectory_array(:,:,i_sc) = rel_traj;
+                sc_initial_state = sc_initial_state_array(i_sc,:);
+                obj.integrate_trajectory(i_sc, ErosGravity, sc_initial_state, abs_or_rel);
             end
         end
         
@@ -79,9 +80,15 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             if nargin<5
                 abs_or_rel = 'absolute'; % which frame to conduct the integration in
             end
-            [~, abs_traj, rel_traj] = ErosGravity.integrate(obj.sample_times, transpose(sc_initial_state), abs_or_rel );
+            [~, abs_traj, rel_traj, mode, stm] = ErosGravity.integrate(obj.sample_times, transpose(sc_initial_state), abs_or_rel );
             obj.abs_trajectory_array(:,:,i_sc) = abs_traj;
             obj.rel_trajectory_array(:,:,i_sc) = rel_traj;
+            obj.state_transition_matrix(:,:,:,i_sc) = stm;
+            obj.state_transition_matrix_frame{i_sc} = mode;
+            obj.unset_trajectories(obj.unset_trajectories==i_sc)=[]; % remove this trajectory from
+            if isempty(obj.unset_trajectories())
+                obj.all_trajectories_set = true;
+            end
         end
         
         %% Get Methods
@@ -146,7 +153,7 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             N = obj.get_num_spacecraft(); 
             K = obj.get_num_timesteps(); 
             
-            if length(fieldnames(obj))~=6
+            if length(fieldnames(obj))~=8
                 warning('Extra fields added to object!')
                 valid = false; 
             elseif length(obj.Parameters.available_memory)~=obj.get_num_spacecraft()
