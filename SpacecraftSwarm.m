@@ -75,7 +75,8 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             if isempty(obj.unset_trajectories())
                 obj.all_trajectories_set = true;
             end
-            if nargin<4
+
+            if nargin<5
                 abs_or_rel = 'absolute'; % which frame to conduct the integration in
             end
             [~, abs_traj, rel_traj] = ErosGravity.integrate(obj.sample_times, transpose(sc_initial_state), abs_or_rel );

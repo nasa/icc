@@ -21,7 +21,7 @@
 function [] = render_observed_points_2d(varargin)
 %F_RENDER_OBSERVED_POINTS_2D Renders location of the observed points in 2d
 %given Asteriod and Swarm objects 
-%    Syntax: render_observed_points_2d(AsteroidModel, Swarm, above_or_below, 'color_array', *color_array)
+%    Syntax: render_observed_points_2d(AsteroidModel, Swarm, above_or_below, 'color_array', *color_array, *font_size)
 %    *optional input
 %
 %   Inputs:
@@ -29,6 +29,7 @@ function [] = render_observed_points_2d(varargin)
 %    - Swarm
 %    - above_or_below: {'above','below'} Side of the asteroid to be viewed
 %       in the 2D projection
+%    - *time_limits: the min and max time index to consider when plotting
 %    - *color_array: Array of colors assigned to the spacecraft
 %
 %   Outputs:
@@ -39,16 +40,6 @@ function [] = render_observed_points_2d(varargin)
 AsteroidModel = varargin{1};
 Swarm = varargin{2};
 
-pos_points = AsteroidModel.BodyModel.shape.vertices ; % Convert to [km] for plotting
-n_spacecraft = Swarm.get_num_spacecraft();
-
-point_index = zeros(1,size(pos_points,1));
-for i_sc = 1:n_spacecraft
-    obs_points = Swarm.Observation.observed_points(i_sc,:);
-    obs_points(obs_points==0)= [];
-    point_index(obs_points) = i_sc;
-end
-
 if nargin<3
     above_or_below = 'above';
 else
@@ -56,20 +47,49 @@ else
 end
 
 colorSpecified = false;
+timeLimitSpecified = false;
+fontSizeSpecified = false;
 
-if nargin > 3
-    if strcmpi(varargin{5},'color_array') || strcmpi(varargin{5},'colorArray') ||  strcmpi(varargin{5},'color')
-        colorSpecified = true;
-        color_array = varargin{6};
+if nargin > 4
+    for arg_ix = 4:nargin-1
+        if strcmpi(varargin{arg_ix},'color_array') || strcmpi(varargin{arg_ix},'colorArray') ||  strcmpi(varargin{arg_ix},'color')
+            colorSpecified = true;
+            color_array = varargin{arg_ix+1};
+        end
+        if strcmpi(varargin{arg_ix},'time_limits')
+            timeLimitSpecified = true;
+            time_limits = varargin{arg_ix+1};
+        end
+        if strcmpi(varargin{arg_ix}, 'font_size')
+            fontSizeSpecified = true;
+            font_size = varargin{arg_ix+1};
+        end
     end
 end
 
 if colorSpecified == false
     color_array = ['c' 'r' 'b' 'g' 'm'];
 end
+if timeLimitSpecified == false
+    time_limits = [1, len(Swarm.sample_times)];
+end
+if fontSizeSpecified == false
+    font_size = 25;
+end
+
+pos_points = AsteroidModel.BodyModel.shape.vertices ; % Convert to [km] for plotting
+n_spacecraft = Swarm.get_num_spacecraft();
+
+point_index = zeros(1,size(pos_points,1));
+for i_sc = 1:n_spacecraft
+    obs_points = Swarm.Observation.observed_points(i_sc,time_limits(1):time_limits(end));
+    obs_points(obs_points==0)= [];
+    point_index(obs_points) = i_sc;
+end
 
 %% Plot
 
+cla()
 hold on
 above_equator_index = transpose(logical(pos_points(:,3)>=0));
 not_observed_index = logical(point_index == 0);
@@ -83,7 +103,7 @@ if strcmp(above_or_below, 'above')
     for i_sc = 1:1:n_spacecraft+1
         observed_index = logical(point_index == i_sc);
         above_equator_observed_index = (above_equator_index & observed_index);
-        plot(pos_points(above_equator_observed_index,1),pos_points(above_equator_observed_index,2),'o','MarkerFaceColor',color_array(mod(i_sc,length(color_array))+1),'MarkerEdgeColor',color_array(mod(i_sc,length(color_array))+1),'MarkerSize',5)
+        plot(pos_points(above_equator_observed_index,1),pos_points(above_equator_observed_index,2),'o','MarkerFaceColor',color_array(:,mod(i_sc-1,size(color_array,2))+1)','MarkerEdgeColor',color_array(:,mod(i_sc-1,size(color_array,2))+1)','MarkerSize',5)
     end
     
 else
@@ -95,10 +115,14 @@ else
     for i_sc = 1:1:n_spacecraft+1
         observed_index = logical(point_index == i_sc);
         above_equator_observed_index = (~above_equator_index & observed_index);
-        plot(pos_points(above_equator_observed_index,1),pos_points(above_equator_observed_index,2),'o','MarkerFaceColor',color_array(mod(i_sc,length(color_array))+1),'MarkerEdgeColor',color_array(mod(i_sc,length(color_array))+1),'MarkerSize',5)
+        plot(pos_points(above_equator_observed_index,1),pos_points(above_equator_observed_index,2),'o','MarkerFaceColor',color_array(:,mod(i_sc-1,size(color_array,2))+1)','MarkerEdgeColor',color_array(:,mod(i_sc-1,size(color_array,2))+1)','MarkerSize',5)
     end
     
 end
+title(strcat(upper(above_or_below(1)),above_or_below(2:end),' Equator'),'fontsize',font_size)
+set(gca, 'fontsize',font_size)
 axis equal
+
+
 end
 

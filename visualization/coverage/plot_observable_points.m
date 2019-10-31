@@ -18,40 +18,45 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [hdl] = render_asteroid_3d(Asteroid, absolute, plot_time)
-%F_RENDER_ASTEROID_3D Creates asteroid patch
-%   Syntax: render_asteroid_3d(Asteroid, absolute, plot_time)
-%   Inputs:
-%   - Asteroid is a SBDT body model.
-%   - absolute (optional) is a Boolean variable. If true, the asteroid is
-%     plotted in an absolute reference frame.
-%   - plot_time is a time. If absolute is false, plot_time is ignored.
-%     if absolute is true, the asteroid is plotted at time plot_time.
+function [h_os] = plot_observable_points(varargin)
+% PLOT_OBSERVABLE_POINTS plots observable points
+% Syntax: [handle] = plot_observable_points(Swarm, AsteroidModel,
+% fig_handle,time_index, spacecraft_ids*, absolute_frame_flag*)
+% * Optional keyword args
 
-% Create Asteroid Patch
-if nargin<2
-    absolute = false;
+Swarm = varargin{1};
+AsteroidModel = varargin{2};
+fig = varargin{3};
+i_time = varargin{4};
+coverage_color = 'y';
+spacecraft_ids = [1:1:Swarm.get_num_spacecraft()];
+absolute= false;
+
+if length(varargin) >= 5
+    for i = 5:2:length(varargin)
+        if strcmpi(varargin{i},'spacecraft_ids')
+            spacecraft_ids = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'absolute') || strcmpi(varargin{i},'absolute_frame_flag')
+            absolute = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'coverage_color') || strcmpi(varargin{i},'color')
+            coverage_color = varargin{i+1};
+        end
+    end
 end
+plot_time = Swarm.sample_times(i_time);
 
-
-ShapeModel.Vertices = Asteroid.BodyModel.shape.vertices;
-ShapeModel.Faces = Asteroid.BodyModel.shape.faces;
-
-if absolute == true
-    assert(nargin>=3, "ERROR: if absolute plotting is desired, plot_time should be specified")
-    rot_angle_z = Asteroid.BodyModel.bodyFrame.pm.w0+ Asteroid.BodyModel.bodyFrame.pm.w * plot_time;
-    Rot_i2b = rotmat(rot_angle_z,3);
-    ShapeModel.Vertices = (Rot_i2b'*ShapeModel.Vertices')';
+%figure(fig)
+for i_sc = spacecraft_ids
+    % If the spacecraft had something to observe
+    if ~isempty(Swarm.Observation.observable_points{i_sc, i_time})
+        % Observable points
+        if ~isempty(Swarm.Observation.observable_points(i_sc, i_time))>0
+            h_os(i_sc) = render_these_points_3d(AsteroidModel, Swarm.Observation.observable_points{i_sc, i_time}, 'color', coverage_color, 'markersize', 3, 'absolute', absolute, 'plot_time', plot_time); %#ok<*SAGROW>
+        end
+    end
 end
-
-hdl = patch(ShapeModel, 'FaceColor',0.7*[1 1 1], 'EdgeColor','none',...
-    'FaceAlpha',1,'FaceLighting','flat','LineStyle','none',...
-    'SpecularStrength',0,'AmbientStrength',.5);
-material([0 1 0])
-alpha(0.75)
-
-hdl.EdgeColor = [.5, .5, .5];
-hdl.LineStyle = '-';
-
+if ~exist('h_os','var')
+    h_os = gobjects(0); %Empty handle
 end
-

@@ -33,7 +33,7 @@ clear, clc, close all, run ../startup.m  % refresh
 addpath(genpath(strcat(ROOT_PATH,'/small_body_dynamics/EROS 433')))
 addpath(strcat(ROOT_PATH,'/small_body_dynamics'))
 addpath(genpath(strcat(ROOT_PATH,'/utilities'))) % Add all utilities
-addpath(strcat(ROOT_PATH,'/visualization'))
+addpath(genpath(strcat(ROOT_PATH,'/visualization')))
 addpath(strcat(ROOT_PATH,'/observed_points_optimizer'))
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -101,38 +101,19 @@ Swarm = observed_points_optimizer_main(ErosModel, Swarm);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 % Show Observed Points
-h1=figure(1);
-set(h1,'Color',[1 1 1]);
-set(h1,'units','normalized','outerposition',[0 0 1 1])
-set(h1,'PaperPositionMode','auto');
-
-initialize_spatial_plot_3d()
-hold on
-render_asteroid_3d(ErosModel);
-axis equal
-axis([-1 1 -1 1 -1 1].*40)
-
 if flag_simulation==1
-    for i_time = 1:Swarm.get_num_timesteps()
-        try %#ok<TRYNC>
-            for i_sc = 1:n_spacecraft
-                if ~isempty(Swarm.Observation.observable_points{i_sc, i_time}) && Swarm.Observation.observed_points(i_sc,i_time)~=0
-                    h_op(i_sc) = render_these_points_3d(ErosModel, Swarm.Observation.observable_points{i_sc, i_time}, 'color', 'y', 'markersize', 2); %#ok<*SAGROW>
-                    render_these_points_3d(ErosModel, Swarm.Observation.observed_points(i_sc, i_time), 'color', color_array(i_sc), 'markersize', 5);
-                    h_line(i_sc) = plot3([Swarm.rel_trajectory_array(i_time,1,i_sc)./1000, ErosModel.BodyModel.shape.vertices(Swarm.Observation.observed_points(i_sc,i_time),1)], ...
-                        [Swarm.rel_trajectory_array(i_time,2,i_sc)./1000, ErosModel.BodyModel.shape.vertices(Swarm.Observation.observed_points(i_sc,i_time),2)],...
-                        [Swarm.rel_trajectory_array(i_time,3,i_sc)./1000, ErosModel.BodyModel.shape.vertices(Swarm.Observation.observed_points(i_sc,i_time),3)],'--','color',color_array(i_sc),'linewidth',0.6);
-                end
-            end
-            if i_time<Swarm.get_num_timesteps()
-                h_sc = render_spacecraft_3d(Swarm.rel_trajectory_array(1:i_time,1:3,:)./1000,'color', color_array);
-            end
-            drawnow limitrate
-            pause(0.125); delete(h_op); delete(h_sc); delete(h_line);
-        end
-    end
+    plot_coverage(Swarm, ErosModel, 'color_array', color_array, 'absolute', true)
     
 elseif flag_simulation == 2
+    h1=figure();
+    set(h1,'Color',[1 1 1]);
+    set(h1,'units','normalized','outerposition',[0 0 1 1])
+    set(h1,'PaperPositionMode','auto');
+    initialize_spatial_plot_3d()
+    hold on
+    render_asteroid_3d(ErosModel);
+    axis equal
+    axis([-1 1 -1 1 -1 1].*40)
     render_observed_points_3d(ErosModel, Swarm);
     render_spacecraft_3d(Swarm.rel_trajectory_array./1000,'color', color_array);
 end

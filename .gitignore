@@ -63,3 +63,7 @@ octave-workspace
 /utilities/spice/naif
 /utilities/spice/smb_spk*
 
+# Videos
+*.avi
+*.mov
+*.mp4
