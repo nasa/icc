@@ -24,3 +24,19 @@ addpath(genpath(strcat(ROOT_PATH, '/../mice/')));
 run utilities/misc/initialize_SBDT.m
 addpath(ROOT_PATH); 
 clc
+
+%% Check whether SBDT exists
+
+if ~exist('addSBDT','file')
+    error("JPL's Small Body Dynamics Toolkit (SBDT) is required to run this example. See the README for how to get access to SBDT.")
+end
+
+%% Set up CVX to avoid using SDPT3
+if ~exist('cvx_solver', 'file')
+    error("CVX is a required dependency. Please download CVX from cvxr.com")
+end
+
+if strcmp(cvx_solver,'SDPT3')
+    warning("SDPT3 is known to falsely return infeasible for our problem. Switching CVX solver to SeDuMi")
+    cvx_solver SeDuMi
+end
