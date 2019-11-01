@@ -28,10 +28,10 @@ if fontSizeSpecified==false
 end
 
 hold on
-xlabel('X axis [km]','fontsize',standard_font_size,'FontName','Times New Roman')
-ylabel('Y axis [km]','fontsize',standard_font_size,'FontName','Times New Roman')
-zlabel('Z axis [km]','fontsize',standard_font_size,'FontName','Times New Roman')
-set(gca, 'fontsize',standard_font_size,'FontName','Times New Roman')
+xlabel('X axis [km]','fontsize',standard_font_size)
+ylabel('Y axis [km]','fontsize',standard_font_size)
+zlabel('Z axis [km]','fontsize',standard_font_size)
+set(gca, 'fontsize',standard_font_size)
 
 grid minor;
 view(3)

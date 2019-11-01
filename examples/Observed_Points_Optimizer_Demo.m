@@ -102,7 +102,7 @@ Swarm = observed_points_optimizer_main(ErosModel, Swarm);
 % 
 % Show Observed Points
 if flag_simulation==1
-    plot_coverage(Swarm, ErosModel, 'color_array', color_array, 'absolute', true)
+    plot_coverage(Swarm, ErosModel, 'color_array', color_array, 'absolute', false)
     
 elseif flag_simulation == 2
     h1=figure();

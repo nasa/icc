@@ -37,7 +37,7 @@ rng default % Pseudo-random but repeatable scenario
 addpath(genpath(strcat(ROOT_PATH,'/small_body_dynamics/EROS 433')))
 addpath(strcat(ROOT_PATH,'/small_body_dynamics'))
 addpath(genpath(strcat(ROOT_PATH,'/utilities'))) % Add all utilities
-addpath(strcat(ROOT_PATH,'/visualization'))
+addpath(genpath(strcat(ROOT_PATH,'/visualization')))
 addpath(strcat(ROOT_PATH,'/observed_points_optimizer'))
 addpath(strcat(ROOT_PATH,'/monte_carlo_coverage_optimizer'))
 addpath(strcat(ROOT_PATH,'/relay_orbit_optimizer'))
@@ -115,13 +115,6 @@ Swarm.integrate_trajectory(carrier_index, ErosModel, carrier_initial_conditions)
 % Optimize Orbits and Observed Points with Monte Carlo
 Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
 
-
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                         Show Coverage Results                           %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                        Relay Orbit Optimization                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
@@ -131,84 +124,48 @@ Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                           Show Comms Results                            %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-plot_coverage(Swarm, ErosModel);
-plot_communications(Swarm, ErosModel);
 
-%% Plot Observing Points Around Asteroid in 3D
+% Do you want the 3d plot to be in an absolute or relative frame?
+absolute = true;
 
-%% Plot Memory Use and Communication Topology
-
-figure()
+% Test 3d plot to get the axes extent
+h1 = figure();
+set(h1,'Color',[1 1 1]);
+set(h1,'units','normalized','outerposition',[0 0 1 1])
+set(h1,'PaperPositionMode','auto');
+initialize_spatial_plot_3d();
+hold on 
+axis equal
+% Initial plot - just to get a sense of the size
+plot_coverage_and_communications_frame(Swarm, ErosModel,length(Swarm.sample_times), 'absolute', absolute, 'figure_handle', h1);
+three_d_plot_axes = axis();
+clf;
 
 for time_step = 1:length(Swarm.sample_times)
+    subplot(2,4,[1 2 5 6]);
+    if time_step == 1
+        initialize_spatial_plot_3d();
+        axis(three_d_plot_axes);
+        axis equal
+    end
+
+    plot_handles = plot_coverage_and_communications_frame(Swarm, ErosModel, time_step, 'absolute', absolute);
     subplot(2,4,3)
     render_observed_points_2d(ErosModel, Swarm, 'above', 'time_limits', [1, time_step]) % Show which points have been observed above equator
     subplot(2,4,4)
     render_observed_points_2d(ErosModel, Swarm, 'below', 'time_limits', [1, time_step]) % Show which points have been observed above equator
     subplot(2,4,7)
-    plot_memory_comparison(time_step, Swarm)
+    plot_memory_comparison(time_step, Swarm);
     subplot(2,4,8)
-    plot_communication_topology_2d(time_step, Swarm, ErosModel)
+    plot_communication_topology_2d(time_step, Swarm, ErosModel);
     drawnow limitrate
+    pause(0.125);
+    for entry_ix = 1:length(plot_handles)
+        if ~isempty(plot_handles{entry_ix})
+            delete(plot_handles{entry_ix})
+        end
+    end
 end
+subplot(2,4,[1 2 5 6]);
+plot_coverage_and_communications_frame(Swarm, ErosModel,length(Swarm.sample_times), 'absolute', absolute, 'figure_handle', h1);
 
-%     
-%     %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%     %                           Visualization                             %
-%     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-%     
-%     %% Setup the Plot
-%     if i_timestep == 1
-%         h1=figure(1);
-%         set(h1,'Color',[1 1 1]);
-%         set(h1,'units','normalized','outerposition',[0 0 1 1])
-%         set(h1,'PaperPositionMode','auto');
-%     end
-% 
-%     %% Plot Observing Points Around Asteroid in 3D
-%     subplot(2,4,[1 2 5 6]);
-%     
-%     if i_timestep == 1
-%         axes_limits = [-1,1].*max(vecnorm(carrier_pos_array,2,2)).*1.01; % Set axes limits to outside carrier orbit radius 
-%         initialize_spatial_plot_3d('fontSize',standard_font_size, 'limits', axes_limits.*10^-3);
-%         h_eros_patch = render_asteroid_3d(ErosShapeModel); % Make asteroid patch from shape model 
-%     else
-%         delete(h_obs_pts); delete(h_sc_pos); delete(h_carrier_pos) % delete points from previous iterations
-%     end
-% 
-%     set(h_eros_patch, 'Vertices', ErosShapeModel.Vertices.*10^-3) % Update Eros patch
-%     h_obs_pts = render_observed_points_3d(ErosShapeModel.Vertices.*10^-3, point_index, n_spacecraft, ...
-%         'color_array', color_array, 'show_not_observed', false); % Show which points have been observed by the spacecraft
-%     h_sc_pos = render_spacecraft_3d(sc_pos_array(1:i_timestep, :, :).*10^-3,...
-%         'color_array', color_array, 'show_trail', true);  % Plot spacecraft positions and orbital trajectories
-%     h_carrier_pos = render_spacecraft_3d(carrier_pos_array(1:i_timestep, :, :).*10^-3,...
-%         'color', 'k', 'show_trail', true); % Plot spacecraft positions and orbital trajectories
-%     
-%     title(['Time = ',num2str(floor(t/3600)),' hours, ',num2str(percentage_seen),' % covered'],'fontsize',standard_font_size,'FontName','Times New Roman')
-%     
-%     %% Plot Observing Points Around Asteroid in 2D
-%     subplot(2,4,3)
-%     cla()
-%     render_observed_points_2d(pos_points.*10^-3, point_index, n_spacecraft, 'above', 'color_array', color_array) % Show which points have been observed above equator
-%     title('Above Equator','fontsize',standard_font_size,'FontName','Times New Roman')
-%     set(gca, 'fontsize',standard_font_size,'FontName','Times New Roman')
-%     
-%     subplot(2,4,4)
-%     cla()
-%     render_observed_points_2d(pos_points.*10^-3, point_index, n_spacecraft, 'below', 'color_array', color_array) % Show which points have been observed below equator
-%     title('Below Equator','fontsize',standard_font_size,'FontName','Times New Roman')
-%     set(gca, 'fontsize',standard_font_size,'FontName','Times New Roman')
-%     
-%     %% Plot Memory Use and Communication Topology
-%     subplot(2,4,7)
-%     plot_memory_comparison(sc_memory_use , communicating_sc_index, standard_comm_data_rate, delta_t, sc_max_memory, color_array, standard_font_size )
-%     
-%     subplot(2,4,8)
-%     plot_communication_topology(sc_current_pos.*10^-3, carrier_current_pos.*10^-3, communicating_sc_index, ErosParameters.radius.*10^-3, color_array, standard_font_size)
-%     
-%     drawnow limitrate
-%     
-%     if (percentage_seen == 100) && (max(sc_memory_use) == 0)
-%         break
-%     end
-% end

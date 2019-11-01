@@ -21,20 +21,19 @@
 function [h_op] = plot_observed_points(varargin)
 % PLOT_OBSERVED_POINTS plots observed points
 % Syntax: [handle] = plot_observed_points(Swarm, AsteroidModel,
-% fig_handle,[start_time_index end_time_index], spacecraft_ids*
+% [start_time_index end_time_index], spacecraft_ids*
 % absolute_frame_flag*, color_array*)
 % * Optional keyword args
 
 Swarm = varargin{1};
 AsteroidModel = varargin{2};
-fig = varargin{3};
-start_time = varargin{4}(1);
-i_time = varargin{4}(2);
+start_time = varargin{3}(1);
+i_time = varargin{3}(2);
 spacecraft_ids = [1:1:Swarm.get_num_spacecraft()];
 absolute= false;
 color_array = ['r', 'b', 'g', 'c', 'm'];
-if length(varargin) >= 5
-    for i = 5:2:length(varargin)
+if length(varargin) >= 4
+    for i = 4:2:length(varargin)
         if strcmpi(varargin{i},'spacecraft_ids')
             spacecraft_ids = varargin{i+1};
         end
@@ -48,7 +47,6 @@ if length(varargin) >= 5
 end
 plot_time = Swarm.sample_times(i_time);
 
-figure(fig)
 for i_sc = spacecraft_ids
     % Actually observed points - if any
     if sum(Swarm.Observation.observed_points(i_sc, start_time:i_time))>0

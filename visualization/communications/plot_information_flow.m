@@ -77,11 +77,12 @@ else
     trajectory_array = rel_trajectory_array;
 end
 
-% Grab the figure
-if ~exist('fig','var')
-    fig = figure();
+if exist('fig','var')
+    current_fig = gcf();
+    if current_fig ~= fig
+        figure(fig);
+    end
 end
-figure(fig);
 
 link_colors = [summer(link_color_steps/2);flipud(autumn(link_color_steps/2))]; %flipud(hot(link_color_steps));
  

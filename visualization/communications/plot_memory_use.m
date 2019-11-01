@@ -42,7 +42,8 @@ n_spacecraft = swarm.get_num_spacecraft();
 %color_array = rand(3,n_spacecraft);
 max_memory = NaN;
 
-max_memory_marker_size = 40;
+max_memory_marker_size = 50;
+min_memory_marker_size = 15;
 
 if length(varargin) > 2
     for i = 3:2:length(varargin)
@@ -73,10 +74,12 @@ else
 end
 
 % Grab the figure
-if ~exist('fig','var')
-    fig = figure();
+if exist('fig','var')
+    current_fig = gcf();
+    if current_fig ~= fig
+        figure(fig);
+    end
 end
-figure(fig);
 
 n_timesteps = swarm.get_num_timesteps();
 
@@ -84,7 +87,7 @@ if isnan(max_memory)
     tmp_memories = zeros(n_timesteps, n_spacecraft);
     for t = 1:n_timesteps
         for sc = 1:n_spacecraft
-            tmp_memories(t,sc) = tmp_bandwidths(t, sc, sc);
+            tmp_memories(t,sc) = swarm.Communication.flow(t, sc, sc);
         end
     end
     max_memory = max(max(tmp_memories));
@@ -100,15 +103,15 @@ max_delivered = sum(sum(swarm.Communication.effective_source_flow));
 for sc1 = 1:n_spacecraft
 
     % Plot the s/c location and memory use
-    curr_memory = swarm.Communication.bandwidths_and_memories(time,sc1,sc1);
+    curr_memory = swarm.Communication.flow(time,sc1,sc1);
     if sc1 == n_spacecraft
         % If the sc is the carrier, also count the science we delivered
         curr_memory = curr_memory+sum(delivered_science(1:time));
         ssymbol = 's';
-        ssize = curr_memory/max_delivered*max_memory_marker_size +1;
+        ssize = curr_memory/max_delivered*(max_memory_marker_size-min_memory_marker_size) +min_memory_marker_size;
     else
         ssymbol = '.';
-        ssize = curr_memory/max_memory*max_memory_marker_size +1;
+        ssize = curr_memory/max_memory*(max_memory_marker_size-min_memory_marker_size) +min_memory_marker_size;
     end
     % plot3(spacecraft.orbits{sc1}(1,time),spacecraft.orbits{sc1}(2,time),spacecraft.orbits{sc1}(3,time), ...
     sc_color = color_array(:,mod(sc1-1,size(color_array,2))+1)';

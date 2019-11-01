@@ -145,11 +145,7 @@ for i_sc = 1:Swarm.get_num_spacecraft()
         continue
     else
         bits_per_point = data_rate.*Swarm.sample_times;
-        try
-            Swarm.Observation.flow(i_sc,:) = bits_per_point.*sign(Swarm.Observation.observed_points(i_sc,:)) ;
-        catch
-            disp(oops)
-        end
+        Swarm.Observation.flow(i_sc,:) = bits_per_point.*sign(Swarm.Observation.observed_points(i_sc,:)) ;
     end
 end
 

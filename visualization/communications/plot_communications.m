@@ -83,8 +83,6 @@ for sc =1:n_spacecraft
     set(gcf,'position',[x0,y0,width,height])
 	hold all;
 end
-hold off
-
 V = axis();
 
 cla;

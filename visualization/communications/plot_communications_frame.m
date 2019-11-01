@@ -49,7 +49,7 @@ if length(varargin) > 3
         if strcmpi(varargin{i},'absolute')
             absolute = varargin{i+1};
         end
-        if strcmpi(varargin{i},'figure_handle') || strcmpi(varargin{i},'handle')
+        if strcmpi(varargin{i},'figure_handle') || strcmpi(varargin{i},'handle') || strcmpi(varargin{i},'figure')
             fig = varargin{i+1};
         end
         if strcmpi(varargin{i},'max_memory')
@@ -74,24 +74,12 @@ max_line_thickness = 20;
 max_memory_marker_size = 40;
 link_color_steps = 100;
 
-if ~exist('fig', 'var')
-    % How big do we have to go?
-    fig = figure();
-    for sc =1:n_spacecraft
-        %plot3(spacecraft.orbits{sc}(1,:),spacecraft.orbits{sc}(2,:),spacecraft.orbits{sc}(3,:),'LineWidth',min_line_thickness);
-        plot3(trajectory_array(:, 1, sc),trajectory_array(:, 2, sc),trajectory_array(:, 3, sc),'LineWidth',min_line_thickness);
-        x0 = 100;
-        y0 = 100;
-        width = 1920;
-        height = 1080;
-        set(gcf,'position',[x0,y0,width,height])
-        hold all;
+if exist('fig', 'var')
+    current_fig = gcf();
+    if current_fig ~= fig
+        figure(fig);
     end
-    hold off
 end
-
-figure(fig);
-hold all;
 
 % Plot asteroid
 h_ast = render_asteroid_3d(gravity_model, absolute, swarm.sample_times(time));
@@ -107,7 +95,6 @@ h_sc = plot_memory_use(swarm, time, ...
     'color_array', color_array, 'absolute', absolute, ...
     'figure_handle', fig, 'max_memory', max_memory, ...
         'max_memory_marker_size', max_memory_marker_size);
-
 % Plot information flow
 h_bw = plot_information_flow(swarm, time, ...
     'color_array',color_array, 'absolute', absolute, ...
@@ -115,7 +102,6 @@ h_bw = plot_information_flow(swarm, time, ...
     'min_line_thickness', min_line_thickness, ...
     'max_line_thickness', max_line_thickness, ...
     'link_color_steps', link_color_steps);
-
 fig_handles = cell(5,1);
 fig_handles{1} = h_tr;
 fig_handles{2} = h_sc;

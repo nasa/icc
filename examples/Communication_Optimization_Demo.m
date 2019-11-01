@@ -35,6 +35,7 @@ clear, clc, close all, run ../startup.m  % refresh
 addpath(genpath('../utilities/'))
 addpath(genpath('../small_body_dynamics/'))
 addpath(genpath('../network_flow_communication_optimizer/'))
+addpath(genpath(strcat(ROOT_PATH,'/visualization')))
 addpath('../')
 constants = initialize_SBDT();
 
@@ -98,5 +99,5 @@ bandwidth_model = @(x1,x2) min(bandwidth_parameters.reference_bandwidth * (bandw
 [swarm] = communication_optimizer(swarm,bandwidth_model);
 
 % Plot the result
-save_video = false;
-plot_communications(swarm, ErosGravity,save_video)
+
+plot_communications(swarm, ErosGravity,'save_video',false, 'absolute', true);

@@ -28,13 +28,12 @@ function [h_line] = plot_observation_ray(varargin)
 
 Swarm = varargin{1};
 AsteroidModel = varargin{2};
-fig = varargin{3};
-i_time = varargin{4};
+i_time = varargin{3};
 spacecraft_ids = [1:1:Swarm.get_num_spacecraft()];
 absolute= false;
 color_array = ['r', 'b', 'g', 'c', 'm'];
-if length(varargin) > 4
-    for i = 5:2:length(varargin)
+if length(varargin) > 3
+    for i = 4:2:length(varargin)
         if strcmpi(varargin{i},'spacecraft_ids')
             spacecraft_ids = varargin{i+1};
         end
@@ -59,7 +58,6 @@ else
     body_vertices =  AsteroidModel.BodyModel.shape.vertices;
 end
 
-%figure(fig)
 for i_sc = spacecraft_ids
     if Swarm.Observation.observed_points(i_sc, i_time)>0
         h_line(i_sc) = plot3([sc_trajectories(i_time,1,i_sc)./1000, body_vertices(Swarm.Observation.observed_points(i_sc,i_time),1)], ...

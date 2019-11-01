@@ -26,14 +26,13 @@ function [h_os] = plot_observable_points(varargin)
 
 Swarm = varargin{1};
 AsteroidModel = varargin{2};
-fig = varargin{3};
-i_time = varargin{4};
+i_time = varargin{3};
 coverage_color = 'y';
 spacecraft_ids = [1:1:Swarm.get_num_spacecraft()];
 absolute= false;
 
-if length(varargin) >= 5
-    for i = 5:2:length(varargin)
+if length(varargin) >= 4
+    for i = 4:2:length(varargin)
         if strcmpi(varargin{i},'spacecraft_ids')
             spacecraft_ids = varargin{i+1};
         end

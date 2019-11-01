@@ -29,7 +29,7 @@
 
 function [plot_handles] = plot_coverage_frame(varargin)
 % PLOT_COVERAGE Plots the instrument coverage of a spacecraft swarm.
-% Syntax: [view] = plot_coverage_frame(Swarm, ErosModel, plot_time_index, figure_handle*, axes_limits*, color_array*, absolute*)
+% Syntax: [view] = plot_coverage_frame(Swarm, ErosModel, plot_time_index, axes_limits*, color_array*, absolute*)
 % *optional input
 
 Swarm = varargin{1};
@@ -46,28 +46,21 @@ if length(varargin) > 3
         if strcmpi(varargin{i},'absolute')
             absolute = varargin{i+1};
         end
-        if strcmpi(varargin{i},'figure_handle') || strcmpi(varargin{i},'handle')
-            h1 = varargin{i+1};
-        end
         if strcmpi(varargin{i},'axes_limits') || strcmpi(varargin{i},'axes')
             axes_limits = varargin{i+1};
             assert(length(axes_limits)==6, "ERROR: axes limits size is incorrect")
         end
+        if strcmpi(varargin{i},'figure_handle') || strcmpi(varargin{i},'figure') || strcmpi(varargin{i},'handle')
+            fig = varargin{i+1};
+        end
     end
 end
-
-if ~exist('h1','var')
-    h1 = figure();
-    set(h1,'Color',[1 1 1]);
-    set(h1,'units','normalized','outerposition',[0 0 1 1])
-    set(h1,'PaperPositionMode','auto');
-    initialize_spatial_plot_3d()
-    grid off
-    hold on 
-    axis equal
-    axis(axes_limits)
+if exist('fig','var')
+    current_fig = gcf();
+    if current_fig ~= fig
+        figure(fig);
+    end
 end
-figure(h1);
 
 % Which trajectories do we use? This will help make the plotting code
 % cleaner
@@ -88,11 +81,11 @@ else
 end
 
 % Plot observable points
-h_os = plot_observable_points(Swarm, AsteroidModel, h1, i_time, 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute);
+h_os = plot_observable_points(Swarm, AsteroidModel, i_time, 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute);
 % Actually observed points - if any
-h_op = plot_observed_points(Swarm, AsteroidModel, h1, [1, i_time], 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute, 'color_array', color_array);
+h_op = plot_observed_points(Swarm, AsteroidModel, [1, i_time], 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute, 'color_array', color_array);
 % Line from observer to observed point
-h_line = plot_observation_ray(Swarm, AsteroidModel, h1, i_time, 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute, 'color_array', color_array);
+h_line = plot_observation_ray(Swarm, AsteroidModel, i_time, 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute, 'color_array', color_array);
 % Spacecraft trajectory
 h_sc = render_spacecraft_3d(sc_trajectories(1:i_time,:,:)./1000, 'color', color_array, 'linewidth', 0.75, 'absolute', absolute, 'plot_time', plot_time);
 

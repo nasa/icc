@@ -34,7 +34,7 @@ clear, clc, close all, run ../startup.m  % refresh
 addpath(genpath(strcat(ROOT_PATH,'/small_body_dynamics/EROS 433')))
 addpath(strcat(ROOT_PATH,'/small_body_dynamics'))
 addpath(strcat(ROOT_PATH,'/voronoi_coverage_optimizer')) % Add all utilities
-addpath(strcat(ROOT_PATH,'/visualization'))
+addpath(genpath(strcat(ROOT_PATH,'/visualization')))
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                   User Options: Flags and Parameters                    %

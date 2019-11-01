@@ -36,7 +36,7 @@ n_spacecraft = Swarm.get_num_spacecraft();
 % Find memory use
 sc_memory_use = zeros(n_spacecraft,1);
 for sc = 1:n_spacecraft
-    sc_memory_use(sc) = Swarm.Communication.bandwidths_and_memories(time_step, sc, sc);
+    sc_memory_use(sc) = Swarm.Communication.flow(time_step, sc, sc);
 end
 
 % Plot the bar graph
