@@ -26,9 +26,10 @@ global SBDT_PATH
 if isempty(SBDT_PATH)
     SBDT_PATH=getenv("SBDT_PATH");
 end
+
 if isempty(SBDT_PATH)
-    warning("SBDT_PATH environment variable not set. Please SBDT_PATH to the path to your copy of SBDT")
-    SBDT_PATH = '/home/frossi/Documents/JPL/ICC/SBDT';
+    warning("SBDT_PATH environment variable not found. Assuming that SBDT is installed in the same folder as icc-dev")
+    SBDT_PATH =  strcat(pwd, '/../SBDT') ; 
 end
 
 addpath(fullfile(SBDT_PATH,'Startup'));
