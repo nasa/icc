@@ -138,12 +138,15 @@ else % Batch optimization
 end
 
 %% Calculate Observation Flow
-delta_t = Swarm.sample_times(2)-Swarm.sample_times(1);
 for i_sc = 1:Swarm.get_num_spacecraft()
     [~, ~, ~, data_rate] = get_instrument_constraints(Swarm.Parameters.types{i_sc});
-    bits_per_point = data_rate*delta_t;
-    
-    Swarm.Observation.flow(i_sc,:) = bits_per_point.*sign(Swarm.Observation.observed_points(i_sc,:)) ;
+    % Some spacecraft do not have a data rate - skip those
+    if isempty(data_rate)
+        continue
+    else
+        bits_per_point = data_rate.*Swarm.sample_times;
+        Swarm.Observation.flow(i_sc,:) = bits_per_point.*sign(Swarm.Observation.observed_points(i_sc,:)) ;
+    end
 end
 
 end

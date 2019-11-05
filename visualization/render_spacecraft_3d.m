@@ -1,3 +1,23 @@
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Copyright 2019 by California Institute of Technology.  ALL RIGHTS RESERVED. %
+% United  States  Government  sponsorship  acknowledged.   Any commercial use %
+% must   be  negotiated  with  the  Office  of  Technology  Transfer  at  the %
+% California Institute of Technology.                                         %
+%                                                                             %
+% This software may be subject to  U.S. export control laws  and regulations. %
+% By accepting this document,  the user agrees to comply  with all applicable %
+% U.S. export laws and regulations.  User  has the responsibility  to  obtain %
+% export  licenses,  or  other  export  authority  as may be required  before %
+% exporting  such  information  to  foreign  countries or providing access to %
+% foreign persons.                                                            %
+%                                                                             %
+% This  software  is a copy  and  may not be current.  The latest  version is %
+% maintained by and may be obtained from the Mobility  and  Robotics  Sytstem %
+% Section (347) at the Jet  Propulsion  Laboratory.   Suggestions and patches %
+% are welcome and should be sent to the software's maintainer.                %
+%                                                                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function [h] = render_spacecraft_3d(varargin) 
 %F_RENDER_SPACECRAFT_3D Renders location of the spacecraft in 3d space
 %    Syntax: render_spacecraft_3d(sc_position_array, 'show_trail', *showTrail, 'color_array', *color_array)
@@ -13,17 +33,15 @@ function [h] = render_spacecraft_3d(varargin)
 %    - h: plot handle for the points rendered
 
 %% Interpret the Inputs
-n_inputs = max(size(varargin));
 sc_position_array = varargin{1}; % Convert to [km] for plotting 
 n_spacecraft = size(sc_position_array,3);
 markersize = 6; 
 linewidth = 1; 
-colorSpecified = false;
 showTrail = true;
-if n_inputs > 1
-    for i = 2:2:n_inputs
+color_array = ['c' 'r' 'b' 'g' 'm'];
+if length(varargin) > 1
+    for i = 2:2:length(varargin)
         if strcmpi(varargin{i},'color_array') || strcmpi(varargin{i},'colorArray') ||  strcmpi(varargin{i},'color')
-            colorSpecified = true;
             color_array = varargin{i+1};
         end
         if strcmpi(varargin{i},'show_trail') || strcmpi(varargin{i},'showTrail')
@@ -32,26 +50,24 @@ if n_inputs > 1
         if strcmpi(varargin{i},'markersize') || strcmpi(varargin{i},'marker_size')
             markersize = varargin{i+1};
         end
-        if strcmpi(varargin{i},'linewidth') || strcmpi(varargin{i},'line_width')
+        if strcmpi(varargin{i},'linewidth') || strcmpi(varargin{i},'line_width' )
             linewidth = varargin{i+1};
         end
     end
 end
 
-if colorSpecified == false
-    color_array = ['c' 'r' 'b' 'g' 'm'];
-end
-
 %% Plot
-hold on 
+hold on
+h = gobjects(2*n_spacecraft,1);
 for i_sc = 1:n_spacecraft
-    h(2*i_sc+2) = plot3( sc_position_array(end, 1, i_sc), sc_position_array(end, 2, i_sc), sc_position_array(end, 3, i_sc),...
-        'o','MarkerFaceColor',color_array(mod(i_sc-1,length(color_array))+1), ...
-        'MarkerEdgeColor',color_array(mod(i_sc-1,length(color_array))+1),'MarkerSize',markersize);
-    
+    if markersize>0
+        h(2*i_sc+2) = plot3( sc_position_array(end, 1, i_sc), sc_position_array(end, 2, i_sc), sc_position_array(end, 3, i_sc),...
+            'o','MarkerFaceColor',color_array(:,mod(i_sc-1,size(color_array,2))+1)', ...
+            'MarkerEdgeColor',color_array(:,mod(i_sc-1,size(color_array,2))+1)','MarkerSize',markersize);
+    end
     if showTrail == true % shows the entire orbital path
         h(2*i_sc+1) = plot3( sc_position_array(:, 1, i_sc), sc_position_array(:, 2, i_sc), sc_position_array(:, 3, i_sc),...
-            '-','Color',color_array(mod(i_sc-1,length(color_array))+1),'linewidth',linewidth);
+            '-','Color',color_array(:,mod(i_sc-1,size(color_array,2))+1)','linewidth',linewidth);
     end
 end
 

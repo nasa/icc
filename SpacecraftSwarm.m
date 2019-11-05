@@ -72,7 +72,12 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
         
         %%%%%%%%%%%%%%%%%% Integrate a single trajectory %%%%%%%%%%%%%%%%%%
         function obj = integrate_trajectory( obj, i_sc, ErosGravity, sc_initial_state, abs_or_rel)
-            if nargin<4
+            obj.unset_trajectories(obj.unset_trajectories==i_sc)=[]; % remove this trajectory from
+            if isempty(obj.unset_trajectories())
+                obj.all_trajectories_set = true;
+            end
+
+            if nargin<5
                 abs_or_rel = 'absolute'; % which frame to conduct the integration in
             end
             [~, abs_traj, rel_traj, mode, stm] = ErosGravity.integrate(obj.sample_times, transpose(sc_initial_state), abs_or_rel );

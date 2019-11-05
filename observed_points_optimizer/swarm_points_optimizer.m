@@ -76,13 +76,13 @@ b = ones(n_constraints, 1);
 % Set bounds
 UB = ones(M,1);
 LB = zeros(M,1);
-fprintf('\n\nTotal time to setup observation points problem: %0.2f\n\n',toc)
+fprintf('Total time to setup observation points problem: %0.2f\n',toc)
 
 %% Solve 
 % Define problem
 tic
 X = intlinprog(-w, 1:M, A, b, [], [], LB, UB);
-fprintf('\n\nTotal time to solve observation points problem: %0.2f\n\n',toc)
+fprintf('Total time to solve observation points problem: %0.2f\n',toc)
 
 % Fill out observed points and reward vectors
 observations = find(X==1);

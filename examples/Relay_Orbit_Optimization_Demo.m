@@ -1,6 +1,6 @@
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
-%             Fmincon-based optimizer for relay orbits. WIP               %
+%            Usage example of the relay optimization framework.           % 
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -31,6 +31,7 @@ addpath(genpath('../utilities/'))
 addpath(genpath('../small_body_dynamics/'))
 addpath(genpath('../network_flow_communication_optimizer/'))
 addpath(genpath('../relay_orbit_optimizer/'))
+addpath(genpath(strcat(ROOT_PATH,'/visualization')))
 addpath('../')
 constants = initialize_SBDT();
 
@@ -103,4 +104,4 @@ disp("Optimizing")
 % Plot the result
 plot_communications(swarm, ErosGravity,true)
 
-save(strcat('relay_optimization_', datestr(datetime,"yyyymmdd_HHMMSS")))
+% save(strcat('relay_optimization_', datestr(datetime,"yyyymmdd_HHMMSS")))

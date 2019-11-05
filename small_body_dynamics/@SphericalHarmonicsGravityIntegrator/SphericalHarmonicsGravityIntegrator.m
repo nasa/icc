@@ -152,17 +152,6 @@ classdef SphericalHarmonicsGravityIntegrator
             %    body_centered, body-fixed frame.
             
             [time,absolute_traj] = obj.Integrator(@obj.dstate_abs,time_horizon,start_state);
-%             relative_traj = zeros(size(absolute_traj));
-%             omega = [0;0;obj.RotationRate];
-%             for t_ix=1:length(time)
-%                 rot_angle_z = obj.RotationEpoch+ obj.RotationRate * time(t_ix);
-%                 Rot_i2b = obj.rotmat(rot_angle_z,3);
-%                 relative_traj(t_ix,1:3) = (Rot_i2b*absolute_traj(t_ix,1:3)')';
-%                 % WRONG: need to remove rotational velocity!
-%                 %relative_traj(t_ix,4:6) = (Rot_i2b*(absolute_traj(t_ix,4:6))')';
-%                 % Fixed
-%                 relative_traj(t_ix,4:6) = (Rot_i2b*(absolute_traj(t_ix,4:6) - cross(omega,absolute_traj(t_ix,1:3)))')';
-%             end
         end
         
         function [time,relative_traj] = integrate_relative(obj,time_horizon,start_state_absolute)
