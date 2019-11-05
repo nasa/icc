@@ -78,7 +78,16 @@ end
 
 bandwidth_model = @(x1,x2) min(bandwidth_parameters.reference_bandwidth * (bandwidth_parameters.reference_distance/norm(x2-x1,2))^2, bandwidth_parameters.max_bandwidth*1e6); 
 
-data_scaling_factor = 1e6;
+% Numerical conditioning is critical to get a good solution from the
+% communication optimizer. Mosek 9 will deal with ill-conditioned problems,
+% but just about every free solver (and Mosek 8) will report infeasibility
+% if appropriate scaling is not applied.
+% Here, we attempt to make a guess at the "mean" information flow by
+% taking the mean data rate, excluding zeros. We use the median, as opposed
+% to the mean, because we do _not_ want to throw out outlier instruments
+% generating a disproportionate amount of data.
+data_scaling_factor = mean(mean(swarm.Observation.flow(swarm.Observation.flow>0)));
+
 [swarm, goal] = communication_optimizer(swarm, bandwidth_model,data_scaling_factor);
 
 

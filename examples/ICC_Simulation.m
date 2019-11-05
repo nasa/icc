@@ -155,7 +155,7 @@ for time_step = 1:length(Swarm.sample_times)
     subplot(2,4,4)
     render_observed_points_2d(ErosModel, Swarm, 'below', 'time_limits', [1, time_step]) % Show which points have been observed above equator
     subplot(2,4,7)
-    plot_memory_comparison(time_step, Swarm);
+    plot_memory_comparison_2d(time_step, Swarm, 'semilogflag', true);
     subplot(2,4,8)
     plot_communication_topology_2d(time_step, Swarm, ErosModel);
     drawnow limitrate

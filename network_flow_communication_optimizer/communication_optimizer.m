@@ -91,7 +91,7 @@ observation_flows = swarm.Observation.flow/data_scaling_factor;
 
 
 % Pose the problem
-cvx_begin quiet
+cvx_begin
     variable effective_science(N,K) nonnegative
     variable flows(K,N,N) nonnegative
     variable delivered_science(K) nonnegative

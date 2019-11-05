@@ -39,7 +39,7 @@ if nargin<7
 end
 
 if nargin<6
-    max_line_thickness = 10;
+    max_line_thickness = 25;
 end
 
 if nargin<5
@@ -65,6 +65,36 @@ patch(asteroid_min_radius * cos(theta), asteroid_min_radius * sin(theta),'k');
 
 
 n_spacecraft = Swarm.get_num_spacecraft;
+
+
+% Communications
+% Available bandwidth
+for sc1 = 1:n_spacecraft
+    for sc2 = 1:n_spacecraft
+        if sc2~=sc1
+            if Swarm.Communication.bandwidths_and_memories(time_step,sc1, sc2) > 0
+                plot([Swarm.abs_trajectory_array(time_step, 1, sc1) Swarm.abs_trajectory_array(time_step, 1, sc2)] , ...
+                    [Swarm.abs_trajectory_array(time_step, 2, sc1) Swarm.abs_trajectory_array(time_step, 2, sc2)],'-', ...
+                    'LineWidth',Swarm.Communication.bandwidths_and_memories(time_step,sc1, sc2)/max_bandwidth*max_line_thickness, ...
+                    'Color',[0.5,0.5,0.5,0.3])
+            end
+        end
+    end
+end
+% Effective bandwidth
+for sc1 = 1:n_spacecraft
+    for sc2 = 1:n_spacecraft
+        if sc2~=sc1
+            if Swarm.Communication.flow(time_step,sc1, sc2) > 0
+                plot([Swarm.abs_trajectory_array(time_step, 1, sc1) Swarm.abs_trajectory_array(time_step, 1, sc2)] , ...
+                    [Swarm.abs_trajectory_array(time_step, 2, sc1) Swarm.abs_trajectory_array(time_step, 2, sc2)],'-', ...
+                    'LineWidth',Swarm.Communication.flow(time_step,sc1, sc2)/max_bandwidth*max_line_thickness, ...
+                    'Color',color_array(:,mod(sc1-1,size(color_array,2))+1)')
+            end
+        end
+    end
+end
+
 % Plot the spacecraft locations
 for ns = 1:1:n_spacecraft
     plot(Swarm.abs_trajectory_array(time_step,1,ns),Swarm.abs_trajectory_array(time_step,2,ns),'o',...
@@ -79,28 +109,6 @@ if ~isempty(carrier_index) && carrier_index>0
         'MarkerFaceColor','k',...
         'MarkerEdgeColor','k',...
         'MarkerSize',10)
-end
-
-% Communications
-for sc1 = 1:n_spacecraft
-    for sc2 = 1:n_spacecraft
-        if Swarm.Communication.flow(time_step,sc1, sc2) > 0
-            plot([Swarm.abs_trajectory_array(time_step, 1, sc1) Swarm.abs_trajectory_array(time_step, 1, sc2)] , ...
-                 [Swarm.abs_trajectory_array(time_step, 2, sc1) Swarm.abs_trajectory_array(time_step, 2, sc2)],'-', ...
-                 'LineWidth',Swarm.Communication.flow(time_step,sc1, sc2)/max_bandwidth*max_line_thickness, ...
-                 'Color',color_array(:,mod(ns-1,size(color_array,2))+1)')
-        end
-    end
-end
-for sc1 = 1:n_spacecraft
-    for sc2 = 1:n_spacecraft
-        if Swarm.Communication.bandwidths_and_memories(time_step,sc1, sc2) > 0
-            plot([Swarm.abs_trajectory_array(time_step, 1, sc1) Swarm.abs_trajectory_array(time_step, 1, sc2)] , ...
-                 [Swarm.abs_trajectory_array(time_step, 2, sc1) Swarm.abs_trajectory_array(time_step, 2, sc2)],'-', ...
-                 'LineWidth',Swarm.Communication.bandwidths_and_memories(time_step,sc1, sc2)/max_bandwidth*max_line_thickness, ...
-                 'Color',[0.5,0.5,0.5,0.3])
-        end
-    end
 end
 
 xlabel('X Axis [m]','fontsize',font_size)

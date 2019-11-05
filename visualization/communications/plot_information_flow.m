@@ -107,7 +107,9 @@ h_bw = gobjects(n_spacecraft, n_spacecraft);
 
 for sc1 = 1:n_spacecraft
     for sc2 = 1:n_spacecraft
-        link_color_index = ceil(bandwidth_duals(time,sc1,sc2)/(max_bandwidth_duals-min_bandwidth_duals)*(link_color_steps-1)+1);
+        link_color_index = ceil((bandwidth_duals(time,sc1,sc2)-min_bandwidth_duals)/(max_bandwidth_duals-min_bandwidth_duals)*(link_color_steps-1)+1);
+        % Just in case, let's clamp the color index
+        link_color_index = max(1,min(link_color_index, link_color_steps));
         if isnan(link_color_index) || link_color_index<1
             warning("Problem is not communication-limited at all: all bandwidth duals are zero");
             link_color_index = 1;
