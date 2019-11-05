@@ -22,12 +22,18 @@ function [constants] = initialize_SBDT()
 %   Assumes that SBDT_PATH is specified as a variable somewhere.
 %   If it isn't, defaults to a directory on Federico's computer.
 global SBDT_PATH
+% Attempt to grab the SBDT path from an environment variable
 if isempty(SBDT_PATH)
-    SBDT_PATH = '/Users/frossi/Documents/JPL/ICC/SBDT';
+    SBDT_PATH=getenv("SBDT_PATH");
 end
 
-addpath(strcat(SBDT_PATH,'/Startup'));
-userModelsPath = strcat(SBDT_PATH,'/ExampleUserModels');
+if isempty(SBDT_PATH)
+    warning("SBDT_PATH environment variable not found. Assuming that SBDT is installed in the same folder as icc-dev")
+    SBDT_PATH =  strcat(pwd, '/../SBDT') ; 
+end
+
+addpath(fullfile(SBDT_PATH,'Startup'));
+userModelsPath = fullfile(SBDT_PATH,'ExampleUserModels');
 constantsModel = 1;
 global constants;
 constants = addSBDT(SBDT_PATH, userModelsPath, constantsModel);

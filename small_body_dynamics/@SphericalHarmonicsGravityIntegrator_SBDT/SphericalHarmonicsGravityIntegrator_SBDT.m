@@ -25,22 +25,28 @@ classdef SphericalHarmonicsGravityIntegrator_SBDT
     
     properties
         BodyModel
+        constants
     end
     
     methods
-        function obj = SphericalHarmonicsGravityIntegrator_SBDT(BodyModel)
-            % Constructor. Takes one input, BodyModel, a model of the 
-            % asteroid in SBDT format.
+        function obj = SphericalHarmonicsGravityIntegrator_SBDT(BodyModel, constants)
+            % Constructor. Takes two inputs:
+            %  BodyModel, a model of the asteroid in SBDT format.
+            %  constants, SBDT constants
+            if nargin<2
+                constants = initialize_SBDT(); 
+            end
             if nargin<1
                 BodyModel = loadEros( constants, 1, 1, 4, 3 );
             end
             obj.BodyModel = BodyModel;
+            obj.constants = constants;
         end
         
-        function [time, absolute_traj,relative_traj] = integrate(obj,time_horizon,start_state,mode)
+        function [time, absolute_traj,relative_traj, mode, state_transition_matrix] = integrate(obj,time_horizon,start_state,mode)
             % Integrates the trajectory of a spacecraft orbiting the small
             % body.
-            % Syntax: [tout, absolute_traj,relative_traj] = integrate(time_horizon,start_state, mode)
+            % Syntax: [tout, absolute_traj,relative_traj, mode, state_transition_matrix] = integrate(time_horizon,start_state, mode)
             % The spacecraft's starting state is start_state (x, y, z, vx,
             % vy, vz). The integration horizon is time_horizon.
             % Mode is 'absolute' (default) or 'relative'. In absolute mode,
@@ -52,6 +58,10 @@ classdef SphericalHarmonicsGravityIntegrator_SBDT
             %    inertial body_centered grame
             % - relative_traj, the spacecraft location and velocity in the
             %    body_centered, body-fixed frame.
+            % - mode, the mode of integration (identical to the input if
+            %    set)
+            % - state_transition_matrix, the state transition matrix in the
+            %    reference frame specified by "mode"
             
             if nargin<4
                 mode = 'absolute';
@@ -59,7 +69,7 @@ classdef SphericalHarmonicsGravityIntegrator_SBDT
             
             omega = [0;0;obj.BodyModel.bodyFrame.pm.w];
             if strcmp(mode,'absolute')
-                [time, absolute_traj] = integrate_absolute(obj,time_horizon,start_state);
+                [time, absolute_traj, state_transition_matrix] = integrate_absolute(obj,time_horizon,start_state);
                 relative_traj = zeros(size(absolute_traj));
                 for t_ix=1:length(time)
                     % Is this the actual initial angle? Unsure
@@ -70,7 +80,7 @@ classdef SphericalHarmonicsGravityIntegrator_SBDT
                 end
                 
             elseif strcmp(mode,'relative')
-                [time, relative_traj] = integrate_relative(obj,time_horizon,start_state);
+                [time, relative_traj, state_transition_matrix] = integrate_relative(obj,time_horizon,start_state);
                 absolute_traj = zeros(size(relative_traj));
                 for t_ix=1:length(time)
                     rot_angle_z = obj.BodyModel.bodyFrame.pm.w0+ obj.BodyModel.bodyFrame.pm.w * time(t_ix);
@@ -87,23 +97,29 @@ classdef SphericalHarmonicsGravityIntegrator_SBDT
         function [time, absolute_traj,state_transition_matrix] = integrate_absolute(obj,time_horizon,start_state)
             % Integrates the trajectory of a spacecraft orbiting the small
             % body.
-            % Syntax: [tout, absolute_traj,relative_traj] = integrate_absolute(time_horizon,start_state)
+            % Syntax: [tout, absolute_traj,state_transition_matrix] = integrate_absolute(time_horizon,start_state)
             % The spacecraft's starting state is start_state (x, y, z, vx,
             % vy, vz). The integration horizon is time_horizon.
             % The output is:
             % - tout, a grid of integration points in time.
             % - absolute_traj, the spacecraft location and velocity in the
             %    inertial body_centered grame
-            % - relative_traj, the spacecraft location and velocity in the
-            %    body_centered, body-fixed frame.
+            % - state_transition_matrix, the state transition matrix (see
+            %    Scheeres)
             
-            global constants
-            sun = loadSun(constants, 1, 1, 1, 1);
+            sun = loadSun(obj.constants, 1, 1, 1, 1);
             simControls = [];
             partials.names = {'x'};
             [ time, absolute_traj, partials, ~, ~ ] = ...
-                Inertial2BP_wPartials( time_horizon, start_state/1e3, [], constants, ...
+                Inertial2BP_wPartials( time_horizon, start_state/1e3, [], obj.constants, ...
                            {sun;obj.BodyModel}, [], partials, simControls );
+            if length(time_horizon)>2
+                if length(time_horizon)~=length(time)
+                    warning("WARNING: Rot2BP_wPartials does not honor time")
+                    warning("Requested time: %d to %d. Integrated time: %d to %d",time_horizon(1), time_horizon(end), time(1), time(end));
+                end
+%                 assert(length(time_horizon)==length(time), "ERROR: Rot2BP_wPartials does not honor time")
+            end
             absolute_traj = absolute_traj'*1e3;
             state_transition_matrix = partials.dxf_dp{1};
 
@@ -112,15 +128,16 @@ classdef SphericalHarmonicsGravityIntegrator_SBDT
         function [time,relative_traj,state_transition_matrix] = integrate_relative(obj,time_horizon,start_state_absolute)
             % Integrates the trajectory of a spacecraft orbiting the small
             % body.
-            % Syntax: [tout, absolute_traj,relative_traj] = integrate_relative(time_horizon,start_state)
+            % Syntax: [tout, relative_traj, state_transition_matrix] = integrate_relative(time_horizon,start_state)
             % The spacecraft's starting state is start_state (x, y, z, vx,
             % vy, vz). The integration horizon is time_horizon.
             % The output is:
             % - tout, a grid of integration points in time.
-            % - absolute_traj, the spacecraft location and velocity in the
-            %    inertial body_centered grame
             % - relative_traj, the spacecraft location and velocity in the
             %    body_centered, body-fixed frame.
+            % - state_transition_matrix, the state transition matrix (see
+            %    Scheeres)
+            
             start_state_absolute = start_state_absolute/1e3;
             rot_angle_z = obj.BodyModel.bodyFrame.pm.w0+ obj.BodyModel.bodyFrame.pm.w * time_horizon(1);
             Rot_i2b = obj.rotmat(rot_angle_z,3);
@@ -130,13 +147,15 @@ classdef SphericalHarmonicsGravityIntegrator_SBDT
             start_state_relative(1:3) = (Rot_i2b*(start_state_absolute(1:3)));
             start_state_relative(4:6) = (Rot_i2b*(start_state_absolute(4:6) - cross(omega,start_state_absolute(1:3))));
             
-            global constants
-            sun = loadSun(constants, 1, 1, 1, 1);
+            sun = loadSun(obj.constants, 1, 1, 1, 1);
             simControls = [];
             partials.names = {'x'};
             [ time, relative_traj, partials, ~, ~ ] = ...
-                Rot2BP_wPartials( time_horizon, start_state_relative, [], constants, ...
+                Rot2BP_wPartials( time_horizon, start_state_relative, [], obj.constants, ...
                                    {sun;obj.BodyModel}, [], partials, simControls );
+            if length(time_horizon)>2
+                assert(length(time_horizon)==length(time), "ERROR: Rot2BP_wPartials does not honor time")
+            end
             relative_traj = relative_traj'*1e3;
             state_transition_matrix = partials.dxf_dp{1};
         end

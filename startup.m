@@ -6,7 +6,11 @@ ROOT_PATH = pwd;
 
 % Store location of SBDT as global
 global SBDT_PATH
-SBDT_PATH =  strcat(ROOT_PATH, '/../SBDT') ; 
+SBDT_PATH = getenv("SBDT_PATH");
+if isempty(SBDT_PATH)
+    warning("SBDT_PATH environment variable not found. Assuming that SBDT is installed in the same folder as icc-dev")
+    SBDT_PATH =  strcat(ROOT_PATH, '/../SBDT') ; 
+end
 
 % Store location of NAIF as global
 global NAIF_PATH
