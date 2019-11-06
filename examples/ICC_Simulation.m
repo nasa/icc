@@ -46,7 +46,7 @@ addpath(strcat(ROOT_PATH,'/relay_orbit_optimizer'))
 %                   User Options: Flags and Parameters                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-n_spacecraft = 4;  % Number of Spacecraft, not counting the carrier
+n_spacecraft = 4;  % Number of Spacecraft, counting the carrier
 
 sc_types = cell(1,n_spacecraft);
 for i_sc = 1:n_spacecraft
@@ -122,11 +122,24 @@ Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
 [Swarm] = relay_optimization(Swarm, ErosModel, bandwidth_parameters, relay_orbit_indices, max_relay_optimization_time);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                           Show Comms Results                            %
+%                           Show Combined Results                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Do you want the 3d plot to be in an absolute or relative frame?
 absolute = true;
+
+% Do you want to record video?
+record_video = true;
+
+if record_video
+    videoname = ['ICC_simulation_',datestr(now,'yyyymmdd_HHMMSS'),'.mp4'];
+    writerObj = VideoWriter(videoname, 'MPEG-4');
+    writerObj.FrameRate = 30;   % Default 30
+    writerObj.Quality = 100;    % Default 75
+    open(writerObj);
+end
+
+
 
 % Test 3d plot to get the axes extent
 h1 = figure();
@@ -138,6 +151,7 @@ hold on
 axis equal
 % Initial plot - just to get a sense of the size
 plot_coverage_and_communications_frame(Swarm, ErosModel,length(Swarm.sample_times), 'absolute', absolute, 'figure_handle', h1);
+axis equal
 three_d_plot_axes = axis();
 clf;
 
@@ -150,22 +164,39 @@ for time_step = 1:length(Swarm.sample_times)
     end
 
     plot_handles = plot_coverage_and_communications_frame(Swarm, ErosModel, time_step, 'absolute', absolute);
+    
     subplot(2,4,3)
     render_observed_points_2d(ErosModel, Swarm, 'above', 'time_limits', [1, time_step]) % Show which points have been observed above equator
+    
     subplot(2,4,4)
     render_observed_points_2d(ErosModel, Swarm, 'below', 'time_limits', [1, time_step]) % Show which points have been observed above equator
+    
     subplot(2,4,7)
     plot_memory_comparison_2d(time_step, Swarm, 'semilogflag', true);
+    
     subplot(2,4,8)
     plot_communication_topology_2d(time_step, Swarm, ErosModel);
+    
     drawnow limitrate
+    if record_video
+        F = getframe(h1);
+        writeVideo(writerObj,F);
+    end
+    
     pause(0.125);
     for entry_ix = 1:length(plot_handles)
         if ~isempty(plot_handles{entry_ix})
             delete(plot_handles{entry_ix})
         end
     end
+    
+    
 end
+
 subplot(2,4,[1 2 5 6]);
 plot_coverage_and_communications_frame(Swarm, ErosModel,length(Swarm.sample_times), 'absolute', absolute, 'figure_handle', h1);
+
+if record_video
+    close(writerObj);
+end
 
