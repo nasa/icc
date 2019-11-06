@@ -128,6 +128,19 @@ Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
 % Do you want the 3d plot to be in an absolute or relative frame?
 absolute = true;
 
+% Do you want to record video?
+record_video = true;
+
+if record_video
+    videoname = ['ICC_simulation_',datestr(now,'yyyymmdd_HHMMSS'),'.mp4'];
+    writerObj = VideoWriter(videoname, 'MPEG-4');
+    writerObj.FrameRate = 30;   % Default 30
+    writerObj.Quality = 100;    % Default 75
+    open(writerObj);
+end
+
+
+
 % Test 3d plot to get the axes extent
 h1 = figure();
 set(h1,'Color',[1 1 1]);
@@ -138,6 +151,7 @@ hold on
 axis equal
 % Initial plot - just to get a sense of the size
 plot_coverage_and_communications_frame(Swarm, ErosModel,length(Swarm.sample_times), 'absolute', absolute, 'figure_handle', h1);
+axis equal
 three_d_plot_axes = axis();
 clf;
 
@@ -158,14 +172,28 @@ for time_step = 1:length(Swarm.sample_times)
     plot_memory_comparison_2d(time_step, Swarm, 'semilogflag', true);
     subplot(2,4,8)
     plot_communication_topology_2d(time_step, Swarm, ErosModel);
+    
     drawnow limitrate
-    pause(0.125);
+    if record_video
+        F = getframe(h1);
+        writeVideo(writerObj,F);
+    end
+    
+    %     drawnow limitrate
+    %     pause(0.125);
     for entry_ix = 1:length(plot_handles)
         if ~isempty(plot_handles{entry_ix})
             delete(plot_handles{entry_ix})
         end
     end
+    
+    
 end
+
 subplot(2,4,[1 2 5 6]);
 plot_coverage_and_communications_frame(Swarm, ErosModel,length(Swarm.sample_times), 'absolute', absolute, 'figure_handle', h1);
+
+if record_video
+    close(writerObj);
+end
 
