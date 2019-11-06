@@ -66,7 +66,7 @@ for i_sc = 1:1:n_spacecraft
     plot([i_sc i_sc+0.1], (1e-6)*[Swarm.Parameters.available_memory(i_sc) Swarm.Parameters.available_memory(i_sc)],'-k','LineWidth',2)
 
     % Plot a rectangle with the SC's memory use
-    patch([i_sc i_sc+0.1 i_sc+0.1 i_sc], (1e-6)*[eps eps sc_memory_use(i_sc,1)+eps sc_memory_use(i_sc,1)+eps],color_array(mod(i_sc,length(color_array))+1))
+    patch([i_sc i_sc+0.1 i_sc+0.1 i_sc], (1e-6)*[eps eps sc_memory_use(i_sc,1)+eps sc_memory_use(i_sc,1)+eps],color_array(:,mod(i_sc-1,size(color_array,2))+1)')
     % If memory usage is high enough, show memory limit
     %if sc_memory_use(i_sc) > 0.1 * Swarm.Parameters.available_memory(i_sc)
     %end

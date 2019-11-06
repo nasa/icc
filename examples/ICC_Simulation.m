@@ -131,6 +131,8 @@ absolute = true;
 % Do you want to record video?
 record_video = false;
 
+color_array = rand(3,Swarm.get_num_spacecraft());
+
 if record_video
     videoname = ['ICC_simulation_',datestr(now,'yyyymmdd_HHMMSS'),'.mp4'];
     writerObj = VideoWriter(videoname, 'MPEG-4');
@@ -150,7 +152,7 @@ initialize_spatial_plot_3d();
 hold on 
 axis equal
 % Initial plot - just to get a sense of the size
-plot_coverage_and_communications_frame(Swarm, ErosModel,length(Swarm.sample_times), 'absolute', absolute, 'figure_handle', h1);
+plot_coverage_and_communications_frame(Swarm, ErosModel,length(Swarm.sample_times), 'absolute', absolute, 'figure_handle', h1, 'color_array', color_array);
 axis equal
 three_d_plot_axes = axis();
 clf;
@@ -163,28 +165,27 @@ for time_step = 1:length(Swarm.sample_times)
         axis equal
     end
 
-    plot_handles = plot_coverage_and_communications_frame(Swarm, ErosModel, time_step, 'absolute', absolute);
+    plot_handles = plot_coverage_and_communications_frame(Swarm, ErosModel, time_step, 'absolute', absolute,'color_array', color_array);
     
     subplot(2,4,3)
-    render_observed_points_2d(ErosModel, Swarm, 'above', 'time_limits', [1, time_step]) % Show which points have been observed above equator
+    render_observed_points_2d(ErosModel, Swarm, 'above', 'time_limits', [1, time_step],'color_array', color_array) % Show which points have been observed above equator
     
     subplot(2,4,4)
-    render_observed_points_2d(ErosModel, Swarm, 'below', 'time_limits', [1, time_step]) % Show which points have been observed above equator
+    render_observed_points_2d(ErosModel, Swarm, 'below', 'time_limits', [1, time_step],'color_array', color_array) % Show which points have been observed above equator
     
     subplot(2,4,7)
-    plot_memory_comparison_2d(time_step, Swarm, 'semilogflag', true);
+    plot_memory_comparison_2d(time_step, Swarm, 'semilogflag', true,'color_array', color_array);
     
     subplot(2,4,8)
-    plot_communication_topology_2d(time_step, Swarm, ErosModel);
+    plot_communication_topology_2d(time_step, Swarm, ErosModel,color_array);
     
     drawnow limitrate
+    pause(0.125);
     if record_video
         F = getframe(h1);
         writeVideo(writerObj,F);
     end
     
-    %     drawnow limitrate
-    %     pause(0.125);
     for entry_ix = 1:length(plot_handles)
         if ~isempty(plot_handles{entry_ix})
             delete(plot_handles{entry_ix})
@@ -195,7 +196,7 @@ for time_step = 1:length(Swarm.sample_times)
 end
 
 subplot(2,4,[1 2 5 6]);
-plot_coverage_and_communications_frame(Swarm, ErosModel,length(Swarm.sample_times), 'absolute', absolute, 'figure_handle', h1);
+plot_coverage_and_communications_frame(Swarm, ErosModel,length(Swarm.sample_times), 'absolute', absolute, 'figure_handle', h1, 'color_array', color_array);
 
 if record_video
     close(writerObj);
