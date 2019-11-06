@@ -122,7 +122,7 @@ Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
 [Swarm] = relay_optimization(Swarm, ErosModel, bandwidth_parameters, relay_orbit_indices, max_relay_optimization_time);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                           Show Comms Results                            %
+%                           Show Combined Results                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Do you want the 3d plot to be in an absolute or relative frame?
@@ -164,12 +164,16 @@ for time_step = 1:length(Swarm.sample_times)
     end
 
     plot_handles = plot_coverage_and_communications_frame(Swarm, ErosModel, time_step, 'absolute', absolute);
+    
     subplot(2,4,3)
     render_observed_points_2d(ErosModel, Swarm, 'above', 'time_limits', [1, time_step]) % Show which points have been observed above equator
+    
     subplot(2,4,4)
     render_observed_points_2d(ErosModel, Swarm, 'below', 'time_limits', [1, time_step]) % Show which points have been observed above equator
+    
     subplot(2,4,7)
     plot_memory_comparison_2d(time_step, Swarm, 'semilogflag', true);
+    
     subplot(2,4,8)
     plot_communication_topology_2d(time_step, Swarm, ErosModel);
     
