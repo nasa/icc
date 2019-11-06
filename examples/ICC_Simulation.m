@@ -183,8 +183,7 @@ for time_step = 1:length(Swarm.sample_times)
         writeVideo(writerObj,F);
     end
     
-    %     drawnow limitrate
-    %     pause(0.125);
+    pause(0.125);
     for entry_ix = 1:length(plot_handles)
         if ~isempty(plot_handles{entry_ix})
             delete(plot_handles{entry_ix})
