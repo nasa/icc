@@ -42,6 +42,7 @@ min_line_thickness = 1;
 max_line_thickness = 20;
 max_memory_marker_size = 40;
 link_color_steps = 100;
+fontSizeSpecified = false;
 
 if length(varargin) > 3
     for i = 4:2:length(varargin)
@@ -54,6 +55,10 @@ if length(varargin) > 3
         if strcmpi(varargin{i},'axes_limits') || strcmpi(varargin{i},'axes')
             axes_limits = varargin{i+1};
             assert(length(axes_limits)==6, "ERROR: axes limits size is incorrect")
+        end
+        if strcmpi(varargin{i},'font_size') || strcmpi(varargin{i},'fontsize')
+            fontSizeSpecified = true;
+            title_font_size = varargin{i+1};
         end
     end
 end
@@ -68,6 +73,13 @@ end
 
 % Time
 plot_time = Swarm.sample_times(i_time);
+
+if fontSizeSpecified==false
+    title_font_size = 30;
+end
+
+h_title = title(['Time = ', num2str(floor(plot_time/8640)/10), ' day '],'fontsize',title_font_size);
+
 
 % Draw the asteroid in its new location
 h_ast = render_asteroid_3d(AsteroidModel, absolute, Swarm.sample_times(i_time));
@@ -119,6 +131,9 @@ if exist('h_mem','var') && ~isempty(h_mem)
 end
 if exist('h_bw','var') && ~isempty(h_bw)
     plot_handles{7} = h_bw; % Optional
+end
+if exist('h_title','var') && ~isempty(h_title)
+    plot_handles{8} = h_title; % Optional
 end
 
 end

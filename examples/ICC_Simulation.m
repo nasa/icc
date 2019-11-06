@@ -129,7 +129,7 @@ Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
 absolute = true;
 
 % Do you want to record video?
-record_video = true;
+record_video = false;
 
 if record_video
     videoname = ['ICC_simulation_',datestr(now,'yyyymmdd_HHMMSS'),'.mp4'];
