@@ -74,9 +74,6 @@ constants = addSBDT(SBDT_PATH, userModelsPath, constantsModel);
 eros_sbdt = loadEros( constants, 1, 1, 4, 3 );
 ErosModel = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt);
 
-% Generate Normals at Vertices
-ErosModel = Compute_Normals_Shape_Model(ErosModel);
-
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                        Initialize Swarm Model                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

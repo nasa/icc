@@ -18,7 +18,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function observable_points = get_observable_points(asteroid_vertices, sc_position, sun_position, sc_type)
+function observable_points = get_observable_points(asteroid_vertices, asteroid_normals, sc_position, sun_position, sc_type)
 %GET_OBSERVABLE_POINTS Returns a vector of the asteroid vertex indicies
 %which are feasible for observation by the spacecraft in the given position
 %
@@ -44,16 +44,12 @@ if flag_use_instruments==true
         vertex_observability_status = zeros(1,Nv); % 1 if observable, zero otherwise
         
         for i_v = 1:Nv
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %                                                             %
-            %     TO DO: Calculate surface normal (r_normal) here         %
-            %                                                             %
-            r_normal = asteroid_vertices(i_v, :); % temporary             %
-            %                                                             %
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+            
+            r_vertices = asteroid_vertices(i_v, :);
+            r_normal = asteroid_normals(i_v, :);
+            
             % Check altitude range
-            sc_altitude = norm(sc_position(:) - r_normal(:)); % height of spacecraft above point i_v
+            sc_altitude = norm(sc_position(:) - r_vertices(:)); % height of spacecraft above point i_v
             if is_in_range(sc_altitude, distance_ranges) % Altitude check
                 
                 % Check sc angle range
