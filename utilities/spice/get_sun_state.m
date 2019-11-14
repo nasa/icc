@@ -26,6 +26,16 @@ global NAIF_PATH
 naif_path = NAIF_PATH;
 
 % Load the appropriate SPICE kernels
+disp("Attempting to load SPICE for Eros from "+naif_path);
+if isempty(naif_path)
+    warning("Cannot find global NAIF_PATH - are you running a parfor loop?")
+    warning("I will try to determine NAIF_PATH from your environment variables")
+    naif_path = getenv("NAIF_PATH");
+    if isempty(naif_path)
+        warning("Cannot find environment variable NAIF_PATH. I will be making a guess as to where NAIF may be.")
+        naif_path = fullfile(pwd, '..','utilities','spice') ;
+    end
+end
 load_spice_eros(naif_path);
 
 % Compute the position of Eros for a bunch of time steps
