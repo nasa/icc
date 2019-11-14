@@ -31,7 +31,7 @@ start_time = varargin{3}(1);
 i_time = varargin{3}(2);
 spacecraft_ids = [1:1:Swarm.get_num_spacecraft()];
 absolute= false;
-color_array = ['r', 'b', 'g', 'c', 'm'];
+color_array = ['r']; %, 'b', 'g', 'c', 'm'];
 if length(varargin) >= 4
     for i = 4:2:length(varargin)
         if strcmpi(varargin{i},'spacecraft_ids')
@@ -53,7 +53,7 @@ for i_sc = spacecraft_ids
         % Note that, for some time steps, there may be no
         % points to observe. render_these_points_3d takes care
         % of filtering those out
-        h_op(i_sc) = render_these_points_3d(AsteroidModel, Swarm.Observation.observed_points(i_sc, start_time:i_time), 'color', color_array(:,mod(i_sc-1,size(color_array,2))+1)', 'markersize', 6, 'absolute', absolute, 'plot_time', plot_time);
+        h_op(i_sc) = render_these_points_3d(AsteroidModel, Swarm.Observation.observed_points(i_sc, start_time:i_time), 'color', color_array(:,mod(Swarm.Parameters.types{i_sc},size(color_array,2))+1)', 'markersize', 6, 'absolute', absolute, 'plot_time', plot_time);
 
     end
 end

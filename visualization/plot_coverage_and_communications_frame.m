@@ -63,14 +63,6 @@ if length(varargin) > 3
     end
 end
 
-% Which trajectories do we use? This will help make the plotting code
-% cleaner
-if absolute == true
-    sc_trajectories = Swarm.abs_trajectory_array/1e3;
-else
-    sc_trajectories = Swarm.rel_trajectory_array/1e3;
-end
-
 % Time
 plot_time = Swarm.sample_times(i_time);
 
@@ -85,7 +77,7 @@ h_title = title(['Time = ', num2str(floor(plot_time/8640)/10), ' day '],'fontsiz
 h_ast = render_asteroid_3d(AsteroidModel, absolute, Swarm.sample_times(i_time));
 
 % Plot the spacecraft trajectories
-h_sc = render_spacecraft_3d(sc_trajectories(1:i_time,:,:),...
+h_sc = render_spacecraft_3d(Swarm,...
     'color', color_array, 'linewidth', 0.75, 'absolute', absolute, ...
     'show_trail', true, 'markersize', 0, ...
     'LineWidth',min_line_thickness);

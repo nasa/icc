@@ -18,7 +18,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function reward_map = get_coverage_reward_map(AsteroidModel, observable_points_map, sc_type)
+function reward_map = get_coverage_reward_map(AsteroidModel, observable_points_map, sc_type, sc_optimized)
 %GET_COVERAGE_REWARD Defines the value of the observed points
 %   reward_map{i}(j,k) defines the reward accociated with agent i observing
 %   vertex j at time k
@@ -36,10 +36,10 @@ flag_map = 0; % 0 for uniform reward
 N = length(observable_points_map);
 pos_points = AsteroidModel.BodyModel.shape.vertices;
 Nv = size(pos_points,1);
-K = size(observable_points_map{1},2);
+K = size(observable_points_map{sc_optimized(1)},2);
 reward_map = cell(1,N);
 
-for i_sc = 1:N
+for i_sc = sc_optimized
     if flag_map==0
         %% Uniform Map
         reward_map{i_sc} = ones(Nv,K);

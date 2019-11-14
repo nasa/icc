@@ -86,7 +86,7 @@ end
 % Create observable points map
 if flag_optimization_approach~=0
     observable_points_map = cell(1,N);
-    for i_sc = 1:N
+    for i_sc = sc_optimized
         observable_points_map{i_sc} = sparse(zeros(Nv,K));
         for i_time = 1:K
             observable_points_map{i_sc}(observable_points{i_sc, i_time}, i_time) = 1;
@@ -103,7 +103,7 @@ if flag_optimization_approach==0
         reward_map{i_sc} = ones(Nv, K);
     end
 else
-    reward_map = get_coverage_reward_map(AsteroidModel, observable_points_map, Swarm.Parameters.types );
+    reward_map = get_coverage_reward_map(AsteroidModel, observable_points_map, Swarm.Parameters.types, sc_optimized);
 end
 
 %% Choose Observation Points

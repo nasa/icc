@@ -62,13 +62,6 @@ if exist('fig','var')
     end
 end
 
-% Which trajectories do we use? This will help make the plotting code
-% cleaner
-if absolute == true
-    sc_trajectories = Swarm.abs_trajectory_array;
-else
-    sc_trajectories = Swarm.rel_trajectory_array;
-end
 
 % Time
 plot_time = Swarm.sample_times(i_time);
@@ -87,7 +80,7 @@ h_op = plot_observed_points(Swarm, AsteroidModel, [1, i_time], 'spacecraft_ids',
 % Line from observer to observed point
 h_line = plot_observation_ray(Swarm, AsteroidModel, i_time, 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute, 'color_array', color_array);
 % Spacecraft trajectory
-h_sc = render_spacecraft_3d(sc_trajectories(1:i_time,:,:)./1000, 'color', color_array, 'linewidth', 0.75, 'absolute', absolute, 'plot_time', plot_time);
+h_sc = render_spacecraft_3d(Swarm, i_time, 'color', color_array, 'linewidth', 0.75, 'absolute', absolute, 'plot_time', plot_time, 'absolute', absolute);
 
 plot_handles = cell(5,1);
 plot_handles{1} = h_ast;

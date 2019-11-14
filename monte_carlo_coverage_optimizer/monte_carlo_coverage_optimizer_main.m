@@ -50,14 +50,17 @@ h = waitbar(iter/max_iter,'Finding orbits...');
 
 for i_sc = setdiff(1:N, Swarm.get_indicies_of_type(0))
     reset_reward = true;
+    sc_same_type = intersect(1:i_sc, Swarm.get_indicies_of_type(Swarm.Parameters.types{i_sc})); % all SC <= i_sc of same type
+    
     for i_orbit = setdiff(1:n_trial_orbits,best_orbits_set)
         trial_swarm{i_orbit} = Swarm.copy(); % copy Swarm, which includes the best trajectories for spacecraft 1:(i_sc-1)
         trial_swarm{i_orbit}.integrate_trajectory(i_sc, AsteroidModel, trial_initial_states(i_orbit,:), 'absolute'); % add in one of the trial orbits
-        trial_swarm{i_orbit} = observed_points_optimizer_main(AsteroidModel, trial_swarm{i_orbit}, 1:i_sc, i_sc); % observe the asteroid, and update the coverage reward to include the new orbit
+        trial_swarm{i_orbit} = observed_points_optimizer_main(AsteroidModel, trial_swarm{i_orbit}, sc_same_type, i_sc); % observe the asteroid, and update the coverage reward to include the new orbit
+        % above 3 lines could be made paralell using parfor
+        
         if (trial_swarm{i_orbit}.get_coverage_reward() > best_reward) || (reset_reward==true) % keep track of the best trial swarm
             reset_reward = false;
             best_reward = trial_swarm{i_orbit}.get_coverage_reward();
-
             best_swarm = trial_swarm{i_orbit}.copy();
             best_orbit = i_orbit;
         end

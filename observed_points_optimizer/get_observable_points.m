@@ -38,7 +38,7 @@ Nv = size(asteroid_vertices,1);
 %% Get Observable Points
 if flag_use_instruments==true
     %% Determine Points that meet instrument constraints 
-    if ismember(4,sc_type) || ismember(6,sc_type) % for altimeter or lidar just retun nadir
+    if ismember(4,sc_type) || ismember(6,sc_type) % for Altimeter or Magnetometer just retun nadir
         observable_points = get_nadir_point(asteroid_vertices, sc_position);
     else
         vertex_observability_status = zeros(1,Nv); % 1 if observable, zero otherwise
