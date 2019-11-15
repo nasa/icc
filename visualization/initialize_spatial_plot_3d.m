@@ -37,7 +37,7 @@ ylabel('Y axis [km]','fontsize',standard_font_size, 'fontname',font_name)
 zlabel('Z axis [km]','fontsize',standard_font_size, 'fontname',font_name)
 set(gca, 'fontsize',standard_font_size, 'fontname',font_name)
 
-grid minor;
+grid on;
 view(3)
 
 if limitsSpecified==true

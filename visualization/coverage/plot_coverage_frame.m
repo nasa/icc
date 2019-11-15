@@ -53,6 +53,15 @@ if length(varargin) > 3
         if strcmpi(varargin{i},'figure_handle') || strcmpi(varargin{i},'figure') || strcmpi(varargin{i},'handle')
             fig = varargin{i+1};
         end
+        if strcmpi(varargin{i},'font_size') || strcmpi(varargin{i},'fontsize') || strcmpi(varargin{i},'standard_font_size')
+            standard_font_size = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'title_font_size')
+            title_font_size = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'font_name')
+            font_name = varargin{i+1};
+        end
     end
 end
 if exist('fig','var')
@@ -65,6 +74,8 @@ end
 
 % Time
 plot_time = Swarm.sample_times(i_time);
+
+h_title = title(['Time = ', num2str(floor(plot_time/8640)/10), ' day '],'fontsize',title_font_size,'fontname',font_name);
 
 % Draw the asteroid in its new location
 if absolute == true
@@ -94,5 +105,16 @@ if exist('h_line','var') && ~isempty(h_line)
     plot_handles{4} = h_line; % Optional
 end
 plot_handles{5} = h_sc;
+if exist('h_title','var') && ~isempty(h_title)
+    plot_handles{6} = h_title; % Optional
+end
+
+xlabel('X axis [km]','fontsize',standard_font_size, 'fontname',font_name)
+ylabel('Y axis [km]','fontsize',standard_font_size, 'fontname',font_name)
+zlabel('Z axis [km]','fontsize',standard_font_size, 'fontname',font_name)
+set(gca, 'fontsize',standard_font_size, 'fontname',font_name)
+
+grid on;
+view(3)
 
 end
