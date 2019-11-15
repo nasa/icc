@@ -116,11 +116,11 @@ swarm.Observation.priority(1:2,:) = 1;
 record_video = plot_flag;
 videoname = ['comm_optimization_problem_',datestr(now,'yyyymmdd_HHMMSS'),'.avi'];
 
-reference_bandwidth = 250000;
-reference_distance = 100000;
-max_bandwidth = 100*1e6;
+bandwidth_parameters.reference_bandwidth = 250000;
+bandwidth_parameters.reference_distance = 100000;
+bandwidth_parameters.max_bandwidth = 100*1e6;
 
-bandwidth_model = @(x1, x2) quadratic_comm_model(x1, x2, reference_distance,reference_bandwidth,max_bandwidth);
+bandwidth_model = @(x1, x2) quadratic_comm_model(x1, x2, bandwidth_parameters);
 %bandwidth_model = @(x1,x2) min(reference_bandwidth * (reference_distance/norm(x2-x1,2))^2, max_bandwidth)
 
 % [flows, effective_science, delivered_science, bandwidths, dual_bandwidths_and_memory] = communication_optimizer(spacecraft, bandwidth_model);
@@ -134,15 +134,11 @@ goal = sum(sum(swarm.Observation.priority.*swarm.Communication.effective_source_
 fraction_of_possible = goal/sum(sum(swarm.Observation.priority.*swarm.Observation.flow));
 
 %% Compute gradient wrt initial conditions
-dgoal_dic = compute_gradient(swarm, reference_distance, reference_bandwidth, max_bandwidth);
+dgoal_dic = compute_gradient(swarm, bandwidth_parameters);
 
 %% Plotting
 if plot_flag
     plot_communications(swarm, ErosGravity,record_video, videoname )
 end
 
-end
-
-function [bandwidth] = quadratic_comm_model(x1, x2, reference_distance,reference_bandwidth,max_bandwidth)
-    bandwidth = min(max_bandwidth, reference_bandwidth*(reference_distance/norm(x2-x1,2))^2);
 end
