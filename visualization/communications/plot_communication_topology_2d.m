@@ -18,45 +18,55 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [ ] = plot_communication_topology_2d(time_step, Swarm, AsteroidModel, color_array, font_size, max_line_thickness, max_bandwidth)
+function [ ] = plot_communication_topology_2d(varargin) %i_time, Swarm, AsteroidModel, color_array, font_size, max_line_thickness, max_bandwidth)
 %PLOT_COMMUNICATION_TOPOLOGY_2D Plots a 2D projection of the spacecraft
 %locations with lines indicating the data flow on the current iteration.
 %The asteroid is approximated by a spherical outer bound.
 %   Syntax: [] = plot_communication_topology(time_step, Swarm, AsteroidModel, color_array*, font_size*, max_bandwidth*)
 %    *optional input
 
-n_timesteps = Swarm.get_num_timesteps;
-n_spacecraft = Swarm.get_num_spacecraft;
-if nargin<7
-    % Estimate max and min bandwidth so we can plot accordingly
-    tmp_bandwidths = Swarm.Communication.bandwidths_and_memories;
-    for t = 1:n_timesteps
-        for sc = 1:n_spacecraft
-            tmp_bandwidths(t, sc, sc) = 0;
+time_step = varargin{1};
+Swarm = varargin{2};
+AsteroidModel = varargin{3};
+
+if length(varargin) > 3
+    for i = 4:1:length(varargin)
+        if strcmpi(varargin{i},'color_array') || strcmpi(varargin{i},'colorArray') ||  strcmpi(varargin{i},'color')
+            color_array = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'font_size') || strcmpi(varargin{i},'fontsize') || strcmpi(varargin{i},'standard_font_size')
+            standard_font_size = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'title_font_size')
+            title_font_size = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'font_name')
+            font_name = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'min_line_thickness')
+            min_line_thickness = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'max_line_thickness')
+            max_line_thickness = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'max_memory_marker_size')
+            max_memory_marker_size = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'link_color_steps')
+            link_color_steps = varargin{i+1};
         end
     end
-    max_bandwidth = max(max(max(tmp_bandwidths)));
 end
 
-if nargin<6
-    max_line_thickness = 25;
-end
-
-if nargin<5
-    font_size = 25;
-end
-
-if nargin < 4
-    color_array = ['c' 'r' 'b' 'g' 'm'];
-end
-
+n_timesteps = Swarm.get_num_timesteps;
+n_spacecraft = Swarm.get_num_spacecraft;
 
 cla()
 hold on
 % Plot the radius encircling the asteroid
-asteroid_max_radius = AsteroidModel.BodyModel.shape.maxRadius*1e3;
-asteroid_mean_radius = AsteroidModel.BodyModel.shape.meanRadius*1e3;
-asteroid_min_radius = AsteroidModel.BodyModel.shape.minRadius*1e3;
+asteroid_max_radius = AsteroidModel.BodyModel.shape.maxRadius;
+asteroid_mean_radius = AsteroidModel.BodyModel.shape.meanRadius;
+asteroid_min_radius = AsteroidModel.BodyModel.shape.minRadius;
 
 theta = 0:pi/50:2*pi;
 plot(asteroid_max_radius * cos(theta), asteroid_max_radius * sin(theta),':k','LineWidth',1.0);
@@ -64,60 +74,30 @@ plot(asteroid_mean_radius * cos(theta), asteroid_mean_radius * sin(theta),'-k','
 patch(asteroid_min_radius * cos(theta), asteroid_min_radius * sin(theta),'k');
 
 
-n_spacecraft = Swarm.get_num_spacecraft;
-
-
 % Communications
-% Available bandwidth
-for sc1 = 1:n_spacecraft
-    for sc2 = 1:n_spacecraft
-        if sc2~=sc1
-            if Swarm.Communication.bandwidths_and_memories(time_step,sc1, sc2) > 0
-                plot([Swarm.abs_trajectory_array(time_step, 1, sc1) Swarm.abs_trajectory_array(time_step, 1, sc2)] , ...
-                    [Swarm.abs_trajectory_array(time_step, 2, sc1) Swarm.abs_trajectory_array(time_step, 2, sc2)],'-', ...
-                    'LineWidth',Swarm.Communication.bandwidths_and_memories(time_step,sc1, sc2)/max_bandwidth*max_line_thickness, ...
-                    'Color',[0.5,0.5,0.5,0.3])
-            end
-        end
-    end
-end
-% Effective bandwidth
-for sc1 = 1:n_spacecraft
-    for sc2 = 1:n_spacecraft
-        if sc2~=sc1
-            if Swarm.Communication.flow(time_step,sc1, sc2) > 0
-                plot([Swarm.abs_trajectory_array(time_step, 1, sc1) Swarm.abs_trajectory_array(time_step, 1, sc2)] , ...
-                    [Swarm.abs_trajectory_array(time_step, 2, sc1) Swarm.abs_trajectory_array(time_step, 2, sc2)],'-', ...
-                    'LineWidth',Swarm.Communication.flow(time_step,sc1, sc2)/max_bandwidth*max_line_thickness, ...
-                    'Color',color_array(:,mod(sc1-1,size(color_array,2))+1)')
-            end
-        end
-    end
-end
 
-% Plot the spacecraft locations
-for ns = 1:1:n_spacecraft
-    plot(Swarm.abs_trajectory_array(time_step,1,ns),Swarm.abs_trajectory_array(time_step,2,ns),'o',...
-        'MarkerFaceColor',color_array(:,mod(ns-1,size(color_array,2))+1)',...
-        'MarkerEdgeColor',color_array(:,mod(ns-1,size(color_array,2))+1)',...
-        'MarkerSize',10)
-end
-carrier_index = Swarm.get_indicies_of_type(0);
-assert(length(carrier_index) <= 1, "ERROR: too many carriers")
-if ~isempty(carrier_index) && carrier_index>0
-    plot(Swarm.abs_trajectory_array(time_step,1,carrier_index),Swarm.abs_trajectory_array(time_step,2,carrier_index),'o',...
-        'MarkerFaceColor',color_array(:,mod(carrier_index-1,size(color_array,2))+1)',...
-        'MarkerEdgeColor',color_array(:,mod(carrier_index-1,size(color_array,2))+1)',...
-        'MarkerSize',10)
-end
+absolute = true;
 
-xlabel('X Axis [m]','fontsize',font_size)
-ylabel('Y Axis [m]','fontsize',font_size)
-title('Communication Topology','fontsize',font_size)
-set(gca, 'fontsize',font_size)
-xlim = [min(min(Swarm.abs_trajectory_array(:,1,:))), max(max(Swarm.abs_trajectory_array(:,1,:)))];
-ylim = [min(min(Swarm.abs_trajectory_array(:,2,:))), max(max(Swarm.abs_trajectory_array(:,2,:)))];
-axis equal
+% Plot spacecraft markers with memory use
+h_mem = plot_memory_use(Swarm, time_step, ...
+    'color_array', color_array, 'absolute', absolute, ...
+        'max_memory_marker_size', max_memory_marker_size);
+
+% Plot information flow
+h_bw = plot_information_flow(Swarm, time_step, ...
+    'color_array',color_array, 'absolute', absolute, ...
+    'min_line_thickness', min_line_thickness, ...
+    'max_line_thickness', max_line_thickness, ...
+    'link_color_steps', link_color_steps);
+
+view(2)
+xlabel('X Axis [km]','fontsize',standard_font_size, 'fontname',font_name)
+ylabel('Y Axis [km]','fontsize',standard_font_size, 'fontname',font_name)
+title('Communication Topology','fontsize',title_font_size, 'fontname',font_name)
+set(gca, 'fontsize',standard_font_size, 'fontname',font_name)
+xlim = (1e-3)*[min(min(Swarm.abs_trajectory_array(:,1,:))), max(max(Swarm.abs_trajectory_array(:,1,:)))];
+ylim = (1e-3)*[min(min(Swarm.abs_trajectory_array(:,2,:))), max(max(Swarm.abs_trajectory_array(:,2,:)))];
 axis([xlim, ylim])
+axis equal
 
 end

@@ -34,16 +34,12 @@ function [fig_handles] = plot_information_flow(varargin)
 % max_bandwidth*, min_line_thickness*, max_line_thickness*, link_color_steps*)
 % * Optional keyword inputs
 
-swarm = varargin{1};
+Swarm = varargin{1};
 time = varargin{2};
 
 absolute = false;
-n_spacecraft = swarm.get_num_spacecraft();
+n_spacecraft = Swarm.get_num_spacecraft();
 max_bandwidth = NaN;
-
-min_line_thickness = 1;
-max_line_thickness = 20;
-link_color_steps = 100;
 
 if length(varargin) > 2
     for i = 3:2:length(varargin)
@@ -69,8 +65,8 @@ if length(varargin) > 2
     end
 end
 
-abs_trajectory_array = swarm.abs_trajectory_array/1e3;
-rel_trajectory_array = swarm.rel_trajectory_array/1e3;
+abs_trajectory_array = Swarm.abs_trajectory_array/1e3;
+rel_trajectory_array = Swarm.rel_trajectory_array/1e3;
 if absolute == true
     trajectory_array = abs_trajectory_array;
 else
@@ -86,10 +82,10 @@ end
 
 link_colors = [summer(link_color_steps/2);flipud(autumn(link_color_steps/2))]; %flipud(hot(link_color_steps));
  
-n_timesteps = swarm.get_num_timesteps();
+n_timesteps = Swarm.get_num_timesteps();
 
 if isnan(max_bandwidth)
-    tmp_bandwidths = swarm.Communication.bandwidths_and_memories;
+    tmp_bandwidths = Swarm.Communication.bandwidths_and_memories;
     for t = 1:n_timesteps
         for sc = 1:n_spacecraft
             tmp_bandwidths(t, sc, sc) = 0;
@@ -98,7 +94,7 @@ if isnan(max_bandwidth)
     max_bandwidth = max(max(max(tmp_bandwidths)));
 end
 
-bandwidth_duals = swarm.Communication.dual_bandwidths_and_memories;
+bandwidth_duals = Swarm.Communication.dual_bandwidths_and_memories;
 max_bandwidth_duals = max(max(max(bandwidth_duals)));
 min_bandwidth_duals = min(min(min(bandwidth_duals)));
 
@@ -119,17 +115,17 @@ for sc1 = 1:n_spacecraft
             [trajectory_array(time, 2, sc1), trajectory_array(time, 2, sc2)], ...
             [trajectory_array(time, 3, sc1), trajectory_array(time, 3, sc2)], ...
             'Color','k', ...
-            'linewidth', (swarm.Communication.bandwidths_and_memories(time,sc1,sc2))/max_bandwidth*max_line_thickness+min_line_thickness);
+            'linewidth', (Swarm.Communication.bandwidths_and_memories(time,sc1,sc2))/max_bandwidth*max_line_thickness+min_line_thickness);
         h_bw(sc1,sc2).Color = [link_colors(link_color_index,:),.3];
         
         % Plot the actual info flow
-        if swarm.Communication.flow(time,sc1,sc2)>0
+        if Swarm.Communication.flow(time,sc1,sc2)>0
             h_comm(sc1,sc2) = plot3([trajectory_array(time, 1, sc1), trajectory_array(time, 1, sc2)], ...
                 [trajectory_array(time, 2, sc1), trajectory_array(time, 2, sc2)], ...
                 [trajectory_array(time, 3, sc1), trajectory_array(time, 3, sc2)], ...
                 ':', ...
                 'Color', link_colors(link_color_index,:), ...
-                'linewidth', (swarm.Communication.flow(time,sc1,sc2))/max_bandwidth*max_line_thickness+min_line_thickness);
+                'linewidth', (Swarm.Communication.flow(time,sc1,sc2))/max_bandwidth*max_line_thickness+min_line_thickness);
             hold all;
         end
         

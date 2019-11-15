@@ -11,14 +11,18 @@ function [] = initialize_spatial_plot_3d(varargin)
 n_inputs = max(size(varargin));
 limitsSpecified = false;
 fontSizeSpecified = false;
+
 for i = 1:2:n_inputs
-    if strcmpi(varargin{i},'font_size') || strcmpi(varargin{i},'fontsize')
+    if strcmpi(varargin{i},'font_size') || strcmpi(varargin{i},'fontsize') || strcmpi(varargin{i},'standard_font_size')
         fontSizeSpecified = true;
         standard_font_size = varargin{i+1};
     end
     if strcmpi(varargin{i},'limits')
         limitsSpecified = true;
         axes_limits = varargin{i+1}; 
+    end
+    if strcmpi(varargin{i},'font_name')
+        font_name = varargin{i+1};
     end
 end
 
@@ -28,10 +32,10 @@ if fontSizeSpecified==false
 end
 
 hold on
-xlabel('X axis [km]','fontsize',standard_font_size)
-ylabel('Y axis [km]','fontsize',standard_font_size)
-zlabel('Z axis [km]','fontsize',standard_font_size)
-set(gca, 'fontsize',standard_font_size)
+xlabel('X axis [km]','fontsize',standard_font_size, 'fontname',font_name)
+ylabel('Y axis [km]','fontsize',standard_font_size, 'fontname',font_name)
+zlabel('Z axis [km]','fontsize',standard_font_size, 'fontname',font_name)
+set(gca, 'fontsize',standard_font_size, 'fontname',font_name)
 
 grid minor;
 view(3)

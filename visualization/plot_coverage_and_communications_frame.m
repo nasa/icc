@@ -29,55 +29,62 @@
 
 function [plot_handles] = plot_coverage_and_communications_frame(varargin)
 % PLOT_COVERAGE_AND_COMMUNICATIONS Plots both coverage and comms.
-% Syntax: [view] = plot_coverage_and_communications_frame(Swarm, ErosModel, plot_time_index, axes_limits*, color_array*, absolute*)
-% *optional keyword input
 
 Swarm = varargin{1};
 AsteroidModel = varargin{2};
-i_time = varargin{3};
-absolute= false;
-color_array = ['r', 'b', 'g', 'c', 'm'];
-axes_limits = [-1 1 -1 1 -1 1].*40;
-min_line_thickness = 1;
-max_line_thickness = 20;
-max_memory_marker_size = 40;
-link_color_steps = 100;
-fontSizeSpecified = false;
+time_step = varargin{3};
 
 if length(varargin) > 3
-    for i = 4:2:length(varargin)
+    for i = 4:1:length(varargin)
         if strcmpi(varargin{i},'color_array') || strcmpi(varargin{i},'colorArray') ||  strcmpi(varargin{i},'color')
             color_array = varargin{i+1};
         end
         if strcmpi(varargin{i},'absolute')
             absolute = varargin{i+1};
         end
-        if strcmpi(varargin{i},'axes_limits') || strcmpi(varargin{i},'axes')
-            axes_limits = varargin{i+1};
-            assert(length(axes_limits)==6, "ERROR: axes limits size is incorrect")
+        if strcmpi(varargin{i},'font_size') || strcmpi(varargin{i},'fontsize') || strcmpi(varargin{i},'standard_font_size')
+            standard_font_size = varargin{i+1};
         end
-        if strcmpi(varargin{i},'font_size') || strcmpi(varargin{i},'fontsize')
-            fontSizeSpecified = true;
+        if strcmpi(varargin{i},'limits') || strcmpi(varargin{i},'axes_limits')
+            axes_limits = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'title_font_size')
             title_font_size = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'font_name')
+            font_name = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'min_line_thickness')
+            min_line_thickness = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'max_line_thickness')
+            max_line_thickness = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'max_memory_marker_size')
+            max_memory_marker_size = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'link_color_steps')
+            link_color_steps = varargin{i+1};
         end
     end
 end
 
+
 % Time
-plot_time = Swarm.sample_times(i_time);
+plot_time = Swarm.sample_times(time_step);
 
-if fontSizeSpecified==false
-    title_font_size = 30;
-end
+% if fontSizeSpecified==false
+%     title_font_size = 30;
+% end
 
-h_title = title(['Time = ', num2str(floor(plot_time/8640)/10), ' day '],'fontsize',title_font_size);
+h_title = title(['Time = ', num2str(floor(plot_time/8640)/10), ' day '],'fontsize',title_font_size,'fontname',font_name);
 
 
 % Draw the asteroid in its new location
-h_ast = render_asteroid_3d(AsteroidModel, absolute, Swarm.sample_times(i_time));
+h_ast = render_asteroid_3d(AsteroidModel, absolute, Swarm.sample_times(time_step));
 
 % Plot the spacecraft trajectories
-h_sc = render_spacecraft_3d(Swarm, i_time,...
+h_sc = render_spacecraft_3d(Swarm, time_step,...
     'color', color_array, 'linewidth', 0.75, 'absolute', absolute, ...
     'show_trail', true, 'markersize', 0, ...
     'LineWidth',min_line_thickness);
@@ -85,21 +92,21 @@ h_sc = render_spacecraft_3d(Swarm, i_time,...
 % Coverage
 
 % Plot observable points
-h_os = plot_observable_points(Swarm, AsteroidModel, i_time, 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute);
+h_os = plot_observable_points(Swarm, AsteroidModel, time_step, 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute);
 % Actually observed points - if any
-h_op = plot_observed_points(Swarm, AsteroidModel, [1, i_time], 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute, 'color_array', color_array);
+h_op = plot_observed_points(Swarm, AsteroidModel, [1, time_step], 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute, 'color_array', color_array);
 % Line from observer to observed point
-h_line = plot_observation_ray(Swarm, AsteroidModel, i_time, 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute, 'color_array', color_array);
+h_line = plot_observation_ray(Swarm, AsteroidModel, time_step, 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute, 'color_array', color_array);
 
 % Communications
 
 % Plot spacecraft markers with memory use
-h_mem = plot_memory_use(Swarm, i_time, ...
+h_mem = plot_memory_use(Swarm, time_step, ...
     'color_array', color_array, 'absolute', absolute, ...
         'max_memory_marker_size', max_memory_marker_size);
 
 % Plot information flow
-h_bw = plot_information_flow(Swarm, i_time, ...
+h_bw = plot_information_flow(Swarm, time_step, ...
     'color_array',color_array, 'absolute', absolute, ...
     'min_line_thickness', min_line_thickness, ...
     'max_line_thickness', max_line_thickness, ...

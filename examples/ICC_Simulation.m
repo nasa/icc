@@ -131,10 +131,10 @@ Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Do you want the 3d plot to be in an absolute or relative frame?
-absolute = true;
+absolute = false;
 
 % Do you want to record video?
-record_video = true;
+record_video = false;
 
-plot_coverage_and_communications(Swarm, ErosModel,'absolute', true, 'record_video', record_video)
+plot_coverage_and_communications(Swarm, ErosModel,'absolute', absolute, 'record_video', record_video)
 
