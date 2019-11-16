@@ -25,8 +25,8 @@ Run the script `utilities/spice/download_SPICE_kernel.sh` to download required d
 To set environment variables:
 
 - On Linux-based systems, add the line `export SBDT_PATH="path/to/your/copy/of/sbdt"` and `export NAIF_PATH="path/to/your/copy/of/naif"` to `~/.bashrc`. If you use a different shell (e.g. zsh), add the lines to the appropriate `.*rc` file.
-- On MacOS, follow [these instructions](https://support.shotgunsoftware.com/hc/en-us/articles/219042108-Setting-global-environment-variables-on-OS-X).
-> **WARNING** Setting environment variables in `~/.bashrc` or `~/.zshrc` will _not_ affect MATLAB unless MATLAB is launched from the terminal.
+- On MacOS, follow [these instructions](https://support.shotgunsoftware.com/hc/en-us/articles/219042108-Setting-global-environment-variables-on-OS-X). 
+> **WARNING** On MacOS, setting environment variables in `~/.bashrc` or `~/.zshrc` will _not_ affect MATLAB unless MATLAB is launched from the terminal.
 - On Windows, follow [these instructions](https://www.architectryan.com/2018/08/31/how-to-change-environment-variables-on-windows-10/). 
 
 ___
