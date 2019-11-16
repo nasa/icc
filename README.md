@@ -1,7 +1,6 @@
 # icc-dev
 Contains MATLAB simulation and optimization code for spacecraft orbiting small Solar System Bodies.
 
-___
 ## Quickstart
 The examples folder contains example _main_ scripts, which demonstrate usage of the provided modules. The scripts should be executed from within this folder.
 
@@ -64,6 +63,8 @@ The system is defined through two special classes, which serve as the primary in
 See the _examples_ directory for usage examples. 
 
 ___
+## Troubleshooting
+
 ### Troubleshooting SBDT
 SBDT is typically distributed as a `.zip` file. The archive contains tests in the `Tests` folder and examples in the `Demos` folder.
 
