@@ -14,16 +14,22 @@ end
 
 % Store location of NAIF as global
 global NAIF_PATH
-NAIF_PATH =  strcat(ROOT_PATH, '/utilities/spice') ; 
+NAIF_PATH = getenv("NAIF_PATH");
+if isempty(NAIF_PATH)
+    warning("NAIF_PATH environment variable not found. "+...
+    "Assuming that NAIF data is stored in $ROOT_PATH/utilities/spice."+ ...
+    "This is likely to cause an error when running parfor "+ ...
+    "- you should really specify the NAIF path as an environment variable.")
+    NAIF_PATH = strcat(ROOT_PATH, '/utilities/spice') ; 
+end
 
 % Add MICE to path 
 addpath(genpath(strcat(ROOT_PATH, '/../mice/'))); 
 
 %% Complete Setup 
 
-run utilities/misc/initialize_SBDT.m
+evalc("run utilities/misc/initialize_SBDT.m");
 addpath(ROOT_PATH); 
-clc
 
 %% Check whether SBDT exists
 
