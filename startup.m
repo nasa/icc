@@ -26,11 +26,6 @@ end
 % Add MICE to path 
 addpath(genpath(strcat(ROOT_PATH, '/../mice/'))); 
 
-%% Complete Setup 
-
-evalc("run utilities/misc/initialize_SBDT.m");
-addpath(ROOT_PATH); 
-
 %% Check whether SBDT exists
 
 if ~exist('addSBDT','file')
@@ -46,3 +41,8 @@ if strcmp(cvx_solver,'SDPT3')
     warning("SDPT3 is known to falsely return infeasible for our problem. Switching CVX solver to SeDuMi")
     cvx_solver SeDuMi
 end
+
+%% Complete Setup 
+
+evalc("run utilities/misc/initialize_SBDT.m");
+addpath(ROOT_PATH); 
