@@ -107,7 +107,8 @@ classdef SphericalHarmonicsGravityIntegrator_SBDT
             % - state_transition_matrix, the state transition matrix (see
             %    Scheeres)
             
-            sun = loadSun(obj.constants, 1, 1, 1, 1);
+            % Evalc is used to suppress printed output
+            [~, sun] = evalc("loadSun(obj.constants, 1, 1, 1, 1)");
             simControls = [];
             partials.names = {'x'};
             [ time, absolute_traj, partials, ~, ~ ] = ...
@@ -147,7 +148,8 @@ classdef SphericalHarmonicsGravityIntegrator_SBDT
             start_state_relative(1:3) = (Rot_i2b*(start_state_absolute(1:3)));
             start_state_relative(4:6) = (Rot_i2b*(start_state_absolute(4:6) - cross(omega,start_state_absolute(1:3))));
             
-            sun = loadSun(obj.constants, 1, 1, 1, 1);
+            % Evalc is used to suppress printed output
+            [~, sun] = evalc("loadSun(obj.constants, 1, 1, 1, 1)");
             simControls = [];
             partials.names = {'x'};
             [ time, relative_traj, partials, ~, ~ ] = ...

@@ -66,6 +66,7 @@ ___
 ## Troubleshooting
 
 ### Troubleshooting SBDT
+
 SBDT is typically distributed as a `.zip` file. The archive contains tests in the `Tests` folder and examples in the `Demos` folder.
 
 Core SBDT functions are implemented in C and must be compiled to MATLAB _mex_ files to enable MATLAB to call them. The SBDT distribution contains pre-compiled MEX files for Windows, MacOS, and Linux inside the folder `CompiledMEX`.
@@ -73,6 +74,23 @@ If you encounter issues trying to run SBDT, it may be advisable to recompile the
 - Navigate to the SBDT root folder.
 - In MATLAB, run `compileMexSBDT()`. A number of files will be generated in the folder. The file extension is `mexw64` on Windows, `mexa64` on Linux, and `mexmaci64` on MacOS. 
 - Copy the newly generated mex files to the CompiledMEX folder, overwriting the previous ones.
+
+### Warning: P-file is older than M-file.
+
+Depending on the SBDT distribution in use, you may receive the warning
+
+```matlab
+Warning: P-file $PATH/TO/FILE.p is older than M-file $PATH/TO/FILE.m.
+$PATH/TO/FILE.p may be obsolete and may need to be regenerated.
+Type "help pcode" for information about generating P-files from M-files.
+
+```
+
+You can get rid of this warning by navigating to the SBDT folder in the terminal and running
+```bash
+find . -type f -name "*.p" -exec touch {} +
+```
+This will reset the last-modified time of all .p files to the current date and time.
 
 ### Detailed instructions on how to set environment variables
 

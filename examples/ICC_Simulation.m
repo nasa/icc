@@ -85,13 +85,12 @@ bandwidth_parameters.max_bandwidth = 100*1e6;
 userModelsPath = strcat(SBDT_PATH,'/ExampleUserModels');
 constantsModel = 1;
 addpath(strcat(SBDT_PATH,'/Startup'));
-global constants
 constants = addSBDT(SBDT_PATH, userModelsPath, constantsModel);
 
 % In order to select a different gravity model, change the inputs to
 % the loadEros function. See the help for assistance
 eros_sbdt = loadEros( constants, 1, 1, 4, 3 );
-ErosModel = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt);
+ErosModel = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt, constants);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                        Initialize Swarm Model                           %

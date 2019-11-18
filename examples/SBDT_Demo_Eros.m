@@ -18,19 +18,16 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+clear, clc, close all, run ../startup.m  % refresh 
 
 % INITIALIZE DEMO -------------------------------------------------------------
 
 disp( '---------------------------------------------------------------' );
-fprintf( 'Starting SBDT_demo_Eros.\n\n' );
+fprintf( 'Starting SBDT_Demo_Eros.\n\n' );
 
 % First, make sure the SBDT and the constants structure have been loaded
 % using 'addSBDT'.
-global constants
-if ( isempty( constants ) )
-    error( 'demo_Eros:addSBDT', [ 'SBDT V6.0 not loaded. Execute the ', ...
-           '"addSBDT" function with appropriate inputs and run again.' ] );
-end
+constants = initialize_SBDT();
 
 
 % LOAD Eros MODELS ---------------------------------------------------------
@@ -200,8 +197,8 @@ plot3( scState_ell( 1, : ), scState_ell( 2, : ), scState_ell( 3, : ), ...
        'm'  );
 plot3( scState_sh_n15a( 1, : ), scState_sh_n15a( 2, : ), scState_sh_n15a( 3, : ), ...
        'b'  );
-% plot3( scState_sh_n393( 1, : ), scState_sh_n393( 2, : ), scState_sh_n393( 3, : ), ...
-%        'b--'  );
+plot3( scState_sh_n393( 1, : ), scState_sh_n393( 2, : ), scState_sh_n393( 3, : ), ...
+       'b--'  );
    
 % Finalize plot
 legend( 'Eros', 'Pointmass', '1708 Polyhedron', ...
