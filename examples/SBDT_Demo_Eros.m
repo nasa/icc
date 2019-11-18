@@ -25,6 +25,9 @@ clear, clc, close all, run ../startup.m  % refresh
 disp( '---------------------------------------------------------------' );
 fprintf( 'Starting SBDT_Demo_Eros.\n\n' );
 
+addpath(genpath("../utilities"));
+addpath(genpath("../small_body_dynamics/EROS 433"));
+
 % First, make sure the SBDT and the constants structure have been loaded
 % using 'addSBDT'.
 constants = initialize_SBDT();
