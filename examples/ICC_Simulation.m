@@ -128,7 +128,7 @@ Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
 absolute = true;
 
 % Do you want to record video?
-record_video = true;
+record_video = false;
 
 color_array = rand(3,Swarm.get_num_spacecraft());
 
