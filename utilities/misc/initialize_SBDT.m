@@ -17,25 +17,23 @@
 % are welcome and should be sent to the software's maintainer.                %
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [constants] = initialize_SBDT()
+function [constants] = initialize_SBDT(SBDT_PATH)
 %INITIALIZE_SBDT 
-%   Assumes that SBDT_PATH is specified as a variable somewhere.
-%   If it isn't, defaults to a directory on Federico's computer.
-global SBDT_PATH
-% Attempt to grab the SBDT path from an environment variable
-if isempty(SBDT_PATH)
-    SBDT_PATH=getenv("SBDT_PATH");
-end
 
-if isempty(SBDT_PATH)
-    warning("SBDT_PATH environment variable not found. Assuming that SBDT is installed in the same folder as icc-dev")
-    SBDT_PATH =  strcat(pwd, '/../SBDT') ; 
+% Attempt to grab the SBDT path from an environment variable
+if nargin<1
+    SBDT_PATH=getenv("SBDT_PATH");
+
+    if isempty(SBDT_PATH)
+        warning("SBDT_PATH environment variable not found. Assuming that SBDT is installed in the same folder as icc-dev")
+        SBDT_PATH =  strcat(pwd, '/../SBDT') ; 
+    end
 end
 
 addpath(fullfile(SBDT_PATH,'Startup'));
 userModelsPath = fullfile(SBDT_PATH,'ExampleUserModels');
 constantsModel = 1;
-global constants;
-constants = addSBDT(SBDT_PATH, userModelsPath, constantsModel);
+% AddSBDT is verbose. We make it quiet by wrapping it in evalc
+[~, constants] = evalc("addSBDT(SBDT_PATH, userModelsPath, constantsModel);");
 
 end
