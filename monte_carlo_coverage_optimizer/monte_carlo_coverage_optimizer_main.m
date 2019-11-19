@@ -37,7 +37,6 @@ function Swarm = monte_carlo_coverage_optimizer_main(AsteroidModel, Swarm, n_tri
 %    - Swarm
 
 N = Swarm.get_num_spacecraft();
-best_reward = 0;
 
 %% Generate Trial Swarms
 trial_swarm = cell(1,n_trial_orbits); % cell array of Swarm copies
@@ -49,23 +48,26 @@ h = waitbar(0/max_iter,'Finding orbits...');
 
 for i_sc = setdiff(1:N, Swarm.get_indicies_of_type(0))
     reset_reward = true;
+    sc_same_type = intersect(1:i_sc, Swarm.get_indicies_of_type(Swarm.Parameters.types{i_sc})); % all SC <= i_sc of same type
     orbits_to_test = setdiff(1:n_trial_orbits,best_orbits_set);
+    best_reward = 0;
     
     parfor i_parfor = 1:length(orbits_to_test)
         i_orbit = orbits_to_test(i_parfor);
         trial_swarm{i_parfor} = Swarm.copy(); % copy Swarm, which includes the best trajectories for spacecraft 1:(i_sc-1)
         trial_swarm{i_parfor}.integrate_trajectory(i_sc, AsteroidModel, trial_initial_states(i_orbit,:), 'absolute'); % add in one of the trial orbits
-        trial_swarm{i_parfor} = observed_points_optimizer_main(AsteroidModel, trial_swarm{i_parfor}, 1:i_sc, i_sc); % observe the asteroid, and update the coverage reward to include the new orbit
+        trial_swarm{i_parfor} = observed_points_optimizer_main(AsteroidModel, trial_swarm{i_parfor}, sc_same_type, i_sc); % observe the asteroid, and update the coverage reward to include the new orbit
     end
     for i_parfor = 1:length(orbits_to_test)
         i_orbit = orbits_to_test(i_parfor);
         if (trial_swarm{i_parfor}.get_coverage_reward() > best_reward) || (reset_reward==true) % keep track of the best trial swarm
             reset_reward = false;
+            best_reward = trial_swarm{i_parfor}.get_coverage_reward();
+            best_swarm = trial_swarm{i_parfor}.copy();
             best_orbit = i_orbit;
         end
     end
-    best_reward = trial_swarm{best_orbit}.get_coverage_reward();
-    best_swarm = trial_swarm{best_orbit}.copy();
+    
     waitbar(i_sc/max_iter,h,'Finding orbits...');
     best_orbits_set = [best_orbits_set, best_orbit]; %#ok<AGROW>
     Swarm = best_swarm.copy(); % Swarm now contains the best trajectories for spacecraft 1:i_sc

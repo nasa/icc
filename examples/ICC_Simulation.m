@@ -46,18 +46,17 @@ addpath(strcat(ROOT_PATH,'/relay_orbit_optimizer'))
 %                   User Options: Flags and Parameters                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-n_spacecraft = 4;  % Number of Spacecraft, counting the carrier
+n_spacecraft = 6;  % Number of Spacecraft, counting the carrier
 
 sc_types = cell(1,n_spacecraft);
-% for i_sc = 1:n_spacecraft
-%     sc_types{i_sc}  = randi([1,6]); % Indicies for instruments on board
-% end
-sc_types{1} = 4;
-sc_types{2} = 4;
+for i_sc = 1:n_spacecraft
+    sc_types{i_sc}  = randi([1,6]); % Indicies for instruments on board
+end
+sc_types{1} = 2;
+sc_types{2} = 2;
 sc_types{3} = 4;
 sc_types{n_spacecraft} = 0; % Mark the carrier so it will not be used
                             % in the Monte Carlo optimization
-
                             
                             
 sc_max_memory = zeros(1,n_spacecraft); % not used, but must be defined
@@ -130,7 +129,7 @@ Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Do you want the 3d plot to be in an absolute or relative frame?
-absolute = false;
+absolute = true;
 
 % Do you want to record video?
 record_video = false;

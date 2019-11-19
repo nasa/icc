@@ -58,11 +58,10 @@ set(h1,'units','normalized','outerposition',[0 0 1 1])
 set(h1,'PaperPositionMode','auto');
 initialize_spatial_plot_3d('standard_font_size', standard_font_size, 'font_name', font_name);
 hold on 
-axis equal
 % Initial plot - just to get a sense of the size
 plot_handles = plot_coverage_frame(Swarm, AsteroidModel,length(Swarm.sample_times), 'absolute', absolute, 'figure_handle', h1, 'color_array', color_array, 'title_font_size', title_font_size, 'standard_font_size', standard_font_size, 'font_name', font_name);
-V = axis();
-cla;
+axis equal
+three_d_plot_axes = axis();
 
 for time_step = 1:length(Swarm.sample_times)
     
@@ -73,7 +72,11 @@ for time_step = 1:length(Swarm.sample_times)
     end
     
     subplot(2,4,[1 2 5 6]);
-    hold on
+    if time_step == 1
+        initialize_spatial_plot_3d('standard_font_size', standard_font_size, 'font_name', font_name);
+        axis(three_d_plot_axes);
+        axis equal
+    end
     plot_handles = plot_coverage_frame(Swarm, AsteroidModel,time_step, 'absolute', absolute, 'figure_handle', h1, 'color_array', color_array, 'title_font_size', title_font_size, 'standard_font_size', standard_font_size, 'font_name', font_name);
     
     subplot(2,4,3)
