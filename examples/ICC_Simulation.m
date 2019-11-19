@@ -52,8 +52,8 @@ sc_types = cell(1,n_spacecraft);
 % for i_sc = 1:n_spacecraft
 %     sc_types{i_sc}  = randi([1,6]); % Indicies for instruments on board
 % end
-sc_types{1} = 2;
-sc_types{2} = 2;
+sc_types{1} = 4;
+sc_types{2} = 4;
 sc_types{3} = 4;
 sc_types{n_spacecraft} = 0; % Mark the carrier so it will not be used
                             % in the Monte Carlo optimization
@@ -90,13 +90,12 @@ bandwidth_parameters.max_bandwidth = 100*1e6;
 userModelsPath = strcat(SBDT_PATH,'/ExampleUserModels');
 constantsModel = 1;
 addpath(strcat(SBDT_PATH,'/Startup'));
-global constants
 constants = addSBDT(SBDT_PATH, userModelsPath, constantsModel);
 
 % In order to select a different gravity model, change the inputs to
 % the loadEros function. See the help for assistance
 eros_sbdt = loadEros( constants, 1, 1, 4, 3 );
-ErosModel = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt);
+ErosModel = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt, constants);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                        Initialize Swarm Model                           %

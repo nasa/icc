@@ -1,29 +1,29 @@
 %% Configure properties for this machine 
 
-% Store location of rootpath as global 
-global ROOT_PATH
+% Store location of rootpath
 ROOT_PATH = pwd; 
 
-% Store location of SBDT as global
-global SBDT_PATH
+% Load location of SBDT from environment variable
 SBDT_PATH = getenv("SBDT_PATH");
 if isempty(SBDT_PATH)
     warning("SBDT_PATH environment variable not found. Assuming that SBDT is installed in the same folder as icc-dev")
     SBDT_PATH =  strcat(ROOT_PATH, '/../SBDT') ; 
 end
+addpath(genpath(SBDT_PATH));
 
-% Store location of NAIF as global
-global NAIF_PATH
-NAIF_PATH =  strcat(ROOT_PATH, '/utilities/spice') ; 
+% Load location of NAIF from environment variable
+NAIF_PATH = getenv("NAIF_PATH");
+if isempty(NAIF_PATH)
+    warning("NAIF_PATH environment variable not found. "+...
+    "Assuming that NAIF data is stored in $ROOT_PATH/utilities/spice."+ ...
+    "This is likely to cause an error when running parfor "+ ...
+    "- you should really specify the NAIF path as an environment variable.")
+    NAIF_PATH = strcat(ROOT_PATH, '/utilities/spice') ; 
+end
+addpath(genpath(NAIF_PATH));
 
 % Add MICE to path 
 addpath(genpath(strcat(ROOT_PATH, '/../mice/'))); 
-
-%% Complete Setup 
-
-run utilities/misc/initialize_SBDT.m
-addpath(ROOT_PATH); 
-clc
 
 %% Check whether SBDT exists
 
@@ -40,3 +40,8 @@ if strcmp(cvx_solver,'SDPT3')
     warning("SDPT3 is known to falsely return infeasible for our problem. Switching CVX solver to SeDuMi")
     cvx_solver SeDuMi
 end
+
+%% Complete Setup 
+
+evalc("run utilities/misc/initialize_SBDT.m");
+addpath(ROOT_PATH); 
