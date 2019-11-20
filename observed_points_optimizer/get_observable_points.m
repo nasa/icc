@@ -29,7 +29,8 @@ function observable_points = get_observable_points(asteroid_vertices, asteroid_n
 flag_use_instruments = true; % if false, will use simplified function, not derived from science
 
 % Define useful function
-get_angle =@(x,y) atan2(norm(cross(x(:), y(:))), dot(x(:), y(:))); % Returns angle between two vectors
+% get_angle =@(x,y) atan2(norm(cross(x(:), y(:))), dot(x(:), y(:))); % Returns angle between two vectors using tan
+get_angle =@(x,y) acos( dot(x(:), y(:)) / (norm(x(:)) * norm(y(:))) ); % Returns angle between two vectors using cos
 
 % Get information
 [sun_angle_ranges, sc_angle_ranges, distance_ranges, ~] = get_instrument_constraints(sc_type);
@@ -50,15 +51,15 @@ if flag_use_instruments==true
             
             % Check altitude range
             sc_altitude = norm(sc_position - r_vertices); % height of spacecraft above point i_v
-            if is_in_range(sc_altitude, distance_ranges) % Altitude check
+            if is_in_range_dist(sc_altitude, distance_ranges) % Altitude check
                 
                 % Check sc angle range
                 sc_angle = get_angle(r_normal, sc_position-r_vertices);
-                if is_in_range(sc_angle, sc_angle_ranges)
+                if is_in_range_angle(sc_angle, sc_angle_ranges)
                     
                     % Check sun angle range
                     sun_angle = get_angle(r_normal, sun_position-r_vertices);
-                    if is_in_range(sun_angle, sun_angle_ranges)
+                    if is_in_range_angle(sun_angle, sun_angle_ranges)
                         
                         % Vertex has passed tests, it must be observable
                         vertex_observability_status(i_v) = 1;
@@ -87,7 +88,7 @@ end
 
 end
 
-function in_range = is_in_range(x, range_cell)
+function in_range = is_in_range_dist(x, range_cell)
 % Checks whether value is in one of the acceptable ranges of the
 % range_cell (range_cell{i} contains one of the acceptable ranges)
 
@@ -98,4 +99,15 @@ for i = 1:length(range_cell)
     end
 end
 
+end
+
+
+function in_range = is_in_range_angle(x, range_cell)
+
+in_range = false;
+for i = 1:length(range_cell)
+    if (x<= max(range_cell{i}(1), range_cell{i}(2))) && (x>= min(range_cell{i}(1), range_cell{i}(2)))
+        in_range=true;
+    end
+end
 end

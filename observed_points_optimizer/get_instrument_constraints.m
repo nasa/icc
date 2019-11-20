@@ -5,7 +5,7 @@ function [sun_angle_ranges, sc_angle_ranges, distance_ranges, data_rate] = get_i
 % WARNING: arbitrary data rates entered. Camera sun angle range has also
 % been changed. 
 
-tolerance = deg2rad(2); 
+tolerance = deg2rad(15); 
 
 switch type 
     case 0 % Carrier Spacecraft 
@@ -14,8 +14,8 @@ switch type
         distance_ranges{1}  = []; 
         data_rate = [];
     case 1 % Imaging Spectrometer 
-        sun_angles = deg2rad([-45, 0, 45]); % [rad]
-        sun_angle_ranges = cell(1,3);
+        sun_angles = deg2rad([0, 45]); % [rad]
+        sun_angle_ranges = cell(1,length(sun_angles));
         for i = 1:length(sun_angles)
             sun_angle_ranges{i} = [sun_angles(i)-tolerance, sun_angles(i)+tolerance]; % [rad]
         end
@@ -24,8 +24,8 @@ switch type
         data_rate = 1*8e9; % [bit/s]
         
     case 2 % X Ray Spectrometer
-        sun_angles = deg2rad([-45, 0, 45]); % [rad]
-        sun_angle_ranges = cell(1,3);
+        sun_angles = deg2rad([0, 45]); % [rad]
+        sun_angle_ranges = cell(1,length(sun_angles));
         for i = 1:length(sun_angles)
             sun_angle_ranges{i} = [sun_angles(i)-tolerance, sun_angles(i)+tolerance]; % [rad]
         end

@@ -34,8 +34,8 @@ load_spice_eros(naif_path);
 % et = cspice_str2et( {'Jun 20, 2004', 'Dec 1, 2005'} );
 % times      = 1% (0:STEP-1) * ( et(2) - et(1) )/STEP + et(1);
 
-% State (position+velocity) of Sun wrt Eros in Eros frame
-[state, ~] = cspice_spkezr('SUN', times, 'IAU_EROS', 'NONE', '2000433');
+% State (position+velocity) of Sun wrt Eros in Absolute frame
+[state, ~] = cspice_spkezr('SUN', times, 'J2000', 'NONE', '2000433');
 % subplot(1,3,3)
 % plot3(state(1,:),state(2,:),state(3,:))
 % title('Sun wrt Eros in IAU\_Eros')
