@@ -112,8 +112,12 @@ h_bw = plot_information_flow(Swarm, time_step, ...
     'max_line_thickness', max_line_thickness, ...
     'link_color_steps', link_color_steps);
 
+% Plot the Sun
+sun_pos = 100*Swarm.sun_state_array(1:3,time_step)/(norm(Swarm.sun_state_array(1:3,time_step)));
+h_sun = plot3(sun_pos(1), sun_pos(2), sun_pos(3), 'o','MarkerFaceColor','y','MarkerEdgeColor','k','MarkerSize',15);
 
-plot_handles = cell(5,1);
+
+plot_handles = cell(9,1);
 plot_handles{1} = h_ast;
 plot_handles{2} = h_sc;
 if exist('h_os','var') && ~isempty(h_os)
@@ -134,5 +138,9 @@ end
 if exist('h_title','var') && ~isempty(h_title)
     plot_handles{8} = h_title; % Optional
 end
+if exist('h_sun','var') && ~isempty(h_sun)
+    plot_handles{9} = h_sun; % Optional
+end
+
 
 end

@@ -85,6 +85,18 @@ ErosModel = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt, constants);
 % Instantiate SpacecraftSwarm class for handling spacecraft data
 Swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
 
+% Add the carrier orbit.
+carrier_index = Swarm.get_indicies_of_type(0);
+if length(carrier_index)>1
+    error("More than one carrier - while this may work, it is not supported")
+end
+carrier_initial_conditions = initialize_carrier_orbit(ErosModel);
+Swarm.integrate_trajectory(carrier_index, ErosModel, carrier_initial_conditions);
+
+% Get Sun Position
+Swarm.sun_state_array = get_sun_state(Swarm.sample_times); 
+
+
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                             Optimization                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

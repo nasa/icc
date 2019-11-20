@@ -56,8 +56,8 @@ end
 %% Options
 flag_optimization_approach = 1; % 0 returns nadir point and unit reward (no optimization); 1 for batch optmization (optimal)
 
-%% Get Sun Position
-sun_state_array = get_sun_state(Swarm.sample_times); %
+% %% Get Sun Position
+% sun_state_array = Swarm.sun_state_array; %
 
 %% Setup
 sc_type = Swarm.Parameters.types; % 0 for carrier; 1 for instrument carrying spacecraft
@@ -77,7 +77,7 @@ for i_time = 1:K
             if flag_optimization_approach==0
                 observable_points{i_sc, i_time} = get_nadir_point(asteroid_vertices, Swarm.rel_trajectory_array(i_time, 1:3, i_sc ) ) ;
             else
-                observable_points{i_sc, i_time} = get_observable_points(asteroid_vertices, asteroid_normals, Swarm.rel_trajectory_array(i_time, 1:3, i_sc ), sun_state_array(1:3,i_time)', Swarm.Parameters.types{i_sc}) ;
+                observable_points{i_sc, i_time} = get_observable_points(asteroid_vertices, asteroid_normals, Swarm.rel_trajectory_array(i_time, 1:3, i_sc ), Swarm.sun_state_array(1:3,i_time)', Swarm.Parameters.types{i_sc}) ;
             end
         end
     end

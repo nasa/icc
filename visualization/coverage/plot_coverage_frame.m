@@ -93,7 +93,11 @@ h_line = plot_observation_ray(Swarm, AsteroidModel, i_time, 'spacecraft_ids', [1
 % Spacecraft trajectory
 h_sc = render_spacecraft_3d(Swarm, i_time, 'color', color_array, 'linewidth', 0.75, 'absolute', absolute, 'plot_time', plot_time, 'absolute', absolute);
 
-plot_handles = cell(5,1);
+% Plot the Sun
+sun_pos = 100*Swarm.sun_state_array(1:3,i_time)/(norm(Swarm.sun_state_array(1:3,i_time)));
+h_sun = plot3(sun_pos(1), sun_pos(2), sun_pos(3), 'o','MarkerFaceColor','y','MarkerEdgeColor','k','MarkerSize',15);
+
+plot_handles = cell(7,1);
 plot_handles{1} = h_ast;
 if exist('h_os','var') && ~isempty(h_os)
     plot_handles{2} = h_os;   % Optional
@@ -107,6 +111,9 @@ end
 plot_handles{5} = h_sc;
 if exist('h_title','var') && ~isempty(h_title)
     plot_handles{6} = h_title; % Optional
+end
+if exist('h_sun','var') && ~isempty(h_sun)
+    plot_handles{7} = h_sun; % Optional
 end
 
 xlabel('X axis [km]','fontsize',standard_font_size, 'fontname',font_name)
