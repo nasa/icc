@@ -18,8 +18,20 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function state = get_sun_state(times)
+function state = get_sun_state(varargin)
 %GET_SUN_STATE returns sun state 
+
+times = varargin{1};
+
+absolute = false;
+
+if length(varargin) >= 2
+    for i = 2:1:length(varargin)
+        if strcmpi(varargin{i},'absolute')
+            absolute = varargin{i+1};
+        end
+    end
+end
 
 %Where the NAIF folder is.
 naif_path = getenv("NAIF_PATH");
@@ -34,12 +46,13 @@ load_spice_eros(naif_path);
 % et = cspice_str2et( {'Jun 20, 2004', 'Dec 1, 2005'} );
 % times      = 1% (0:STEP-1) * ( et(2) - et(1) )/STEP + et(1);
 
-% State (position+velocity) of Sun wrt Eros in Absolute frame
-[state, ~] = cspice_spkezr('SUN', times, 'J2000', 'NONE', '2000433');
-% subplot(1,3,3)
-% plot3(state(1,:),state(2,:),state(3,:))
-% title('Sun wrt Eros in IAU\_Eros')
-% axis equal
+if absolute == true
+    % State (position+velocity) of Sun wrt Eros in Absolute frame
+    [state, ~] = cspice_spkezr('SUN', times, 'J2000', 'NONE', '2000433');
+else
+    % State (position+velocity) of Sun wrt Eros in Eros frame
+    [state, ~] = cspice_spkezr('SUN', times, 'IAU_EROS', 'NONE', '2000433');
+end
 
 
 end

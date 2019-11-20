@@ -34,7 +34,7 @@ function [plot_handles] = plot_coverage_frame(varargin)
 
 Swarm = varargin{1};
 AsteroidModel = varargin{2};
-i_time = varargin{3};
+time_step = varargin{3};
 absolute= false;
 color_array = ['r', 'b', 'g', 'c', 'm'];
 axes_limits = [-1 1 -1 1 -1 1].*40;
@@ -73,28 +73,29 @@ end
 
 
 % Time
-plot_time = Swarm.sample_times(i_time);
+plot_time = Swarm.sample_times(time_step);
 
 h_title = title(['Time = ', num2str(floor(plot_time/8640)/10), ' day '],'fontsize',title_font_size,'fontname',font_name);
 
 % Draw the asteroid in its new location
 if absolute == true
-    h_ast = render_asteroid_3d(AsteroidModel, true, Swarm.sample_times(i_time));
+    h_ast = render_asteroid_3d(AsteroidModel, true, Swarm.sample_times(time_step));
 else
     h_ast = render_asteroid_3d(AsteroidModel, false);
 end
 
 % Plot observable points
-h_os = plot_observable_points(Swarm, AsteroidModel, i_time, 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute);
+h_os = plot_observable_points(Swarm, AsteroidModel, time_step, 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute);
 % Actually observed points - if any
-h_op = plot_observed_points(Swarm, AsteroidModel, [1, i_time], 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute, 'color_array', color_array);
+h_op = plot_observed_points(Swarm, AsteroidModel, [1, time_step], 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute, 'color_array', color_array);
 % Line from observer to observed point
-h_line = plot_observation_ray(Swarm, AsteroidModel, i_time, 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute, 'color_array', color_array);
+h_line = plot_observation_ray(Swarm, AsteroidModel, time_step, 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute, 'color_array', color_array);
 % Spacecraft trajectory
-h_sc = render_spacecraft_3d(Swarm, i_time, 'color', color_array, 'linewidth', 0.75, 'absolute', absolute, 'plot_time', plot_time, 'absolute', absolute);
+h_sc = render_spacecraft_3d(Swarm, time_step, 'color', color_array, 'linewidth', 0.75, 'absolute', absolute, 'plot_time', plot_time, 'absolute', absolute);
 
 % Plot the Sun
-sun_pos = 100*Swarm.sun_state_array(1:3,i_time)/(norm(Swarm.sun_state_array(1:3,i_time)));
+sun_state = get_sun_state(Swarm.sample_times(time_step), 'absolute', absolute);
+sun_pos = 100*sun_state(1:3)/(norm(sun_state(1:3)));
 h_sun = plot3(sun_pos(1), sun_pos(2), sun_pos(3), 'o','MarkerFaceColor','y','MarkerEdgeColor','k','MarkerSize',15);
 
 plot_handles = cell(7,1);

@@ -113,7 +113,8 @@ h_bw = plot_information_flow(Swarm, time_step, ...
     'link_color_steps', link_color_steps);
 
 % Plot the Sun
-sun_pos = 100*Swarm.sun_state_array(1:3,time_step)/(norm(Swarm.sun_state_array(1:3,time_step)));
+sun_state = get_sun_state(Swarm.sample_times(time_step), 'absolute', absolute);
+sun_pos = 100*sun_state(1:3)/(norm(sun_state(1:3)));
 h_sun = plot3(sun_pos(1), sun_pos(2), sun_pos(3), 'o','MarkerFaceColor','y','MarkerEdgeColor','k','MarkerSize',15);
 
 

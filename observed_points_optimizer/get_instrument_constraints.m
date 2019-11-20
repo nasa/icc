@@ -36,7 +36,7 @@ switch type
     case 3 % Camera      
         sun_angle_ranges{1} = deg2rad([-45, 45]); % [rad]   *Does not agree with science table, assuming that the value should be interpreted as ranges. 
         sc_angle_ranges{1}  = deg2rad([-10, 10]); % [rad]
-        distance_ranges{1}  = [30, 36].*1000; % [m]
+        distance_ranges{1}  = [0, 40].*1000; % [m]
         data_rate = 1*8e9; % [bit/s]
         
     case 4 % Altimeter

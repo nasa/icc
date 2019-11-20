@@ -50,8 +50,8 @@ sc_types = cell(1,n_spacecraft);
 % for i_sc = 1:n_spacecraft
 %     sc_types{i_sc}  = randi([1,6]); % Indicies for instruments on board
 % end
-sc_types{1} = 1;
-sc_types{2} = 1;
+sc_types{1} = 3;
+sc_types{2} = 3;
 % sc_types{3} = 4;
 sc_types{n_spacecraft} = 0;
 
