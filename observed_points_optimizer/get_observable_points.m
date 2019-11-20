@@ -49,15 +49,15 @@ if flag_use_instruments==true
             r_normal = asteroid_normals(i_v, :);
             
             % Check altitude range
-            sc_altitude = norm(sc_position(:) - r_vertices(:)); % height of spacecraft above point i_v
+            sc_altitude = norm(sc_position - r_vertices); % height of spacecraft above point i_v
             if is_in_range(sc_altitude, distance_ranges) % Altitude check
                 
                 % Check sc angle range
-                sc_angle = get_angle(r_normal, sc_position);
+                sc_angle = get_angle(r_normal, sc_position-r_vertices);
                 if is_in_range(sc_angle, sc_angle_ranges)
                     
                     % Check sun angle range
-                    sun_angle = get_angle(r_normal, sun_position);
+                    sun_angle = get_angle(r_normal, sun_position-r_vertices);
                     if is_in_range(sun_angle, sun_angle_ranges)
                         
                         % Vertex has passed tests, it must be observable
