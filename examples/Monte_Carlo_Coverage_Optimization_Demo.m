@@ -66,13 +66,12 @@ sc_max_memory(1,n_spacecraft) = 8*10000*1e9; % Memory limit for carrier spacecra
 userModelsPath = strcat(SBDT_PATH,'/ExampleUserModels');
 constantsModel = 1;
 addpath(strcat(SBDT_PATH,'/Startup'));
-global constants
 constants = addSBDT(SBDT_PATH, userModelsPath, constantsModel);
 
 % In order to select a different gravity model, change the inputs to
 % the loadEros function. See the help for assistance
 eros_sbdt = loadEros( constants, 1, 1, 4, 3 );
-ErosModel = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt);
+ErosModel = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt, constants);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                        Initialize Swarm Model                           %

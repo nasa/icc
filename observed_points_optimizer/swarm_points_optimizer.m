@@ -81,7 +81,9 @@ fprintf('Total time to setup observation points problem: %0.2f\n',toc)
 %% Solve 
 % Define problem
 tic
-X = intlinprog(-w, 1:M, A, b, [], [], LB, UB);
+% Mosek has some undesirable text input due to an uncommented "options".
+% We suppress it by wrapping it in evalc.
+[~,X] = evalc("intlinprog(-w, 1:M, A, b, [], [], LB, UB);");
 fprintf('Total time to solve observation points problem: %0.2f\n',toc)
 
 % Fill out observed points and reward vectors

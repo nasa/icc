@@ -37,6 +37,10 @@ total_t = 5*24*60*60; % [sec]; 5 days, total time of simulation
 
 flag_testInHouse = true; % test in-house spherical harmonics integrator
 flag_testSBDT = true; % test SBDT integrators 
+if ~exist('addSBDT','file')
+    fprintf("WARNING: SBDT not found.\n You should set SBDT folder as an environment variable SBDT_PATH. \n Skipping SBDT tests.\n")
+    flag_testSBDT = false;
+end
 
 tspan = [0: delta_t: total_t];
 
@@ -95,13 +99,12 @@ if flag_testSBDT
     userModelsPath = strcat(SBDT_PATH,'/ExampleUserModels');
     constantsModel = 1;
     addpath(strcat(SBDT_PATH,'/Startup'));
-    global constants
     constants = addSBDT(SBDT_PATH, userModelsPath, constantsModel);
     
     % In order to select a different gravity model, change the inputs to
     % the loadEros function. See the help for assistance
     eros_sbdt = loadEros( constants, 1, 1, 4, 3 );
-    ErosGravity_SBDT = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt);
+    ErosGravity_SBDT = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt,constants);
 
     % Initialize a base case
     sc_position = [35*1e3;0;0];
@@ -126,8 +129,6 @@ if flag_testSBDT
     ErosGravity_SBDT.plot_relative_traj(time,rel_traj,1,RelativeTrajPlot,1)
 
     [time,abs_traj,state_transition_matrix] = ErosGravity_SBDT.integrate_absolute(tspan,sc_state);
-else
-    fprintf("WARNING: SBDT path not in %s.\n You should set SBDT folder as a global SBDT_PATH. \n Skipping SBDT tests.\n", SBDT_PATH)
 end
 
 
