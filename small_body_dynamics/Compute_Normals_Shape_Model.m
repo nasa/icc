@@ -41,14 +41,14 @@ for i=1:1:size(Faces,1)
     this_face_normal = cross(this_pts(2,:)-this_pts(1,:), this_pts(3,:)-this_pts(1,:));
     this_face_normal = this_face_normal/norm(this_face_normal);
     
-    angle = acosd(dot(this_face_normal, this_pts(1,:)/norm(this_pts(1,:))));
+    this_angle = acosd(dot(this_face_normal, this_pts(1,:)/norm(this_pts(1,:))));
     
-    if angle >= 135
-        Faces_Normals_Confidence(i,1) = 1;
-        Faces_Normals(i,:) = this_face_normal;
-    elseif angle <=45
+    if this_angle >= 135
         Faces_Normals_Confidence(i,1) = 1;
         Faces_Normals(i,:) = -this_face_normal;
+    elseif this_angle <=45
+        Faces_Normals_Confidence(i,1) = 1;
+        Faces_Normals(i,:) = this_face_normal;
     else
         Faces_Normals_Confidence(i,1) = 0.5;
         Faces_Normals(i,:) = this_face_normal;
@@ -83,13 +83,13 @@ while sum(Faces_Normals_Confidence==0.5) > 0
                 
                 this_face_normal = Faces_Normals(i,:);
                 
-                angle = acosd(dot(this_face_normal, high_confidence_face_normal));
+                this_angle = acosd(dot(this_face_normal, high_confidence_face_normal));
                 
                 
-                if angle >= 135
+                if this_angle >= 135
                     Faces_Normals_Confidence(i,1) = 1;
                     Faces_Normals(i,:) = -this_face_normal;
-                elseif angle <=45
+                elseif this_angle <=45
                     Faces_Normals_Confidence(i,1) = 1;
                     Faces_Normals(i,:) = this_face_normal;
                 else
@@ -119,3 +119,17 @@ end
 disp('Normal calculation Done!')
 
 obj.BodyModel.shape.normals = Vertices_Normals;
+
+% % test code for plotting normals
+% 
+% figure()
+% hold on
+% for i=1:1:length(ErosModel.BodyModel.shape.vertices)
+%     plot3([ErosModel.BodyModel.shape.vertices(i,1) ErosModel.BodyModel.shape.vertices(i,1)+ErosModel.BodyModel.shape.normals(i,1)],...
+%         [ErosModel.BodyModel.shape.vertices(i,2) ErosModel.BodyModel.shape.vertices(i,2)+ErosModel.BodyModel.shape.normals(i,2)],...
+%         [ErosModel.BodyModel.shape.vertices(i,3) ErosModel.BodyModel.shape.vertices(i,3)+ErosModel.BodyModel.shape.normals(i,3)],...
+%         '-k')
+%     plot3(ErosModel.BodyModel.shape.vertices(i,1), ErosModel.BodyModel.shape.vertices(i,2), ErosModel.BodyModel.shape.vertices(i,3),'.r')
+%     
+% end
+% hold off
