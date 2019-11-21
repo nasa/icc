@@ -30,7 +30,7 @@ function [fig_handles] = plot_information_flow(varargin)
 % PLOT_INFORMATION_FLOW A function to plot the information flow between
 % spacecraft
 % Syntax: [axes_limits] = plot_information_flow(swarm, plot_time,
-% absolute*, figure_handle*, 
+% absolute*, figure_handle*,
 % max_bandwidth*, min_line_thickness*, max_line_thickness*, link_color_steps*)
 % * Optional keyword inputs
 
@@ -58,7 +58,7 @@ if length(varargin) > 2
         if strcmpi(varargin{i},'max_line_thickness')
             max_line_thickness = varargin{i+1};
         end
-
+        
         if strcmpi(varargin{i},'link_color_steps')
             link_color_steps = varargin{i+1};
         end
@@ -81,7 +81,7 @@ if exist('fig','var')
 end
 
 link_colors = [summer(link_color_steps/2);flipud(autumn(link_color_steps/2))]; %flipud(hot(link_color_steps));
- 
+
 n_timesteps = Swarm.get_num_timesteps();
 
 if isnan(max_bandwidth)
@@ -111,48 +111,29 @@ for sc1 = 1:n_spacecraft
                 warning("Problem is not communication-limited at all: all bandwidth duals are zero");
                 link_color_index = 1;
             end
-            % Plot the bandwidths]
-            if swarm.Communication.bandwidths_and_memories(time,sc1,sc2)>0
+            % Plot the bandwidths
+            if Swarm.Communication.bandwidths_and_memories(time,sc1,sc2)>0
                 h_bw(sc1,sc2) = plot3([trajectory_array(time, 1, sc1), trajectory_array(time, 1, sc2)], ...
                     [trajectory_array(time, 2, sc1), trajectory_array(time, 2, sc2)], ...
                     [trajectory_array(time, 3, sc1), trajectory_array(time, 3, sc2)], ...
                     'Color','k', ...
-                    'linewidth', (swarm.Communication.bandwidths_and_memories(time,sc1,sc2))/max_bandwidth*max_line_thickness+min_line_thickness);
+                    'linewidth', (Swarm.Communication.bandwidths_and_memories(time,sc1,sc2))/max_bandwidth*max_line_thickness+min_line_thickness);
                 h_bw(sc1,sc2).Color = [link_colors(link_color_index,:),.3];
             end
-
+            
             % Plot the actual info flow
-            if swarm.Communication.flow(time,sc1,sc2)>0
+            if Swarm.Communication.flow(time,sc1,sc2)>0
                 h_comm(sc1,sc2) = plot3([trajectory_array(time, 1, sc1), trajectory_array(time, 1, sc2)], ...
                     [trajectory_array(time, 2, sc1), trajectory_array(time, 2, sc2)], ...
                     [trajectory_array(time, 3, sc1), trajectory_array(time, 3, sc2)], ...
                     ':', ...
                     'Color', link_colors(link_color_index,:), ...
-                    'linewidth', (swarm.Communication.flow(time,sc1,sc2))/max_bandwidth*max_line_thickness+min_line_thickness);
+                    'linewidth', (Swarm.Communication.flow(time,sc1,sc2))/max_bandwidth*max_line_thickness+min_line_thickness);
                 hold all;
             end
+            
         end
-        
-        % Plot the bandwidths
-        h_bw(sc1,sc2) = plot3([trajectory_array(time, 1, sc1), trajectory_array(time, 1, sc2)], ...
-            [trajectory_array(time, 2, sc1), trajectory_array(time, 2, sc2)], ...
-            [trajectory_array(time, 3, sc1), trajectory_array(time, 3, sc2)], ...
-            'Color','k', ...
-            'linewidth', (Swarm.Communication.bandwidths_and_memories(time,sc1,sc2))/max_bandwidth*max_line_thickness+min_line_thickness);
-        h_bw(sc1,sc2).Color = [link_colors(link_color_index,:),.3];
-        
-        % Plot the actual info flow
-        if Swarm.Communication.flow(time,sc1,sc2)>0
-            h_comm(sc1,sc2) = plot3([trajectory_array(time, 1, sc1), trajectory_array(time, 1, sc2)], ...
-                [trajectory_array(time, 2, sc1), trajectory_array(time, 2, sc2)], ...
-                [trajectory_array(time, 3, sc1), trajectory_array(time, 3, sc2)], ...
-                ':', ...
-                'Color', link_colors(link_color_index,:), ...
-                'linewidth', (Swarm.Communication.flow(time,sc1,sc2))/max_bandwidth*max_line_thickness+min_line_thickness);
-            hold all;
-        end
-        
     end
 end
-    
+
 fig_handles = [h_bw, h_comm];
