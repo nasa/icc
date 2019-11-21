@@ -40,7 +40,7 @@ addpath('../')
 constants = initialize_SBDT();
 
 % Create a gravity model
-[~, eros_sbdt] = evalc("loadEros( constants, 1, 1, 3, 3 );");
+[~, eros_sbdt] = evalc("loadEros( constants, 1, 1, 4, 3 );");
 ErosGravity = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt);
 GM = eros_sbdt.gravity.gm * 1e9;  % Convert to m from km
 
