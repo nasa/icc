@@ -89,7 +89,7 @@ end
 
 assert(swarm.is_valid());
 
-bandwidth_model = @(x1,x2) min(250000 * ((100000/norm(x2-x1,2))^2+ 0.2*randn()), 100*1e6);
+bandwidth_model = @(x1,x2) quadratic_comm_model(x1,x2);
 
 
 [swarm] = communication_optimizer(swarm, bandwidth_model);

@@ -18,9 +18,15 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [dk_dic, dk_dbandwidth, dbandwidth_dlocation, dlocation_dic] = compute_gradient(swarm, reference_distance, reference_bandwidth, max_bandwidth)
+function [dk_dic, dk_dbandwidth, dbandwidth_dlocation, dlocation_dic] = compute_gradient(swarm, bandwidth_parameters, asteroid_parameters)
 if ~swarm.is_valid()
     error("Swarm is not valid")
+end
+
+if nargin<3
+    occlusion_test_fun = @(x1, x2) 0.;
+else
+    occlusion_test_fun = @(x1, x2) is_occluded(x1, x2, asteroid_parameters);
 end
 
 N=swarm.get_num_spacecraft();
@@ -28,6 +34,8 @@ K = swarm.get_num_timesteps;
 % Derivative of goal function wrt bandwidth
 
 dk_dbandwidth = reshape(swarm.Communication.dual_bandwidths_and_memories,1,K*N*N);
+
+
 
 % Derivative of bandwidth wrt spacecraft location
 dbandwidth_dlocation_full = zeros(K,N,N,K,N,3);
@@ -43,8 +51,8 @@ for k=1:K
             end
             % Derivatives wrt all three directions are vectorized
             for dir=1:3
-                dbandwidth_dlocation_full(k,i,j,k,i,dir) = diff_quadratic_comm_model_x1(x1, x2, dir, reference_distance,reference_bandwidth,max_bandwidth)*temp_time_step;
-                dbandwidth_dlocation_full(k,i,j,k,j,dir) = diff_quadratic_comm_model_x2(x1, x2, dir, reference_distance,reference_bandwidth,max_bandwidth)*temp_time_step;
+                dbandwidth_dlocation_full(k,i,j,k,i,dir) = diff_quadratic_comm_model_x1(x1, x2, dir, bandwidth_parameters, occlusion_test_fun)*temp_time_step;
+                dbandwidth_dlocation_full(k,i,j,k,j,dir) = diff_quadratic_comm_model_x2(x1, x2, dir, bandwidth_parameters, occlusion_test_fun)*temp_time_step;
             end
         end
     end
@@ -74,39 +82,3 @@ for sc = 1:N
 end
 end
 
-function [bandwidth] = quadratic_comm_model(x1, x2, reference_distance,reference_bandwidth,max_bandwidth, scaling_factor)
-    if nargin<6
-        scaling_factor=reference_distance;
-    end
-    x1=x1./scaling_factor;
-    x2=x2./scaling_factor;
-    reference_distance=reference_distance./scaling_factor;
-    bandwidth = min(max_bandwidth, reference_bandwidth*(reference_distance/norm(x2-x1,2))^2);
-end
-
-function [db_dx1] = diff_quadratic_comm_model_x1(x1, x2, dir, reference_distance,reference_bandwidth,max_bandwidth,scaling_factor)
-    if nargin<7
-        scaling_factor=reference_distance;
-    end
-
-    if quadratic_comm_model(x1, x2, reference_distance,reference_bandwidth,max_bandwidth,scaling_factor)>=max_bandwidth
-        db_dx1 = 0; %zeros(size(x1));
-    else
-        x1=x1./scaling_factor;
-        x2=x2./scaling_factor;
-        reference_distance=reference_distance./scaling_factor;        
-%          db_dx1 = -2*reference_bandwidth*(reference_distance/norm(x2-x1,2)^2)^2 * (x1(dir)-x2(dir));
-        % Numerical conditioning - let's try and get something that looks
-        % like a distance before squaring
-         db_dx1 = -2*reference_bandwidth.* ( reference_distance/norm(x2-x1,2)^2).^2 .* (x1(dir)-x2(dir));
-         db_dx1 = db_dx1./scaling_factor;
-    end
-    
-end
-
-function [db_dx2] = diff_quadratic_comm_model_x2(x1, x2, dir, reference_distance,reference_bandwidth,max_bandwidth, scaling_factor)
-    if nargin<7
-        scaling_factor=reference_distance;
-    end
-    db_dx2 = - diff_quadratic_comm_model_x1(x1, x2, dir, reference_distance,reference_bandwidth,max_bandwidth, scaling_factor);
-end

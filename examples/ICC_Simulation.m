@@ -134,7 +134,11 @@ color_array = rand(3,Swarm.get_num_spacecraft());
 
 if record_video
     videoname = ['ICC_simulation_',datestr(now,'yyyymmdd_HHMMSS'),'.mp4'];
-    writerObj = VideoWriter(videoname, 'MPEG-4');
+    if ismac() || ispc()
+        writerObj = VideoWriter(videoname, 'MPEG-4');
+    else
+        writerObj = VideoWriter(videoname);
+    end
     writerObj.FrameRate = 30;   % Default 30
     writerObj.Quality = 100;    % Default 75
     open(writerObj);

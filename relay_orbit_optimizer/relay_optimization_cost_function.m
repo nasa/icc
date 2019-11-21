@@ -76,7 +76,13 @@ for relay_sc = 1:length(relay_orbit_index)
     end
 end
 
-bandwidth_model = @(x1,x2) min(bandwidth_parameters.reference_bandwidth * (bandwidth_parameters.reference_distance/norm(x2-x1,2))^2, bandwidth_parameters.max_bandwidth*1e6); 
+%bandwidth_model = @(x1,x2) min(bandwidth_parameters.reference_bandwidth * (bandwidth_parameters.reference_distance/norm(x2-x1,2))^2, bandwidth_parameters.max_bandwidth*1e6); 
+
+spherical_asteroid_parameters.max_radius = gravity_model.BodyModel.shape.maxRadius*1e3;
+spherical_asteroid_parameters.min_radius = gravity_model.BodyModel.shape.maxRadius*1e3;
+
+occlusion_test =  @(x1, x2) is_occluded(x1, x2, spherical_asteroid_parameters);
+bandwidth_model = @(x1, x2) quadratic_comm_model(x1, x2, bandwidth_parameters,occlusion_test);
 
 % Numerical conditioning is critical to get a good solution from the
 % communication optimizer. Mosek 9 will deal with ill-conditioned problems,
@@ -92,7 +98,7 @@ data_scaling_factor = mean(mean(swarm.Observation.flow(swarm.Observation.flow>0)
 
 
 if nargout>1  % compute gradient
-    [dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dlocation_dic] = compute_gradient(swarm, bandwidth_parameters.reference_distance, bandwidth_parameters.reference_bandwidth, bandwidth_parameters.max_bandwidth);
+    [dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dlocation_dic] = compute_gradient(swarm, bandwidth_parameters,spherical_asteroid_parameters);
     gradient = zeros(size(sc_initial_condition_vector));
     for relay_sc = 1:length(relay_orbit_index)
         offset = 6*(relay_sc-1);

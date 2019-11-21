@@ -116,7 +116,6 @@ for sc1 = 1:n_spacecraft
     % plot3(spacecraft.orbits{sc1}(1,time),spacecraft.orbits{sc1}(2,time),spacecraft.orbits{sc1}(3,time), ...
     sc_color = color_array(:,mod(sc1-1,size(color_array,2))+1)';
     %[sc1, NaN, sc_color]
-    
     h_sc(sc1) = plot3(trajectory_array(time, 1, sc1), trajectory_array(time, 2, sc1), trajectory_array(time, 3, sc1), ...
         ssymbol,'MarkerSize',ssize, 'MarkerFaceColor',sc_color,'MarkerEdgeColor',sc_color);
 
