@@ -138,4 +138,3 @@ absolute = true;
 record_video = false;
 
 plot_coverage_and_communications(Swarm, ErosModel,'absolute', absolute, 'record_video', record_video)
-

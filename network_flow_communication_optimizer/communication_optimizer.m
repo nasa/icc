@@ -52,7 +52,7 @@ if nargin<3
     data_scaling_factor = 1;
 end
 if nargin<2
-    bandwidth_model = @(x1,x2) min(250000 * (100000/norm(x2-x1,2))^2, 100*1e6); 
+    bandwidth_model = @(x1,x2) quadratic_comm_model(x1,x2);
 end
 
 K = swarm.get_num_timesteps();

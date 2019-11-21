@@ -93,10 +93,18 @@ bandwidth_parameters.reference_bandwidth = 250000;
 bandwidth_parameters.reference_distance = 100000;
 bandwidth_parameters.max_bandwidth = 100*1e6;
 
-bandwidth_model = @(x1,x2) min(bandwidth_parameters.reference_bandwidth * (bandwidth_parameters.reference_distance/norm(x2-x1,2))^2, bandwidth_parameters.max_bandwidth); 
+%bandwidth_model = @(x1,x2) min(bandwidth_parameters.reference_bandwidth * (bandwidth_parameters.reference_distance/norm(x2-x1,2))^2, bandwidth_parameters.max_bandwidth); 
+
+
+spherical_asteroid_parameters.max_radius = ErosGravity.BodyModel.shape.maxRadius*1e3;
+spherical_asteroid_parameters.min_radius = ErosGravity.BodyModel.shape.maxRadius*1e3;
+
+occlusion_test =  @(x1, x2) is_occluded(x1, x2, spherical_asteroid_parameters);
+bandwidth_model = @(x1,x2) quadratic_comm_model(x1, x2, bandwidth_parameters, occlusion_test);
+
 
 % Optimize communications
-[swarm] = communication_optimizer(swarm,bandwidth_model);
+[swarm] = communication_optimizer(swarm, bandwidth_model);
 
 % Plot the result
 
