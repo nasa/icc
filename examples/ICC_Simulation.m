@@ -55,6 +55,7 @@ end
 sc_types{1} = 2;
 sc_types{2} = 2;
 sc_types{3} = 4;
+sc_types{4} = 4;
 sc_types{n_spacecraft} = 0; % Mark the carrier so it will not be used
                             % in the Monte Carlo optimization
                             
