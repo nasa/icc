@@ -135,7 +135,6 @@ Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
 absolute = true;
 
 % Do you want to record video?
-record_video = false;
+record_video = true;
 
 plot_coverage_and_communications(Swarm, ErosModel,'absolute', absolute, 'record_video', record_video)
-

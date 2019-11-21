@@ -89,8 +89,9 @@ bandwidth_parameters.reference_bandwidth = 250000;
 bandwidth_parameters.reference_distance = 100000;
 bandwidth_parameters.max_bandwidth = 100*1e6;
 
-% Try optimizing comms right now for sanity
-[swarm] = communication_optimizer(swarm);
+% Try optimizing comms right now for sanity - with incorrect bandwidth
+% model
+% [swarm] = communication_optimizer(swarm);
 % plot_communications(swarm, ErosGravity,true)
 
 relay_orbit_indices = [2];
