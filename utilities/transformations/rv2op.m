@@ -56,48 +56,48 @@ if size(vvec,1)==1
 	vvec=vvec';
 end
 
-%0_ definisco i versori degli assi, mi aiuteranno a fare i conti.
+%0_ Find unit vectors for axes - will help
 iver=[1;0;0];
 %jver=[0;1;0];
 kver=[0;0;1];
 
-%1_Calcolo i moduli di rvec e vvec
+%1_ Compute the norm of radius and velocity vectors
 r=norm(rvec);
 v=norm(vvec);
 
-%2_Energia totale;
+%2_ Total energy
 %E=0.5*v^2-mu/r;
-%Trovo a dall'energia totale
+% Find a from total energy
 a=mu/(2*mu/r-v^2);
 
-%3_Definizione di h e modulo
+%3_ H vector from definition and norm
 hvec=cross(rvec,vvec);
 h=norm(hvec);
 
-%4_Trovo l'eccentricità
+%4_ Eccentricity
 evec=((v^2-mu/r).*rvec-(dot(rvec,vvec).*vvec))./mu;
 e=norm(evec);
 
-%5_Trovo l'angolo i
+%5_ Inclination
 i_anomaly=acos(hvec(3)/h);
 % What if h is zero, i.e., rvec and vvec are aligned?
 
-%6_trovo il versore dell'asse dei nodi
+%6_ Unit vector for nodal axis 
 nver=cross(kver,hvec)./norm(cross(kver,hvec));
 % What if the orbit is horizontal, i.e., h is aligned with z?
 if isnan(nver)
     disp('WARNING: orbit is in x-y plane')
     nver = iver;
 end
-%7_trovo Omega
+%7_ find Omega, RAAN
 Omega=acos(dot(nver,iver));
 
-%Sistemo il segno controllando il seno di omega
+% Fix sign by checking sin(omega)
 if nver(2)<0
 	Omega=2*pi-Omega;
 end
 
-%8_trovo omega
+%8_ find omega
 if norm(evec) == 0
     % Orbit is circular
     omega=0;
@@ -110,7 +110,7 @@ if evec(3)<0
 end
 
 
-%9_trovo l'anomalia vera
+%9_ Finally, true anomaly
 theta=acos(rvec'*evec./(r*e));
 % What if eccentricity is zero?
 
