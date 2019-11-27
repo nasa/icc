@@ -34,7 +34,7 @@ if nargin<5
 end
 
 if nargin<4
-    output_folder = "Eros";
+    output_folder = strcat("42_EROS_ICC_",datestr(now,'yyyymmdd_HHMMSS'));
 end
 
 if nargin<3
@@ -54,9 +54,6 @@ create_input_commands(Swarm, output_folder);
 
 % If we have access to the defaults, copy them
 try
-    % Spacecraft description
-    copyfile(fullfile(defaults_path,"SC_IonCruiser.txt"), output_folder);
-
     % FOV
     copyfile(fullfile(defaults_path,"Inp_FOV.txt"), output_folder);
 
@@ -76,7 +73,6 @@ catch
    warning(sprintf(...
        "Folder %s not found.\n" + ...
        "You should create or copy the 42 configuration files for\n" + ...
-       "- Spacecraft: SC_IonCruiser.txt \n" + ...
        "- FOV: Inp_FOV.txt \n" + ...
        "- Graphics: Inp_Graphics.txt \n" + ...
        "- IPC: Inp_IPC.txt \n" + ...
