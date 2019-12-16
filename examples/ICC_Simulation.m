@@ -31,6 +31,12 @@
 
 clear, clc, close all, run ../startup.m  % refresh
 
+% Do you want to record video?
+record_video = false;
+
+% Do you want to save the output of the optimization in 42 format?
+save_42_inputs = false;
+
 rng default % Pseudo-random but repeatable scenario
 
 % Add Required Packages to PATH
@@ -127,9 +133,6 @@ Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
 % Do you want the 3d plot to be in an absolute or relative frame?
 absolute = true;
 
-% Do you want to record video?
-record_video = false;
-
 color_array = rand(3,Swarm.get_num_spacecraft());
 
 if record_video
@@ -205,3 +208,7 @@ if record_video
     close(writerObj);
 end
 
+% Create 42 representation of the orbits
+if save_42_inputs
+    fortytwo_bridge(Swarm, ErosModel, "../utilities/42_bridge/defaults", strcat("42_EROS_ICC_ICC_",datestr(now,'yyyymmdd_HHMMSS')));    
+end
