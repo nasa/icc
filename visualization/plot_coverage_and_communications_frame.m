@@ -34,6 +34,16 @@ Swarm = varargin{1};
 AsteroidModel = varargin{2};
 time_step = varargin{3};
 
+absolute = true;
+color_array = ['r', 'b', 'g', 'c', 'm']; %rand(3,Swarm.get_num_spacecraft());
+min_line_thickness = 1;
+max_line_thickness = 20;
+max_memory_marker_size = 40;
+link_color_steps = 100;
+title_font_size = 30;
+standard_font_size = 25;
+font_name = 'Times New Roman';
+
 if length(varargin) > 3
     for i = 4:1:length(varargin)
         if strcmpi(varargin{i},'color_array') || strcmpi(varargin{i},'colorArray') ||  strcmpi(varargin{i},'color')
