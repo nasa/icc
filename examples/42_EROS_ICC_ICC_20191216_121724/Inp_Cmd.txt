@@ -1,0 +1,11 @@
+<<<<<<<<<<<<<<<<<  42:  Command Script File  >>>>>>>>>>>>>>>>>
+0.0 Align SC[0].B[0] Primary Vector [0.0 0.0 1.0] with L-frame Vector [1.0 0.0 1.0]
+0.0 Point SC[0].B[0] Secondary Vector [1.0 0.0 0.0] at SUN
+0.0 Align SC[1].B[0] Primary Vector [0.0 0.0 1.0] with L-frame Vector [1.0 0.0 1.0]
+0.0 Point SC[1].B[0] Secondary Vector [1.0 0.0 0.0] at SUN
+0.0 Align SC[2].B[0] Primary Vector [0.0 0.0 1.0] with L-frame Vector [1.0 0.0 1.0]
+0.0 Point SC[2].B[0] Secondary Vector [1.0 0.0 0.0] at SUN
+0.0 Align SC[3].B[0] Primary Vector [0.0 0.0 1.0] with L-frame Vector [1.0 0.0 1.0]
+0.0 Point SC[3].B[0] Secondary Vector [1.0 0.0 0.0] at SUN
+
+EOF
