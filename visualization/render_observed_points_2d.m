@@ -46,7 +46,12 @@ else
     above_or_below = varargin{3};
 end
 
+% Defaults
 timeLimitSpecified = false;
+color_array = ['r', 'b', 'g', 'c', 'm']; %rand(3,Swarm.get_num_spacecraft());
+title_font_size = 30;
+standard_font_size = 25;
+font_name = 'Times New Roman';
 
 if nargin > 3
     for i = 3:1:nargin-1

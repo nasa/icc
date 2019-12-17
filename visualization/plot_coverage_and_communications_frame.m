@@ -34,6 +34,7 @@ Swarm = varargin{1};
 AsteroidModel = varargin{2};
 time_step = varargin{3};
 
+% Defaults
 absolute = true;
 color_array = ['r', 'b', 'g', 'c', 'm']; %rand(3,Swarm.get_num_spacecraft());
 min_line_thickness = 1;
@@ -43,6 +44,7 @@ link_color_steps = 100;
 title_font_size = 30;
 standard_font_size = 25;
 font_name = 'Times New Roman';
+
 
 if length(varargin) > 3
     for i = 4:1:length(varargin)

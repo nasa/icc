@@ -29,6 +29,10 @@ Swarm = varargin{2};
 
 % Defaults
 semilogflag = false;
+color_array = ['r', 'b', 'g', 'c', 'm']; %rand(3,Swarm.get_num_spacecraft());
+title_font_size = 30;
+standard_font_size = 25;
+font_name = 'Times New Roman';
 
 if length(varargin) > 2
     for i = 3:1:length(varargin)

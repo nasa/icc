@@ -58,10 +58,6 @@ sc_types = cell(1,n_spacecraft);
 for i_sc = 1:n_spacecraft
     sc_types{i_sc}  = randi([1,6]); % Indicies for instruments on board
 end
-sc_types{1} = 2;
-sc_types{2} = 2;
-sc_types{3} = 4;
-sc_types{4} = 4;
 sc_types{n_spacecraft} = 0; % Mark the carrier so it will not be used
                             % in the Monte Carlo optimization
                             
@@ -142,9 +138,9 @@ Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
 absolute = true;
 
 % Do you want to record video?
-record_video = false;
+record_video = true;
 
-plot_coverage_and_communications(Swarm, ErosModel,'absolute', absolute, 'record_video', record_video)
+plot_coverage_and_communications_with_insets(Swarm, ErosModel,'absolute', absolute, 'record_video', record_video)
 
 % Create 42 representation of the orbits
 if save_42_inputs
