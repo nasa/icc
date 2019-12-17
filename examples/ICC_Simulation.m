@@ -31,6 +31,12 @@
 
 clear, clc, close all, run ../startup.m  % refresh
 
+% Do you want to record video?
+record_video = false;
+
+% Do you want to save the output of the optimization in 42 format?
+save_42_inputs = false;
+
 rng default % Pseudo-random but repeatable scenario
 
 % Add Required Packages to PATH
@@ -139,3 +145,8 @@ absolute = true;
 record_video = false;
 
 plot_coverage_and_communications(Swarm, ErosModel,'absolute', absolute, 'record_video', record_video)
+
+% Create 42 representation of the orbits
+if save_42_inputs
+    fortytwo_bridge(Swarm, ErosModel, "../utilities/42_bridge/defaults", strcat("42_EROS_ICC_ICC_",datestr(now,'yyyymmdd_HHMMSS')));    
+end
