@@ -32,7 +32,7 @@
 clear, clc, close all, run ../startup.m  % refresh
 
 % Do you want to record video?
-record_video = false;
+record_video = true;
 
 % Do you want to save the output of the optimization in 42 format?
 save_42_inputs = false;
@@ -136,9 +136,6 @@ Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
 
 % Do you want the 3d plot to be in an absolute or relative frame?
 absolute = true;
-
-% Do you want to record video?
-record_video = true;
 
 plot_coverage_and_communications_with_insets(Swarm, ErosModel,'absolute', absolute, 'record_video', record_video)
 
