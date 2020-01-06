@@ -36,7 +36,7 @@ time_step = varargin{3};
 
 % Defaults
 absolute = true;
-color_array = ['r', 'b', 'g', 'c', 'm']; %rand(3,Swarm.get_num_spacecraft());
+color_array = ['r', 'b', 'g', 'c', 'm']; 
 min_line_thickness = 1;
 max_line_thickness = 20;
 max_memory_marker_size = 40;

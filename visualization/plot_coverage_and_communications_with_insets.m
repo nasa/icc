@@ -28,7 +28,7 @@ AsteroidModel = varargin{2};
 
 % Defaults
 absolute = true;
-color_array = ['r', 'b', 'g', 'c', 'm']; %rand(3,Swarm.get_num_spacecraft());
+color_array = ['r', 'b', 'g', 'c', 'm']; 
 record_video = false;
 videoname = ['ICC_simulation_',datestr(now,'yyyymmdd_HHMMSS'),'.mp4'];
 min_line_thickness = 1;
