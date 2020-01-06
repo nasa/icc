@@ -58,7 +58,7 @@ sc_types = cell(1,n_spacecraft);
 for i_sc = 1:n_spacecraft
     sc_types{i_sc}  = i_sc; %randi([1,6]); % Indicies for instruments on board
 end
-sc_types{n_spacecraft} = 0; % Mark the carrier so it will not be used in the Monte Carlo optimization
+sc_types{n_spacecraft-1} = 0; % Mark the carrier so it will not be used in the Monte Carlo optimization
                             
                             
 sc_max_memory = zeros(1,n_spacecraft); % not used, but must be defined
