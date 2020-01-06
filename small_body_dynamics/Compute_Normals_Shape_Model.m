@@ -24,19 +24,19 @@ function obj = compute_normals_shape_model(obj)
 
 disp('Start Normal calculation')
 
-Vertices = obj.BodyModel.shape.vertices;
-Faces = obj.BodyModel.shape.faces; 
+vertices = obj.BodyModel.shape.vertices;
+faces = obj.BodyModel.shape.faces; 
 
-Faces_Normals = 0*Faces;
-Faces_Normals_Confidence = zeros(size(Faces,1),1);
+faces_normals = 0*faces;
+faces_normals_confidence = zeros(size(faces,1),1);
 
 iteration_number = 0;
 disp(['Iteration :',num2str(iteration_number)])
 
-for i=1:1:size(Faces,1)
+for i=1:1:size(faces,1)
     %     disp(['Iteration :',num2str(iteration_number),', Point :',num2str(i)])
     
-    this_pts = Vertices(Faces(i,:),:);
+    this_pts = vertices(faces(i,:),:);
     
     this_face_normal = cross(this_pts(2,:)-this_pts(1,:), this_pts(3,:)-this_pts(1,:));
     this_face_normal = this_face_normal/norm(this_face_normal);
@@ -44,54 +44,54 @@ for i=1:1:size(Faces,1)
     this_angle = acosd(dot(this_face_normal, this_pts(1,:)/norm(this_pts(1,:))));
     
     if this_angle >= 130
-        Faces_Normals_Confidence(i,1) = 1;
-        Faces_Normals(i,:) = -this_face_normal;
+        faces_normals_confidence(i,1) = 1;
+        faces_normals(i,:) = -this_face_normal;
     elseif this_angle <=50
-        Faces_Normals_Confidence(i,1) = 1;
-        Faces_Normals(i,:) = this_face_normal;
+        faces_normals_confidence(i,1) = 1;
+        faces_normals(i,:) = this_face_normal;
     else
-        Faces_Normals_Confidence(i,1) = 0.5;
-        Faces_Normals(i,:) = this_face_normal;
+        faces_normals_confidence(i,1) = 0.5;
+        faces_normals(i,:) = this_face_normal;
     end
     
 end
 
-while sum(Faces_Normals_Confidence==0.5) > 0
+while sum(faces_normals_confidence==0.5) > 0
     iteration_number = iteration_number + 1;
     disp(['Iteration :',num2str(iteration_number)])
     
-    for i=1:1:size(Faces,1)
+    for i=1:1:size(faces,1)
         
-        if Faces_Normals_Confidence(i,1) == 0.5
+        if faces_normals_confidence(i,1) == 0.5
             %             disp(['Iteration :',num2str(iteration_number),', Point :',num2str(i)])
             
-            this_face_pts = Faces(i,:);
+            this_face_pts = faces(i,:);
             
-            all_faces_pts1 = [find(Faces(:,1)==this_face_pts(1)); find(Faces(:,2)==this_face_pts(1)); find(Faces(:,3)==this_face_pts(1))];
-            all_faces_pts2 = [find(Faces(:,1)==this_face_pts(2)); find(Faces(:,2)==this_face_pts(2)); find(Faces(:,3)==this_face_pts(2))];
-            all_faces_pts3 = [find(Faces(:,1)==this_face_pts(3)); find(Faces(:,2)==this_face_pts(3)); find(Faces(:,3)==this_face_pts(3))];
+            all_faces_pts1 = [find(faces(:,1)==this_face_pts(1)); find(faces(:,2)==this_face_pts(1)); find(faces(:,3)==this_face_pts(1))];
+            all_faces_pts2 = [find(faces(:,1)==this_face_pts(2)); find(faces(:,2)==this_face_pts(2)); find(faces(:,3)==this_face_pts(2))];
+            all_faces_pts3 = [find(faces(:,1)==this_face_pts(3)); find(faces(:,2)==this_face_pts(3)); find(faces(:,3)==this_face_pts(3))];
             
-            all_faces_pts1_high_confidence = all_faces_pts1(find(Faces_Normals_Confidence(all_faces_pts1)==1));
-            all_faces_pts2_high_confidence = all_faces_pts2(find(Faces_Normals_Confidence(all_faces_pts2)==1));
-            all_faces_pts3_high_confidence = all_faces_pts3(find(Faces_Normals_Confidence(all_faces_pts3)==1));
+            all_faces_pts1_high_confidence = all_faces_pts1(find(faces_normals_confidence(all_faces_pts1)==1));
+            all_faces_pts2_high_confidence = all_faces_pts2(find(faces_normals_confidence(all_faces_pts2)==1));
+            all_faces_pts3_high_confidence = all_faces_pts3(find(faces_normals_confidence(all_faces_pts3)==1));
             
             all_faces_high_confidence = [all_faces_pts1_high_confidence; all_faces_pts2_high_confidence; all_faces_pts3_high_confidence];
             
             if (size(all_faces_high_confidence,1) > 0)
                 
-                high_confidence_face_normal = Faces_Normals(all_faces_high_confidence(1),:);
+                high_confidence_face_normal = faces_normals(all_faces_high_confidence(1),:);
                 
-                this_face_normal = Faces_Normals(i,:);
+                this_face_normal = faces_normals(i,:);
                 
                 this_angle = acosd(dot(this_face_normal, high_confidence_face_normal));
                 
                 
                 if this_angle >= 130
-                    Faces_Normals_Confidence(i,1) = 1;
-                    Faces_Normals(i,:) = -this_face_normal;
+                    faces_normals_confidence(i,1) = 1;
+                    faces_normals(i,:) = -this_face_normal;
                 elseif this_angle <=50
-                    Faces_Normals_Confidence(i,1) = 1;
-                    Faces_Normals(i,:) = this_face_normal;
+                    faces_normals_confidence(i,1) = 1;
+                    faces_normals(i,:) = this_face_normal;
                 else
                     disp(['Problem with ',num2str(i)])
                 end
@@ -103,22 +103,22 @@ while sum(Faces_Normals_Confidence==0.5) > 0
     
 end
 
-Vertices_Normals = 0*Vertices;
+vertices_normals = 0*vertices;
 
-for i=1:1:size(Vertices,1)
+for i=1:1:size(vertices,1)
     %     disp(['Vertex Point :',num2str(i)])
     
-    all_faces_pts = [find(Faces(:,1)==i); find(Faces(:,2)==i); find(Faces(:,3)==i)];
+    all_faces_pts = [find(faces(:,1)==i); find(faces(:,2)==i); find(faces(:,3)==i)];
     
-    this_vertex_normal = mean(Faces_Normals(all_faces_pts,:));
+    this_vertex_normal = mean(faces_normals(all_faces_pts,:));
     this_vertex_normal = this_vertex_normal/norm(this_vertex_normal);
     
-    Vertices_Normals(i,:) = this_vertex_normal;
+    vertices_normals(i,:) = this_vertex_normal;
 end
 
 disp('Normal calculation Done!')
 
-obj.BodyModel.shape.normals = Vertices_Normals;
+obj.BodyModel.shape.normals = vertices_normals;
 
 % % test code for plotting normals
 % 

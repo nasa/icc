@@ -44,15 +44,12 @@ addpath(strcat(ROOT_PATH,'/monte_carlo_coverage_optimizer'))
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Set Parameters:
-n_spacecraft = 3; % Number of Spacecraft, counting the carrier
+n_spacecraft = 8; % Number of Spacecraft, counting the carrier
 
 sc_types = cell(1,n_spacecraft);
-% for i_sc = 1:n_spacecraft
-%     sc_types{i_sc}  = randi([1,6]); % Indicies for instruments on board
-% end
-sc_types{1} = 3;
-sc_types{2} = 3;
-% sc_types{3} = 4;
+for i_sc = 1:n_spacecraft
+    sc_types{i_sc}  = randi([1,6]); % Indicies for instruments on board
+end
 sc_types{n_spacecraft} = 0;
 
 delta_t = 10*60; % [s]; simulation time step

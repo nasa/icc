@@ -71,7 +71,6 @@ for time_step = 1:length(Swarm.sample_times)
         end
     end
     
-%     subplot(2,4,[1 2 5 6]);
     if time_step == 1
         initialize_spatial_plot_3d('standard_font_size', standard_font_size, 'font_name', font_name);
         axis(three_d_plot_axes);
@@ -79,13 +78,15 @@ for time_step = 1:length(Swarm.sample_times)
     end
     plot_handles = plot_coverage_frame(Swarm, AsteroidModel,time_step, 'absolute', absolute, 'figure_handle', h1, 'color_array', color_array, 'title_font_size', title_font_size, 'standard_font_size', standard_font_size, 'font_name', font_name);
     
-%     subplot(2,4,3)
-%     render_observed_points_2d(AsteroidModel, Swarm, 'above', 'time_limits', [1, time_step],'color_array', color_array, 'title_font_size', title_font_size, 'standard_font_size', standard_font_size, 'font_name', font_name) % Show which points have been observed above equator
-%     
-%     subplot(2,4,4)
-%     render_observed_points_2d(AsteroidModel, Swarm, 'below', 'time_limits', [1, time_step],'color_array', color_array, 'title_font_size', title_font_size, 'standard_font_size', standard_font_size, 'font_name', font_name) % Show which points have been observed above equator
+    xlabel('X axis [km]','fontsize',standard_font_size, 'fontname',font_name)
+    ylabel('Y axis [km]','fontsize',standard_font_size, 'fontname',font_name)
+    zlabel('Z axis [km]','fontsize',standard_font_size, 'fontname',font_name)
+    set(gca, 'fontsize',standard_font_size, 'fontname',font_name)
     
-    
+    grid on;
+    view(3)
+
+        
     drawnow limitrate
     pause(0.125);
     

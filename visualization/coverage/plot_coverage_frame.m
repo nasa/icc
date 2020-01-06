@@ -117,12 +117,5 @@ if exist('h_sun','var') && ~isempty(h_sun)
     plot_handles{7} = h_sun; % Optional
 end
 
-xlabel('X axis [km]','fontsize',standard_font_size, 'fontname',font_name)
-ylabel('Y axis [km]','fontsize',standard_font_size, 'fontname',font_name)
-zlabel('Z axis [km]','fontsize',standard_font_size, 'fontname',font_name)
-set(gca, 'fontsize',standard_font_size, 'fontname',font_name)
-
-grid on;
-view(3)
 
 end
