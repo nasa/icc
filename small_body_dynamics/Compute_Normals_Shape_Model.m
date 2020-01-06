@@ -20,7 +20,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function obj = Compute_Normals_Shape_Model(obj)
+function obj = compute_normals_shape_model(obj)
 
 disp('Start Normal calculation')
 
