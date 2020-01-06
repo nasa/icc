@@ -43,10 +43,10 @@ for i=1:1:size(Faces,1)
     
     this_angle = acosd(dot(this_face_normal, this_pts(1,:)/norm(this_pts(1,:))));
     
-    if this_angle >= 135
+    if this_angle >= 130
         Faces_Normals_Confidence(i,1) = 1;
         Faces_Normals(i,:) = -this_face_normal;
-    elseif this_angle <=45
+    elseif this_angle <=50
         Faces_Normals_Confidence(i,1) = 1;
         Faces_Normals(i,:) = this_face_normal;
     else
@@ -86,10 +86,10 @@ while sum(Faces_Normals_Confidence==0.5) > 0
                 this_angle = acosd(dot(this_face_normal, high_confidence_face_normal));
                 
                 
-                if this_angle >= 135
+                if this_angle >= 130
                     Faces_Normals_Confidence(i,1) = 1;
                     Faces_Normals(i,:) = -this_face_normal;
-                elseif this_angle <=45
+                elseif this_angle <=50
                     Faces_Normals_Confidence(i,1) = 1;
                     Faces_Normals(i,:) = this_face_normal;
                 else
