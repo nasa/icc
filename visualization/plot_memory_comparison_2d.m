@@ -56,25 +56,23 @@ end
 
 n_spacecraft = Swarm.get_num_spacecraft();
 
-idx_carrier_spacecraft = 0;
+carrier_index = Swarm.get_indicies_of_type(0);
 
 % Find memory use
 sc_memory_use = zeros(n_spacecraft,1);
 for sc = 1:n_spacecraft
-    if Swarm.Parameters.types{sc} == 0
-        idx_carrier_spacecraft = sc;
-    else
+    if sc ~= carrier_index
         sc_memory_use(sc) = Swarm.Communication.flow(time_step, sc, sc);
     end
 end
 
-flows_to_carrier = Swarm.Communication.flow(:,:,idx_carrier_spacecraft);
-flows_from_carrier = squeeze(Swarm.Communication.flow(:,idx_carrier_spacecraft,:));
+flows_to_carrier = Swarm.Communication.flow(:,:,carrier_index);
+flows_from_carrier = squeeze(Swarm.Communication.flow(:,carrier_index,:));
 n_timesteps = Swarm.get_num_timesteps();
 delivered_science = zeros(n_timesteps,1);
-delivered_science(2:end) = sum(flows_to_carrier(1:end-1,:),2)-sum(flows_from_carrier(2:end,:),2) + Swarm.Communication.effective_source_flow(idx_carrier_spacecraft,1:end-1)';
+delivered_science(2:end) = sum(flows_to_carrier(1:end-1,:),2)-sum(flows_from_carrier(2:end,:),2) + Swarm.Communication.effective_source_flow(carrier_index,1:end-1)';
 
-sc_memory_use(idx_carrier_spacecraft) = Swarm.Communication.flow(time_step, idx_carrier_spacecraft, idx_carrier_spacecraft) + sum(delivered_science(1:time_step));
+sc_memory_use(carrier_index) = Swarm.Communication.flow(time_step, carrier_index, carrier_index) + sum(delivered_science(1:time_step));
 
 % Plot the bar graph
 cla()
