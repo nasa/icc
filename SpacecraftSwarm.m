@@ -18,6 +18,8 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
     properties(SetAccess=public, GetAccess=public)
         Observation % Variables related to observation of the small body by the spacecraft
         Communication % Variables related to communication between spacecraft
+        sun_state_array % [6 X N_TIMESTEPS] Array containing the trajectory of the Sun in IAU_EROS frame
+        
     end
     
     properties(SetAccess=private, GetAccess=private)
@@ -54,6 +56,8 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             
             obj.all_trajectories_set = false;
             obj.unset_trajectories = 1:N;
+            
+            obj.sun_state_array = zeros(6, K); % Sun trajectory in IAU_EROS frame
             
         end
         
@@ -153,7 +157,7 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             N = obj.get_num_spacecraft(); 
             K = obj.get_num_timesteps(); 
             
-            if length(fieldnames(obj))~=8
+            if length(fieldnames(obj))~=9
                 warning('Extra fields added to object!')
                 valid = false; 
             elseif length(obj.Parameters.available_memory)~=obj.get_num_spacecraft()

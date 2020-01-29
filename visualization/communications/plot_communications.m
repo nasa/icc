@@ -35,8 +35,7 @@ function [] = plot_communications(varargin)
 swarm = varargin{1};
 gravity_model = varargin{2};
 absolute= false;
-% color_array = ['r', 'b', 'g', 'c', 'm'];
-color_array = rand(3,swarm.get_num_spacecraft());
+color_array = ['c' 'r' 'b' 'g' 'm'];
 
 record_video = false;
 

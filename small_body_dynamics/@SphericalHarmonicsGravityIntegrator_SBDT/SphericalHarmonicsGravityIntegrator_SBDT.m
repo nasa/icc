@@ -41,6 +41,9 @@ classdef SphericalHarmonicsGravityIntegrator_SBDT
             end
             obj.BodyModel = BodyModel;
             obj.constants = constants;
+            
+            % Generate Normals at Vertices
+            obj = compute_normals_shape_model(obj);
         end
         
         function [time, absolute_traj,relative_traj, mode, state_transition_matrix] = integrate(obj,time_horizon,start_state,mode)

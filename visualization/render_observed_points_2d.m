@@ -46,35 +46,36 @@ else
     above_or_below = varargin{3};
 end
 
-colorSpecified = false;
+% Defaults
 timeLimitSpecified = false;
-fontSizeSpecified = false;
+color_array = ['r', 'b', 'g', 'c', 'm']; %rand(3,Swarm.get_num_spacecraft());
+title_font_size = 30;
+standard_font_size = 25;
+font_name = 'Times New Roman';
 
-if nargin > 4
-    for arg_ix = 4:nargin-1
-        if strcmpi(varargin{arg_ix},'color_array') || strcmpi(varargin{arg_ix},'colorArray') ||  strcmpi(varargin{arg_ix},'color')
-            colorSpecified = true;
-            color_array = varargin{arg_ix+1};
+if nargin > 3
+    for i = 3:1:nargin-1
+        if strcmpi(varargin{i},'color_array') || strcmpi(varargin{i},'colorArray') ||  strcmpi(varargin{i},'color')
+            color_array = varargin{i+1};
         end
-        if strcmpi(varargin{arg_ix},'time_limits')
+        if strcmpi(varargin{i},'time_limits')
             timeLimitSpecified = true;
-            time_limits = varargin{arg_ix+1};
+            time_limits = varargin{i+1};
         end
-        if strcmpi(varargin{arg_ix}, 'font_size')
-            fontSizeSpecified = true;
-            font_size = varargin{arg_ix+1};
+        if strcmpi(varargin{i},'font_size') || strcmpi(varargin{i},'fontsize') || strcmpi(varargin{i},'standard_font_size')
+            standard_font_size = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'title_font_size')
+            title_font_size = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'font_name')
+            font_name = varargin{i+1};
         end
     end
 end
 
-if colorSpecified == false
-    color_array = ['c' 'r' 'b' 'g' 'm'];
-end
 if timeLimitSpecified == false
-    time_limits = [1, len(Swarm.sample_times)];
-end
-if fontSizeSpecified == false
-    font_size = 25;
+    time_limits = [1, length(Swarm.sample_times)];
 end
 
 pos_points = AsteroidModel.BodyModel.shape.vertices ; % Convert to [km] for plotting
@@ -100,10 +101,10 @@ if strcmp(above_or_below, 'above')
     plot(pos_points(above_equator_not_observed_index,1),pos_points(above_equator_not_observed_index,2),...
         '.k','MarkerFaceColor','none','MarkerSize',5)
     
-    for i_sc = 1:1:n_spacecraft+1
+    for i_sc = 1:1:n_spacecraft
         observed_index = logical(point_index == i_sc);
         above_equator_observed_index = (above_equator_index & observed_index);
-        plot(pos_points(above_equator_observed_index,1),pos_points(above_equator_observed_index,2),'o','MarkerFaceColor',color_array(:,mod(i_sc-1,size(color_array,2))+1)','MarkerEdgeColor',color_array(:,mod(i_sc-1,size(color_array,2))+1)','MarkerSize',5)
+        plot(pos_points(above_equator_observed_index,1),pos_points(above_equator_observed_index,2),'o','MarkerFaceColor',color_array(:,mod(Swarm.Parameters.types{i_sc},size(color_array,2))+1)','MarkerEdgeColor',color_array(:,mod(Swarm.Parameters.types{i_sc},size(color_array,2))+1)','MarkerSize',5)
     end
     
 else
@@ -112,15 +113,17 @@ else
     plot(pos_points(above_equator_not_observed_index,1),pos_points(above_equator_not_observed_index,2),...
         '.k','MarkerFaceColor','none','MarkerSize',5)
     
-    for i_sc = 1:1:n_spacecraft+1
+    for i_sc = 1:1:n_spacecraft
         observed_index = logical(point_index == i_sc);
         above_equator_observed_index = (~above_equator_index & observed_index);
-        plot(pos_points(above_equator_observed_index,1),pos_points(above_equator_observed_index,2),'o','MarkerFaceColor',color_array(:,mod(i_sc-1,size(color_array,2))+1)','MarkerEdgeColor',color_array(:,mod(i_sc-1,size(color_array,2))+1)','MarkerSize',5)
+        plot(pos_points(above_equator_observed_index,1),pos_points(above_equator_observed_index,2),'o','MarkerFaceColor',color_array(:,mod(Swarm.Parameters.types{i_sc},size(color_array,2))+1)','MarkerEdgeColor',color_array(:,mod(Swarm.Parameters.types{i_sc},size(color_array,2))+1)','MarkerSize',5)
     end
     
 end
-title(strcat(upper(above_or_below(1)),above_or_below(2:end),' Equator'),'fontsize',font_size)
-set(gca, 'fontsize',font_size)
+title(strcat(upper(above_or_below(1)),above_or_below(2:end),' Equator'),'fontsize',title_font_size,'fontname',font_name)
+xlabel('X axis [km]','fontsize',standard_font_size, 'fontname',font_name)
+ylabel('Y axis [km]','fontsize',standard_font_size, 'fontname',font_name)
+set(gca, 'fontsize',standard_font_size,'fontname',font_name)
 axis equal
 
 

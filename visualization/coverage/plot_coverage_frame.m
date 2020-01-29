@@ -34,7 +34,7 @@ function [plot_handles] = plot_coverage_frame(varargin)
 
 Swarm = varargin{1};
 AsteroidModel = varargin{2};
-i_time = varargin{3};
+time_step = varargin{3};
 absolute= false;
 color_array = ['r', 'b', 'g', 'c', 'm'];
 axes_limits = [-1 1 -1 1 -1 1].*40;
@@ -53,6 +53,15 @@ if length(varargin) > 3
         if strcmpi(varargin{i},'figure_handle') || strcmpi(varargin{i},'figure') || strcmpi(varargin{i},'handle')
             fig = varargin{i+1};
         end
+        if strcmpi(varargin{i},'font_size') || strcmpi(varargin{i},'fontsize') || strcmpi(varargin{i},'standard_font_size')
+            standard_font_size = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'title_font_size')
+            title_font_size = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'font_name')
+            font_name = varargin{i+1};
+        end
     end
 end
 if exist('fig','var')
@@ -62,34 +71,34 @@ if exist('fig','var')
     end
 end
 
-% Which trajectories do we use? This will help make the plotting code
-% cleaner
-if absolute == true
-    sc_trajectories = Swarm.abs_trajectory_array;
-else
-    sc_trajectories = Swarm.rel_trajectory_array;
-end
 
 % Time
-plot_time = Swarm.sample_times(i_time);
+plot_time = Swarm.sample_times(time_step);
+
+h_title = title(['Time = ', num2str(floor(plot_time/8640)/10), ' day '],'fontsize',title_font_size,'fontname',font_name);
 
 % Draw the asteroid in its new location
 if absolute == true
-    h_ast = render_asteroid_3d(AsteroidModel, true, Swarm.sample_times(i_time));
+    h_ast = render_asteroid_3d(AsteroidModel, true, Swarm.sample_times(time_step));
 else
     h_ast = render_asteroid_3d(AsteroidModel, false);
 end
 
 % Plot observable points
-h_os = plot_observable_points(Swarm, AsteroidModel, i_time, 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute);
+h_os = plot_observable_points(Swarm, AsteroidModel, time_step, 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute);
 % Actually observed points - if any
-h_op = plot_observed_points(Swarm, AsteroidModel, [1, i_time], 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute, 'color_array', color_array);
+h_op = plot_observed_points(Swarm, AsteroidModel, [1, time_step], 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute, 'color_array', color_array);
 % Line from observer to observed point
-h_line = plot_observation_ray(Swarm, AsteroidModel, i_time, 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute, 'color_array', color_array);
+h_line = plot_observation_ray(Swarm, AsteroidModel, time_step, 'spacecraft_ids', [1:1:Swarm.get_num_spacecraft()], 'absolute', absolute, 'color_array', color_array);
 % Spacecraft trajectory
-h_sc = render_spacecraft_3d(sc_trajectories(1:i_time,:,:)./1000, 'color', color_array, 'linewidth', 0.75, 'absolute', absolute, 'plot_time', plot_time);
+h_sc = render_spacecraft_3d(Swarm, time_step, 'color', color_array, 'linewidth', 0.75, 'absolute', absolute, 'plot_time', plot_time, 'absolute', absolute);
 
-plot_handles = cell(5,1);
+% Plot the Sun
+sun_state = get_sun_state(Swarm.sample_times(time_step), 'absolute', absolute);
+sun_pos = 100*sun_state(1:3)/(norm(sun_state(1:3)));
+h_sun = plot3(sun_pos(1), sun_pos(2), sun_pos(3), 'o','MarkerFaceColor','y','MarkerEdgeColor','k','MarkerSize',15);
+
+plot_handles = cell(7,1);
 plot_handles{1} = h_ast;
 if exist('h_os','var') && ~isempty(h_os)
     plot_handles{2} = h_os;   % Optional
@@ -101,5 +110,12 @@ if exist('h_line','var') && ~isempty(h_line)
     plot_handles{4} = h_line; % Optional
 end
 plot_handles{5} = h_sc;
+if exist('h_title','var') && ~isempty(h_title)
+    plot_handles{6} = h_title; % Optional
+end
+if exist('h_sun','var') && ~isempty(h_sun)
+    plot_handles{7} = h_sun; % Optional
+end
+
 
 end

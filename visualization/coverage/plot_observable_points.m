@@ -29,7 +29,7 @@ AsteroidModel = varargin{2};
 i_time = varargin{3};
 coverage_color = 'y';
 spacecraft_ids = [1:1:Swarm.get_num_spacecraft()];
-absolute= false;
+absolute = true;
 
 if length(varargin) >= 4
     for i = 4:2:length(varargin)

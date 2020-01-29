@@ -32,7 +32,7 @@
 clear, clc, close all, run ../startup.m  % refresh
 
 % Do you want to record video?
-record_video = false;
+record_video = true;
 
 % Do you want to save the output of the optimization in 42 format?
 save_42_inputs = false;
@@ -52,17 +52,16 @@ addpath(strcat(ROOT_PATH,'/relay_orbit_optimizer'))
 %                   User Options: Flags and Parameters                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-n_spacecraft = 4;  % Number of Spacecraft, counting the carrier
+n_spacecraft = 6;  % Number of Spacecraft, counting the carrier
 
 sc_types = cell(1,n_spacecraft);
 for i_sc = 1:n_spacecraft
-    sc_types{i_sc}  = randi([1,6]); % Indicies for instruments on board
+    sc_types{i_sc}  = i_sc; %randi([1,6]); % Indicies for instruments on board
 end
-sc_types{n_spacecraft} = 0; % Mark the carrier so it will not be used
-                            % in the Monte Carlo optimization
-
-sc_max_memory = zeros(1,n_spacecraft); % not used, but must be defined
-
+carrier_index = n_spacecraft;
+sc_types{carrier_index} = 0; % Mark the carrier so it will not be used in the Monte Carlo optimization
+                            
+                            
 delta_t = 10*60; % [s]; simulation time step
 total_t = 1*24*60*60; % [s]; 1 day, total time of simulation
 time_vector = 0:delta_t:total_t; % sample times
@@ -76,8 +75,8 @@ max_relay_optimization_time = 300;
 relay_orbit_indices = [3, 4];
 assert(max(relay_orbit_indices)<=n_spacecraft, "ERROR: relay orbit indices exceed number of spacecraft");
 
-sc_max_memory = 8*20*1e9.*ones(1,n_spacecraft-1); % 20 GB max memory for instrument spacecraft
-sc_max_memory(1,n_spacecraft) = 8*10000*1e9; % Memory limit for carrier spacecraft
+sc_max_memory = 8*20*1e9.*ones(1,n_spacecraft); % 20 GB max memory for instrument spacecraft
+sc_max_memory(1,carrier_index) = 8*10000*1e9; % Memory limit for carrier spacecraft
 
 % Parameters for bandwidth model
 bandwidth_parameters.reference_bandwidth = 250000;
@@ -113,6 +112,9 @@ end
 carrier_initial_conditions = initialize_carrier_orbit(ErosModel);
 Swarm.integrate_trajectory(carrier_index, ErosModel, carrier_initial_conditions);
 
+% Get Sun Position
+Swarm.sun_state_array = get_sun_state(Swarm.sample_times); 
+
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                    Sciencecraft Orbit Optimization                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -133,80 +135,7 @@ Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
 % Do you want the 3d plot to be in an absolute or relative frame?
 absolute = true;
 
-color_array = rand(3,Swarm.get_num_spacecraft());
-
-if record_video
-    videoname = ['ICC_simulation_',datestr(now,'yyyymmdd_HHMMSS'),'.mp4'];
-    if ismac() || ispc()
-        writerObj = VideoWriter(videoname, 'MPEG-4');
-    else
-        writerObj = VideoWriter(videoname);
-    end
-    writerObj.FrameRate = 30;   % Default 30
-    writerObj.Quality = 100;    % Default 75
-    open(writerObj);
-end
-
-
-
-% Test 3d plot to get the axes extent
-h1 = figure();
-set(h1,'Color',[1 1 1]);
-set(h1,'units','normalized','outerposition',[0 0 1 1])
-set(h1,'PaperPositionMode','auto');
-initialize_spatial_plot_3d();
-hold on 
-axis equal
-% Initial plot - just to get a sense of the size
-plot_coverage_and_communications_frame(Swarm, ErosModel,length(Swarm.sample_times), 'absolute', absolute, 'figure_handle', h1, 'color_array', color_array);
-axis equal
-three_d_plot_axes = axis();
-clf;
-
-for time_step = 1:length(Swarm.sample_times)
-    subplot(2,4,[1 2 5 6]);
-    if time_step == 1
-        initialize_spatial_plot_3d();
-        axis(three_d_plot_axes);
-        axis equal
-    end
-
-    plot_handles = plot_coverage_and_communications_frame(Swarm, ErosModel, time_step, 'absolute', absolute,'color_array', color_array);
-    
-    subplot(2,4,3)
-    render_observed_points_2d(ErosModel, Swarm, 'above', 'time_limits', [1, time_step],'color_array', color_array) % Show which points have been observed above equator
-    
-    subplot(2,4,4)
-    render_observed_points_2d(ErosModel, Swarm, 'below', 'time_limits', [1, time_step],'color_array', color_array) % Show which points have been observed above equator
-    
-    subplot(2,4,7)
-    plot_memory_comparison_2d(time_step, Swarm, 'semilogflag', true,'color_array', color_array);
-    
-    subplot(2,4,8)
-    plot_communication_topology_2d(time_step, Swarm, ErosModel,color_array);
-    
-    drawnow limitrate
-    pause(0.125);
-    if record_video
-        F = getframe(h1);
-        writeVideo(writerObj,F);
-    end
-    
-    for entry_ix = 1:length(plot_handles)
-        if ~isempty(plot_handles{entry_ix})
-            delete(plot_handles{entry_ix})
-        end
-    end
-    
-    
-end
-
-subplot(2,4,[1 2 5 6]);
-plot_coverage_and_communications_frame(Swarm, ErosModel,length(Swarm.sample_times), 'absolute', absolute, 'figure_handle', h1, 'color_array', color_array);
-
-if record_video
-    close(writerObj);
-end
+plot_coverage_and_communications_with_insets(Swarm, ErosModel,'absolute', absolute, 'record_video', record_video)
 
 % Create 42 representation of the orbits
 if save_42_inputs

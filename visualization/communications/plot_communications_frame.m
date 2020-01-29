@@ -37,7 +37,7 @@ time = varargin{3};
 
 absolute = false;
 n_spacecraft = swarm.get_num_spacecraft();
-color_array = rand(3,n_spacecraft);
+color_array = ['r', 'b', 'g', 'c', 'm']; 
 max_memory = NaN;
 max_bandwidth = NaN;
 
@@ -61,14 +61,6 @@ if length(varargin) > 3
     end
 end
 
-abs_trajectory_array = swarm.abs_trajectory_array/1e3;
-rel_trajectory_array = swarm.rel_trajectory_array/1e3;
-if absolute == true
-    trajectory_array = abs_trajectory_array;
-else
-    trajectory_array = rel_trajectory_array;
-end
-
 min_line_thickness = 1;
 max_line_thickness = 20;
 max_memory_marker_size = 40;
@@ -84,11 +76,18 @@ end
 % Plot asteroid
 h_ast = render_asteroid_3d(gravity_model, absolute, swarm.sample_times(time));
 
+% % Plot the spacecraft trajectories
+% h_tr = render_spacecraft_3d(trajectory_array(1:time,:,:),...
+%     'color', color_array, 'linewidth', 0.75, 'absolute', absolute, ...
+%     'show_trail', true, 'markersize', 0, ...
+%     'LineWidth',min_line_thickness);
+
 % Plot the spacecraft trajectories
-h_tr = render_spacecraft_3d(trajectory_array(1:time,:,:),...
+h_tr = render_spacecraft_3d(swarm, time,...
     'color', color_array, 'linewidth', 0.75, 'absolute', absolute, ...
     'show_trail', true, 'markersize', 0, ...
     'LineWidth',min_line_thickness);
+
 
 % Plot spacecraft markers with memory use
 h_sc = plot_memory_use(swarm, time, ...

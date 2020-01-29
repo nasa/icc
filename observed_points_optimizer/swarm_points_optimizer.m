@@ -6,8 +6,8 @@ function [observed_points, priority] = swarm_points_optimizer(observable_points_
 tic
 
 N = length(observable_points_map);
-Nv = size(reward_map{1},1); % number of vertices
-K  = size(reward_map{1},2); % number of time steps
+Nv = size(reward_map{sc_optimized(1)},1); % number of vertices
+K  = size(reward_map{sc_optimized(1)},2); % number of time steps
 
 % Total number of potential observations = size of decision variable = M
 M = 0;
