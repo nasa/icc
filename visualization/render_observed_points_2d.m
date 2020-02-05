@@ -40,7 +40,7 @@ function [] = render_observed_points_2d(varargin)
 AsteroidModel = varargin{1};
 Swarm = varargin{2};
 
-if nargin<3
+if length(varargin) < 3
     above_or_below = 'above';
 else
     above_or_below = varargin{3};
@@ -53,8 +53,8 @@ title_font_size = 30;
 standard_font_size = 25;
 font_name = 'Times New Roman';
 
-if nargin > 3
-    for i = 3:1:nargin-1
+if length(varargin) > 3
+    for i = 3:1:length(varargin)
         if strcmpi(varargin{i},'color_array') || strcmpi(varargin{i},'colorArray') ||  strcmpi(varargin{i},'color')
             color_array = varargin{i+1};
         end
