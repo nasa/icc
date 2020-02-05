@@ -24,3 +24,5 @@ accociated with randomly generated orbits.
 - `Voronoi_On_Eros` provides a usage example of the functions in the 
 coverage optmization module that are used to create Voronoi partitions on 
 a small body. 
+
+- `Run_all_demo_files` sequentially runs all the demo files in this folder. This is to help testing of new features and code changes. 
