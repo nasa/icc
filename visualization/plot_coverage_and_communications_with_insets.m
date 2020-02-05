@@ -20,7 +20,7 @@
 
 function [] = plot_coverage_and_communications_with_insets(varargin)
 % plot_coverage_and_communications A function to plot both coverage and communications with insets.
-% Syntax: [] = plot_coverage_and_communications_with_insets(Swarm, ErosModel, absolute*, color_array*, record_video*, videoname*)
+% Syntax: [] = plot_coverage_and_communications_with_insets(Swarm, ErosModel, absolute*, color_array*, record_video*, videoname*, font_name*, min_line_thickness*, max_line_thickness*, max_memory_marker_size*, link_color_steps*)
 % * Optional keyword inputs
 
 Swarm = varargin{1};
@@ -53,6 +53,28 @@ if length(varargin) > 2
         if strcmpi(varargin{i},'video_name') || strcmpi(varargin{i},'videoname')
             videoname = varargin{i+1};
         end
+        if strcmpi(varargin{i},'font_size') || strcmpi(varargin{i},'fontsize') || strcmpi(varargin{i},'standard_font_size')
+            standard_font_size = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'title_font_size')
+            title_font_size = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'font_name')
+            font_name = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'min_line_thickness')
+            min_line_thickness = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'max_line_thickness')
+            max_line_thickness = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'max_memory_marker_size')
+            max_memory_marker_size = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'link_color_steps')
+            link_color_steps = varargin{i+1};
+        end
+
     end
 end
 
