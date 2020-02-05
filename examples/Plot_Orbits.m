@@ -35,7 +35,7 @@ addpath(strcat(ROOT_PATH,'/small_body_dynamics'))
 delta_t = 10*60; % [sec] simulation time step
 total_t = 5*24*60*60; % [sec]; 5 days, total time of simulation
 
-flag_testInHouse = true; % test in-house spherical harmonics integrator
+flag_testInHouse = true; % test in-house spherical harmonics integrator, needs Matlab Aerospace Toolbox
 flag_testSBDT = true; % test SBDT integrators 
 if ~exist('addSBDT','file')
     fprintf("WARNING: SBDT not found.\n You should set SBDT folder as an environment variable SBDT_PATH. \n Skipping SBDT tests.\n")
