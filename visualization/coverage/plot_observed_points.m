@@ -20,9 +20,7 @@
 
 function [h_op] = plot_observed_points(varargin)
 % PLOT_OBSERVED_POINTS plots observed points
-% Syntax: [handle] = plot_observed_points(Swarm, AsteroidModel,
-% [start_time_index end_time_index], spacecraft_ids*
-% absolute_frame_flag*, color_array*)
+% Syntax: [handle] = plot_observed_points(Swarm, AsteroidModel, [start_time_index end_time_index], spacecraft_ids*, absolute_frame_flag*, color_array*)
 % * Optional keyword args
 
 Swarm = varargin{1};

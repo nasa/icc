@@ -20,9 +20,7 @@
 
 function [h_line] = plot_observation_ray(varargin)
 % PLOT_OBSERVATION_RAY plots ray from spacecraft to observed point
-% Syntax: [handle] = plot_observation_ray(Swarm, AsteroidModel,
-% fig_handle,time_index, spacecraft_ids*, absolute_frame_flag*,
-% color_array*).
+% Syntax: [handle] = plot_observation_ray(Swarm, AsteroidModel, time_index, spacecraft_ids*, absolute_frame_flag*, color_array*).
 % * Optional keyword args
 
 

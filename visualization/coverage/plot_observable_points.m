@@ -20,8 +20,7 @@
 
 function [h_os] = plot_observable_points(varargin)
 % PLOT_OBSERVABLE_POINTS plots observable points
-% Syntax: [handle] = plot_observable_points(Swarm, AsteroidModel,
-% fig_handle,time_index, spacecraft_ids*, absolute_frame_flag*)
+% Syntax: [handle] = plot_observable_points(Swarm, AsteroidModel, time_index, spacecraft_ids*, absolute_frame_flag*, coverage_color*)
 % * Optional keyword args
 
 Swarm = varargin{1};
