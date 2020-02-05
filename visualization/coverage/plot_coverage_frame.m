@@ -37,7 +37,6 @@ AsteroidModel = varargin{2};
 time_step = varargin{3};
 absolute= false;
 color_array = ['r', 'b', 'g', 'c', 'm'];
-axes_limits = [-1 1 -1 1 -1 1].*40;
 title_font_size = 30;
 font_name = 'Times New Roman';
 
@@ -48,10 +47,6 @@ if length(varargin) > 3
         end
         if strcmpi(varargin{i},'absolute')
             absolute = varargin{i+1};
-        end
-        if strcmpi(varargin{i},'axes_limits') || strcmpi(varargin{i},'axes')
-            axes_limits = varargin{i+1};
-            assert(length(axes_limits)==6, "ERROR: axes limits size is incorrect")
         end
         if strcmpi(varargin{i},'figure_handle') || strcmpi(varargin{i},'figure') || strcmpi(varargin{i},'handle')
             fig = varargin{i+1};

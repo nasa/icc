@@ -27,11 +27,8 @@
 
 
 function [fig_handles] = plot_memory_use(varargin)
-% PLOT_MEMORY_USE A function to plot the information flow between
-% spacecraft
-% Syntax: [axes_limits] = plot_information_flow(swarm, 
-% plot_time, color_array*, absolute*, figure_handle*, max_memory*,
-% max_memory_marker_size*)
+% PLOT_MEMORY_USE A function to plot the information flow between spacecraft
+% Syntax: [axes_limits] = plot_information_flow(swarm, plot_time, color_array*, absolute*, figure_handle*, max_memory*, max_memory_marker_size*)
 % * Optional keyword inputs
 
 Swarm = varargin{1};

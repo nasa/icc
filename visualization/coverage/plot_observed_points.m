@@ -30,6 +30,7 @@ i_time = varargin{3}(2);
 spacecraft_ids = [1:1:Swarm.get_num_spacecraft()];
 absolute= false;
 color_array = ['r']; %, 'b', 'g', 'c', 'm'];
+
 if length(varargin) >= 4
     for i = 4:2:length(varargin)
         if strcmpi(varargin{i},'spacecraft_ids')

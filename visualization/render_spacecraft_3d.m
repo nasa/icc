@@ -39,6 +39,7 @@ linewidth = 1;
 showTrail = true;
 absolute= true;
 color_array = ['r', 'b', 'g', 'c', 'm']; 
+
 if length(varargin) > 2
     for i = 3:2:length(varargin)
         if strcmpi(varargin{i},'color_array') || strcmpi(varargin{i},'colorArray') ||  strcmpi(varargin{i},'color')
