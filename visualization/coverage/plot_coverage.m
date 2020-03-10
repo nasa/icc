@@ -41,7 +41,7 @@ standard_font_size = 25;
 font_name = 'Times New Roman';
 
 if length(varargin) > 2
-    for i = 3:1:length(varargin)
+    for i = 3:2:length(varargin)
         if strcmpi(varargin{i},'color_array') || strcmpi(varargin{i},'colorArray') ||  strcmpi(varargin{i},'color')
             color_array = varargin{i+1};
         end

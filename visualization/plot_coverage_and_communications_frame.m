@@ -29,6 +29,8 @@
 
 function [plot_handles] = plot_coverage_and_communications_frame(varargin)
 % PLOT_COVERAGE_AND_COMMUNICATIONS Plots both coverage and comms.
+% Syntax: [view] = plot_coverage_and_communications_frame(Swarm, ErosModel, time_step, axes_limits*, color_array*, absolute*, standard_font_size*, title_font_size*, font_name*, min_line_thickness*, max_line_thickness*, max_memory_marker_size*, link_color_steps*)
+% *optional input
 
 Swarm = varargin{1};
 AsteroidModel = varargin{2};
@@ -47,7 +49,7 @@ font_name = 'Times New Roman';
 
 
 if length(varargin) > 3
-    for i = 4:1:length(varargin)
+    for i = 4:2:length(varargin)
         if strcmpi(varargin{i},'color_array') || strcmpi(varargin{i},'colorArray') ||  strcmpi(varargin{i},'color')
             color_array = varargin{i+1};
         end
@@ -56,9 +58,6 @@ if length(varargin) > 3
         end
         if strcmpi(varargin{i},'font_size') || strcmpi(varargin{i},'fontsize') || strcmpi(varargin{i},'standard_font_size')
             standard_font_size = varargin{i+1};
-        end
-        if strcmpi(varargin{i},'limits') || strcmpi(varargin{i},'axes_limits')
-            axes_limits = varargin{i+1};
         end
         if strcmpi(varargin{i},'title_font_size')
             title_font_size = varargin{i+1};
@@ -113,9 +112,7 @@ h_line = plot_observation_ray(Swarm, AsteroidModel, time_step, 'spacecraft_ids',
 % Communications
 
 % Plot spacecraft markers with memory use
-h_mem = plot_memory_use(Swarm, time_step, ...
-    'color_array', color_array, 'absolute', absolute, ...
-        'max_memory_marker_size', max_memory_marker_size);
+h_mem = plot_memory_use(Swarm, time_step, 'color_array', color_array, 'absolute', absolute, 'max_memory_marker_size', max_memory_marker_size);
 
 % Plot information flow
 h_bw = plot_information_flow(Swarm, time_step, ...

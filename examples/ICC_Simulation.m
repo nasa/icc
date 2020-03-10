@@ -32,7 +32,7 @@
 clear, clc, close all, run ../startup.m  % refresh
 
 % Do you want to record video?
-record_video = true;
+record_video = false;
 
 % Do you want to save the output of the optimization in 42 format?
 save_42_inputs = false;

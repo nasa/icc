@@ -20,12 +20,10 @@
 
 function [h] = render_spacecraft_3d(varargin) 
 %F_RENDER_SPACECRAFT_3D Renders location of the spacecraft in 3d space
-%    Syntax: render_spacecraft_3d(sc_position_array, 'show_trail', *showTrail, 'color_array', *color_array)
+%    Syntax: render_spacecraft_3d(Swarm, time_index, show_trail*, color_array*, markersize*, linewidth*, absolute_frame_flag*)
 %    *optional input
 %
 %   Inputs:
-%    - sc_position_array [km]: [N_TIMESTEPS x 3 x N_SPACECRAFT] Position
-%       array of the spacecraft (over some time history)
 %    - *color_array: Array of colors assigned to the spacecraft
 %    - *showTrail: logical variable; will show entire orbital
 %
@@ -41,6 +39,7 @@ linewidth = 1;
 showTrail = true;
 absolute= true;
 color_array = ['r', 'b', 'g', 'c', 'm']; 
+
 if length(varargin) > 2
     for i = 3:2:length(varargin)
         if strcmpi(varargin{i},'color_array') || strcmpi(varargin{i},'colorArray') ||  strcmpi(varargin{i},'color')

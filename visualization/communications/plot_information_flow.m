@@ -29,9 +29,7 @@
 function [fig_handles] = plot_information_flow(varargin)
 % PLOT_INFORMATION_FLOW A function to plot the information flow between
 % spacecraft
-% Syntax: [axes_limits] = plot_information_flow(swarm, plot_time,
-% absolute*, figure_handle*,
-% max_bandwidth*, min_line_thickness*, max_line_thickness*, link_color_steps*)
+% Syntax: [axes_limits] = plot_information_flow(swarm, plot_time, absolute*, figure_handle*, max_bandwidth*, min_line_thickness*, max_line_thickness*, link_color_steps*)
 % * Optional keyword inputs
 
 Swarm = varargin{1};

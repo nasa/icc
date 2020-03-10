@@ -1,6 +1,6 @@
 function [] = initialize_spatial_plot_3d(varargin)
 %INITIALIZE_SPATIAL_PLOT_3D Initializes 3D spatial plot with axes in km
-%   Syntax: [] = initialize_spatial_plot_3d('font_size', font_size, 'limits', axes_limits)
+%   Syntax: [] = initialize_spatial_plot_3d(font_size*, axes_limits*, font_name*)
 %    *all inputs are optional
 %
 %   Inputs:
@@ -8,18 +8,19 @@ function [] = initialize_spatial_plot_3d(varargin)
 %    - axes_limits: [km] Limits used on axes; axes lengths are equal
 
 %% Interpret the Inputs
-n_inputs = max(size(varargin));
 limitsSpecified = false;
-fontSizeSpecified = false;
+axes_limits = [-1 1 -1 1 -1 1].*40;
+standard_font_size = 25;
+font_name = 'Times New Roman';
 
-for i = 1:2:n_inputs
+for i = 1:2:length(varargin)
     if strcmpi(varargin{i},'font_size') || strcmpi(varargin{i},'fontsize') || strcmpi(varargin{i},'standard_font_size')
-        fontSizeSpecified = true;
         standard_font_size = varargin{i+1};
     end
     if strcmpi(varargin{i},'limits')
         limitsSpecified = true;
         axes_limits = varargin{i+1}; 
+        assert(length(axes_limits)==6, "ERROR: axes limits size is incorrect")
     end
     if strcmpi(varargin{i},'font_name')
         font_name = varargin{i+1};
@@ -27,9 +28,6 @@ for i = 1:2:n_inputs
 end
 
 %% Make Plot
-if fontSizeSpecified==false
-    standard_font_size = 25;
-end
 
 hold on
 xlabel('X axis [km]','fontsize',standard_font_size, 'fontname',font_name)

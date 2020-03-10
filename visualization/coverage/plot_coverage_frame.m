@@ -29,7 +29,7 @@
 
 function [plot_handles] = plot_coverage_frame(varargin)
 % PLOT_COVERAGE Plots the instrument coverage of a spacecraft swarm.
-% Syntax: [view] = plot_coverage_frame(Swarm, ErosModel, plot_time_index, axes_limits*, color_array*, absolute*)
+% Syntax: [view] = plot_coverage_frame(Swarm, ErosModel, plot_time_index, axes_limits*, color_array*, absolute*, figure_handle*, title_font_size*, font_name*)
 % *optional input
 
 Swarm = varargin{1};
@@ -37,7 +37,9 @@ AsteroidModel = varargin{2};
 time_step = varargin{3};
 absolute= false;
 color_array = ['r', 'b', 'g', 'c', 'm'];
-axes_limits = [-1 1 -1 1 -1 1].*40;
+title_font_size = 30;
+font_name = 'Times New Roman';
+
 if length(varargin) > 3
     for i = 4:2:length(varargin)
         if strcmpi(varargin{i},'color_array') || strcmpi(varargin{i},'colorArray') ||  strcmpi(varargin{i},'color')
@@ -46,15 +48,8 @@ if length(varargin) > 3
         if strcmpi(varargin{i},'absolute')
             absolute = varargin{i+1};
         end
-        if strcmpi(varargin{i},'axes_limits') || strcmpi(varargin{i},'axes')
-            axes_limits = varargin{i+1};
-            assert(length(axes_limits)==6, "ERROR: axes limits size is incorrect")
-        end
         if strcmpi(varargin{i},'figure_handle') || strcmpi(varargin{i},'figure') || strcmpi(varargin{i},'handle')
             fig = varargin{i+1};
-        end
-        if strcmpi(varargin{i},'font_size') || strcmpi(varargin{i},'fontsize') || strcmpi(varargin{i},'standard_font_size')
-            standard_font_size = varargin{i+1};
         end
         if strcmpi(varargin{i},'title_font_size')
             title_font_size = varargin{i+1};
