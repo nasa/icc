@@ -18,13 +18,16 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function observable_points = get_observable_points(asteroid_vertices, asteroid_normals, sc_position, sun_position, sc_type)
+function observable_points = get_observable_points(AsteroidModel, Swarm, i_time, i_sc)
 %GET_OBSERVABLE_POINTS Returns a vector of the asteroid vertex indicies
 %which are feasible for observation by the spacecraft in the given position
-%
-%   WARNING: Sun and Spacecraft angles not being calculated correctly. The
-%    surface normal vector "r_normal" uses a spherical approximation, which
-%    is inaccurate. 
+
+asteroid_vertices = AsteroidModel.BodyModel.shape.vertices; % Verticies composing surface of asteroid
+asteroid_normals = AsteroidModel.BodyModel.shape.normals; % Normals at Verticies
+sc_position = Swarm.rel_trajectory_array(i_time, 1:3, i_sc );
+sun_position = Swarm.sun_state_array(1:3,i_time)';
+sc_type = Swarm.Parameters.types{i_sc};
+
 
 flag_use_instruments = true; % if false, will use simplified function, not derived from science
 
@@ -40,7 +43,7 @@ Nv = size(asteroid_vertices,1);
 if flag_use_instruments==true
     %% Determine Points that meet instrument constraints 
     if ismember(4,sc_type) || ismember(6,sc_type) % for Altimeter or Magnetometer just retun nadir
-        observable_points = get_nadir_point(asteroid_vertices, sc_position);
+        observable_points = get_nadir_point(AsteroidModel, Swarm, i_time, i_sc);
     else
         vertex_observability_status = zeros(1,Nv); % 1 if observable, zero otherwise
         
