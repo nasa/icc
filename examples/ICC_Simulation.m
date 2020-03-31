@@ -141,3 +141,5 @@ plot_coverage_and_communications_with_insets(Swarm, ErosModel,'absolute', absolu
 if save_42_inputs
     fortytwo_bridge(Swarm, ErosModel, "../utilities/42_bridge/defaults", strcat("42_EROS_ICC_ICC_",datestr(now,'yyyymmdd_HHMMSS')));    
 end
+
+cspice_kclear
