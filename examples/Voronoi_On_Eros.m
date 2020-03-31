@@ -149,3 +149,5 @@ elseif flag_demo == 2 % Iteratively call the algorithm with the wavefront propag
         
     end
 end
+
+cspice_kclear % This cleares the SPICE files from Matlab's memory

@@ -106,3 +106,5 @@ Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
 %                              Show Results                               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 plot_coverage(Swarm, ErosModel,'absolute', true)
+
+cspice_kclear % This cleares the SPICE files from Matlab's memory

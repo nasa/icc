@@ -111,3 +111,5 @@ disp("Optimizing")
 plot_communications(swarm, ErosGravity,true)
 
 % save(strcat('relay_optimization_', datestr(datetime,"yyyymmdd_HHMMSS")))
+
+cspice_kclear % This cleares the SPICE files from Matlab's memory
