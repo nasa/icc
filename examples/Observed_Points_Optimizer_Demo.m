@@ -116,3 +116,5 @@ elseif flag_simulation == 2
     render_observed_points_3d(ErosModel, Swarm);
     render_spacecraft_3d(Swarm.rel_trajectory_array./1000,'color', color_array);
 end
+
+cspice_kclear % This cleares the SPICE files from Matlab's memory

@@ -132,3 +132,4 @@ if flag_testSBDT
 end
 
 
+cspice_kclear % This cleares the SPICE files from Matlab's memory

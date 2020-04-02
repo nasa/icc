@@ -115,3 +115,5 @@ bandwidth_model = @(x1,x2) quadratic_comm_model(x1, x2, bandwidth_parameters, oc
 % Plot the result
 
 plot_communications(swarm, ErosGravity,'save_video',false, 'absolute', true);
+
+cspice_kclear % This cleares the SPICE files from Matlab's memory

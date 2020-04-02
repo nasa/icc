@@ -52,7 +52,7 @@ addpath(strcat(ROOT_PATH,'/relay_orbit_optimizer'))
 %                   User Options: Flags and Parameters                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-n_spacecraft = 6;  % Number of Spacecraft, counting the carrier
+n_spacecraft = 7;  % Number of Spacecraft, counting the carrier
 
 sc_types = cell(1,n_spacecraft);
 for i_sc = 1:n_spacecraft
@@ -141,3 +141,5 @@ plot_coverage_and_communications_with_insets(Swarm, ErosModel,'absolute', absolu
 if save_42_inputs
     fortytwo_bridge(Swarm, ErosModel, "../utilities/42_bridge/defaults", strcat("42_EROS_ICC_ICC_",datestr(now,'yyyymmdd_HHMMSS')));    
 end
+
+cspice_kclear % This cleares the SPICE files from Matlab's memory

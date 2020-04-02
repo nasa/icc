@@ -64,8 +64,8 @@ sc_type = Swarm.Parameters.types; % 0 for carrier; 1 for instrument carrying spa
 K = Swarm.get_num_timesteps(); % number of time samples
 N = Swarm.get_num_spacecraft(); % number of spacecraft
 Nv = size(AsteroidModel.BodyModel.shape.vertices,1); % number of vertices in shape model
-asteroid_vertices = AsteroidModel.BodyModel.shape.vertices; % Verticies composing surface of asteroid
-asteroid_normals = AsteroidModel.BodyModel.shape.normals; % Normals at Verticies
+% asteroid_vertices = AsteroidModel.BodyModel.shape.vertices; % Verticies composing surface of asteroid
+% asteroid_normals = AsteroidModel.BodyModel.shape.normals; % Normals at Verticies
 
 %% Get Set of Feasible Observation Points at Each Timestep
 observable_points = Swarm.Observation.observable_points;
@@ -75,9 +75,9 @@ for i_time = 1:K
             observable_points{i_sc, i_time} = []; % carrier spacecraft does not observe anything
         else
             if flag_optimization_approach==0
-                observable_points{i_sc, i_time} = get_nadir_point(asteroid_vertices, Swarm.rel_trajectory_array(i_time, 1:3, i_sc ) ) ;
+                observable_points{i_sc, i_time} = get_nadir_point(AsteroidModel, Swarm, i_time, i_sc) ;
             else
-                observable_points{i_sc, i_time} = get_observable_points(asteroid_vertices, asteroid_normals, Swarm.rel_trajectory_array(i_time, 1:3, i_sc ), Swarm.sun_state_array(1:3,i_time)', Swarm.Parameters.types{i_sc}) ;
+                observable_points{i_sc, i_time} = get_observable_points(AsteroidModel, Swarm, i_time, i_sc) ;
             end
         end
     end
@@ -103,7 +103,7 @@ if flag_optimization_approach==0
         reward_map{i_sc} = ones(Nv, K);
     end
 else
-    reward_map = get_coverage_reward_map(AsteroidModel, observable_points_map, Swarm.Parameters.types, sc_optimized);
+    reward_map = get_coverage_reward_map(AsteroidModel, Swarm, observable_points_map, sc_optimized);
 end
 
 %% Choose Observation Points
