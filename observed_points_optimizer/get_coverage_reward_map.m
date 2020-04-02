@@ -18,7 +18,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function reward_map = get_coverage_reward_map(AsteroidModel, observable_points_map, sc_optimized)
+function reward_map = get_coverage_reward_map(AsteroidModel, Swarm, observable_points_map, sc_optimized)
 %GET_COVERAGE_REWARD Defines the value of the observed points
 %   reward_map{i}(j,k) defines the reward accociated with agent i observing
 %   vertex j at time k
