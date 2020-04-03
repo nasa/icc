@@ -133,7 +133,7 @@ else % Batch optimization
             Swarm.Observation.priority(i_sc,:) = added_priority(i_sc,:);
         end
     else
-        disp('Skipping intlinprog!')
+        disp('Skipping intlinprog, no observables vertices!')
 
     end
 end

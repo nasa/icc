@@ -1,4 +1,5 @@
 % Run all demo files
+clear all; close all; clc;
 
 ICC_Simulation;
 
