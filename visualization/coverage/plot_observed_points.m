@@ -46,13 +46,21 @@ if length(varargin) >= 4
 end
 plot_time = Swarm.sample_times(i_time);
 
+h_op = zeros(2*length(spacecraft_ids),1);
 for i_sc = spacecraft_ids
     % Actually observed points - if any
     if sum(Swarm.Observation.observed_points(i_sc, start_time:i_time))>0
         % Note that, for some time steps, there may be no
         % points to observe. render_these_points_3d takes care
         % of filtering those out
-        h_op(i_sc) = render_these_points_3d(AsteroidModel, Swarm.Observation.observed_points(i_sc, start_time:i_time), 'color', color_array(:,mod(Swarm.Parameters.types{i_sc},size(color_array,2))+1)', 'markersize', 6, 'absolute', absolute, 'plot_time', plot_time);
+% 'color', color_array(:,mod(Swarm.Parameters.types{i_sc},size(color_array,2))+1)'
+
+        h_op(2*i_sc-1) = render_these_points_3d(AsteroidModel, Swarm.Observation.observed_points(i_sc, start_time:i_time), 'color', 'w', 'markersize', 4, 'absolute', absolute, 'plot_time', plot_time);
+        % We plot in color _only_ the points that the communication
+        % optimizer thinks should be recorded. 
+        % Here we exploit the fact that point 0: no observation.
+        recorded_points = Swarm.Observation.observed_points.*(Swarm.Communication.effective_source_flow>0);
+        h_op(2*i_sc) = render_these_points_3d(AsteroidModel, recorded_points(i_sc, start_time:i_time), 'color', color_array(:,mod(Swarm.Parameters.types{i_sc},size(color_array,2))+1)', 'markersize', 4, 'absolute', absolute, 'plot_time', plot_time);
 
     end
 end

@@ -147,6 +147,12 @@ for i_sc = 1:Swarm.get_num_spacecraft()
     else
         bits_per_point = data_rate.*Swarm.sample_times;
         Swarm.Observation.flow(i_sc,:) = bits_per_point.*sign(Swarm.Observation.observed_points(i_sc,:)) ;
+        % Here, we pre-allocate Swarm.Communication.effective_source_flow
+        % to Swarm.Observation.flow . The idea is, if we do not run the
+        % communication optimizer, we assume we collect _all_ data. This is
+        % done primarily for plotting purposes. The variable will be
+        % overridden when communication_optimizer is called.
+        Swarm.Communication.effective_source_flow(i_sc,:) = Swarm.Observation.flow(i_sc,:);
     end
 end
 
