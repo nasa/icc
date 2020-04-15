@@ -75,6 +75,17 @@ If you encounter issues trying to run SBDT, it may be advisable to recompile the
 - In MATLAB, run `compileMexSBDT()`. A number of files will be generated in the folder. The file extension is `mexw64` on Windows, `mexa64` on Linux, and `mexmaci64` on MacOS. 
 - Copy the newly generated mex files to the CompiledMEX folder, overwriting the previous ones.
 
+### Missing function `setstructfields`
+
+SBDT internally makes use of the MATLAB function `setstructfields`, which
+is provided by the Signal Processing toolbox.
+If you do not have access to the Signal Processing toolbox, the repository
+contains [a clean-room reimplementation](utilities/misc/setstructfields_ICC.m)
+of the function (based on [this description](https://stackoverflow.com/questions/38645/what-are-some-efficient-ways-to-combine-two-structures-in-matlab/23767610#23767610)). 
+To use it, rename the file from `setstructfields_ICC.m` to `setstructfields.m`
+and ensure that it is in a folder on your MATLAB PATH.
+
+
 ### Warning: P-file is older than M-file.
 
 Depending on the SBDT distribution in use, you may receive the warning
