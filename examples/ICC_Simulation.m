@@ -112,8 +112,8 @@ end
 carrier_initial_conditions = initialize_carrier_orbit(ErosModel);
 Swarm.integrate_trajectory(carrier_index, ErosModel, carrier_initial_conditions);
 
-% Get Sun Position
-Swarm.sun_state_array = get_sun_state(Swarm.sample_times); 
+% % Get Sun Position - handled in constructor
+% Swarm.sun_state_array = get_sun_state(Swarm.sample_times); 
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                    Sciencecraft Orbit Optimization                      %
