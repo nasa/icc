@@ -95,17 +95,17 @@ flows_from_carrier = squeeze(Swarm.Communication.flow(:,end,:));
 delivered_science = zeros(n_timesteps,1);
 delivered_science(2:end) = sum(flows_to_carrier(1:end-1,:),2)-sum(flows_from_carrier(2:end,:),2)+Swarm.Communication.effective_source_flow(end,1:end-1)';
 
-max_delivered = sum(sum(Swarm.Communication.effective_source_flow));
+max_delivered = sum(delivered_science);
 
 for sc1 = 1:n_spacecraft
 
     % Plot the s/c location and memory use
     curr_memory = Swarm.Communication.flow(time_step,sc1,sc1);
-    if sc1 == n_spacecraft
+    if Swarm.Parameters.types{sc1} == 0
         % If the sc is the carrier, also count the science we delivered
         curr_memory = curr_memory+sum(delivered_science(1:time_step));
         ssymbol = 's';
-        ssize = curr_memory/max_delivered*(max_memory_marker_size-min_memory_marker_size) +min_memory_marker_size;
+        ssize = curr_memory/(max_delivered+max_memory)*(max_memory_marker_size-min_memory_marker_size) +min_memory_marker_size;
     else
         ssymbol = '.';
         ssize = curr_memory/max_memory*(max_memory_marker_size-min_memory_marker_size) +min_memory_marker_size;
@@ -113,7 +113,8 @@ for sc1 = 1:n_spacecraft
     % plot3(spacecraft.orbits{sc1}(1,time),spacecraft.orbits{sc1}(2,time),spacecraft.orbits{sc1}(3,time), ...
     sc_color = color_array(:,mod(Swarm.Parameters.types{sc1},size(color_array,2))+1)';
     %[sc1, NaN, sc_color]
-    
+    ssize
+    curr_memory
     h_sc(sc1) = plot3(trajectory_array(time_step, 1, sc1), trajectory_array(time_step, 2, sc1), trajectory_array(time_step, 3, sc1), ...
         ssymbol,'MarkerSize',ssize, 'MarkerFaceColor',sc_color,'MarkerEdgeColor',sc_color);
 
