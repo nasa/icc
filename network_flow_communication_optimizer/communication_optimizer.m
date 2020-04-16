@@ -32,7 +32,7 @@ function [swarm, goal] = communication_optimizer(swarm, bandwidth_model, data_sc
 % s/c, given a network bandwidth model. Solves the problem as a
 % single-commodity flow, leveraging CVX.
 % Syntax:
-%  [flows, effective_science, delivered_science, bandwidths, dual_bandwidth, dual_memory] = communication_optimizer(swarm, bandwidth_model,data_scaling_factor)
+%  communication_optimizer(swarm, bandwidth_model, data_scaling_factor)
 % Inputs:
 % * swarm is the object defined in swarm.m
 % * bandwidth_model is a function. bandwidth_model takes in a pair of
@@ -89,12 +89,28 @@ end
 bandwidths_and_memories = bandwidths_and_memories/data_scaling_factor;
 observation_flows = swarm.Observation.flow/data_scaling_factor;
 
+% Sanity check: how many carriers are there?
+num_carriers = 0;
+carrier_id = zeros(N,1); % This is a map from spacecraft_number to carrier_number
+carrier_index = 1;
+for j=1:N
+    if swarm.Parameters.types{j} == 0
+        num_carriers = num_carriers + 1;
+        carrier_id(j) = carrier_index;
+        carrier_index = carrier_index + 1;
+    end
+end
+assert(num_carriers>0, "ERROR: no designated carrier spacecraft. Communication optimization problem will fail")
+if num_carriers>1
+    disp("There is more than one carrier spacecraft. Is this intended?")
+end
+
 
 % Pose the problem
 cvx_begin quiet
     variable effective_science(N,K) nonnegative
     variable flows(K,N,N) nonnegative
-    variable delivered_science(K) nonnegative
+    variable delivered_science(K, num_carriers) nonnegative
     dual variable dual_bandwidth_and_memory
     
     maximize sum(sum(swarm.Observation.priority.*effective_science))
@@ -104,10 +120,10 @@ cvx_begin quiet
     % Continuity for all except carrier
     for k=1:K-1
         for j=1:N
-            if j~=N
+            if swarm.Parameters.types{j}~=0
                 sum(flows(k,:,j)) + effective_science(j,k) == sum(flows(k+1,j,:))
             else
-                sum(flows(k,:,j)) + effective_science(j,k) == sum(flows(k+1,j,:))+delivered_science(k+1);
+                sum(flows(k,:,j)) + effective_science(j,k) == sum(flows(k+1,j,:))+delivered_science(k+1, carrier_id(j));
             end
         end
     end
@@ -116,7 +132,7 @@ cvx_begin quiet
     % enforced by bandwidth limits at K.
     
     % No science delivered at t=0
-    delivered_science(1) == 0;
+    delivered_science(1, :) == 0;
     
     % Initial flows are nil - don't make up information
     flows(1,:,:) == 0;
@@ -149,10 +165,10 @@ swarm.Communication.dual_bandwidths_and_memories = dual_bandwidth_and_memory;  %
 
 goal = sum(sum(swarm.Observation.priority.*swarm.Communication.effective_source_flow));
 
-% Blueprint for recovering science_delivered. 
-flows_to_carrier = flows(:,:,end);
-flows_from_carrier = squeeze(flows(:,end,:));
-delivered_science_recovered = zeros(K,1);
-delivered_science_recovered(2:end) = sum(flows_to_carrier(1:end-1,:),2)-sum(flows_from_carrier(2:end,:),2)+effective_science(end,1:end-1)';
-
-%assert(norm(delivered_science_recovered-delivered_science)<1e-3)
+% % Blueprint for recovering science_delivered. 
+% flows_to_carrier = flows(:,:,end);
+% flows_from_carrier = squeeze(flows(:,end,:));
+% delivered_science_recovered = zeros(K,1);
+% delivered_science_recovered(2:end) = sum(flows_to_carrier(1:end-1,:),2)-sum(flows_from_carrier(2:end,:),2)+effective_science(end,1:end-1)';
+% 
+%assert(norm(delivered_science_recovered-sum(delivered_science'))<1e-3)
