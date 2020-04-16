@@ -42,8 +42,10 @@ Nv = size(asteroid_vertices,1);
 %% Get Observable Points
 if flag_use_instruments==true
     %% Determine Points that meet instrument constraints 
-    if ismember(4,sc_type) || ismember(6,sc_type) % for Altimeter or Magnetometer just retun nadir
-        observable_points = get_nadir_point(AsteroidModel, Swarm, i_time, i_sc);
+    if ismember(0,sc_type) % For carrier, nothing is observed
+        observable_points = [];
+%     elseif ismember(4,sc_type) || ismember(6,sc_type) % for Altimeter or Magnetometer just retun nadir
+%         observable_points = get_nadir_point(AsteroidModel, Swarm, i_time, i_sc);
     else
         vertex_observability_status = zeros(1,Nv); % 1 if observable, zero otherwise
         
@@ -67,9 +69,11 @@ if flag_use_instruments==true
 %                     else
 %                         fprintf("SC not in sun angle range (sun angle %f, bounds (%f to %f))\n",sun_angle, sun_angle_ranges{1}(1), sun_angle_ranges{1}(2))
                     end
+%                 else
+%                     fprintf("SC not in view angle range (view angle %f, bounds (%f to %f))\n",sc_angle, sc_angle_ranges{1}(1), sc_angle_ranges{1}(2))
                 end
 %             else
-%                 fprintf("SC not in altitude range (altitude %f, bounds (%f-%f))\n",sc_altitude, distance_ranges{1}(1), distance_ranges{2}(1))
+%                 fprintf("SC not in altitude range (altitude %f, bounds (%f-%f))\n",sc_altitude, distance_ranges{1}(1), distance_ranges{1}(2))
             end
         end
         

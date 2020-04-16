@@ -113,8 +113,6 @@ for sc1 = 1:n_spacecraft
     % plot3(spacecraft.orbits{sc1}(1,time),spacecraft.orbits{sc1}(2,time),spacecraft.orbits{sc1}(3,time), ...
     sc_color = color_array(:,mod(Swarm.Parameters.types{sc1},size(color_array,2))+1)';
     %[sc1, NaN, sc_color]
-    ssize
-    curr_memory
     h_sc(sc1) = plot3(trajectory_array(time_step, 1, sc1), trajectory_array(time_step, 2, sc1), trajectory_array(time_step, 3, sc1), ...
         ssymbol,'MarkerSize',ssize, 'MarkerFaceColor',sc_color,'MarkerEdgeColor',sc_color);
 

@@ -84,10 +84,25 @@ switch sc_type
         
     case 6 % Magnetometer 
         sun_angle_ranges{1} = [-2*pi, 2*pi];
-        sc_angle_ranges{1}  = deg2rad([-tolerance, tolerance]); % [rad]
+        sc_angle_ranges{1}  = [-2*pi, 2*pi]; % [rad]
         distance_ranges{1}  = [0, 40].*1000; % [m]
         data_rate = 1*8e6; % [bit/s]
         
+    case -1 % A permissive instrument used for testing purposes
+        sun_angle_ranges{1} = [-2*pi, 2*pi];
+        sc_angle_ranges{1}  = [-2*pi, 2*pi]; % [rad]
+        distance_ranges{1}  = [0, 40].*1000; % [m]
+        data_rate = 1; % [bit/s]
+    case -2 % A non-permissive instrument used for testing purposes
+        sun_angle_ranges{1} = [0, 0];
+        sc_angle_ranges{1}  = [0, 0]; % [rad]
+        distance_ranges{1}  = [0, 0].*1000; % [m]
+        data_rate = 1; % [bit/s]
+    case -3 % Same as -1, but has lower reward/priority in get_coverage_reward_map
+        sun_angle_ranges{1} = [-2*pi, 2*pi];
+        sc_angle_ranges{1}  = [-2*pi, 2*pi]; % [rad]
+        distance_ranges{1}  = [0, 40].*1000; % [m]
+        data_rate = 1; % [bit/s]
 end
 
 
