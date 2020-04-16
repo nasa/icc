@@ -58,10 +58,11 @@ end
 K = swarm.get_num_timesteps();
 N = swarm.get_num_spacecraft();
 
+%% Compute bandwidths
+
 % We will never need more than this memory
 max_memory = sum(sum(swarm.Observation.flow));
 
-% Compute bandwidths
 if isa(bandwidth_model,'function_handle')
     bandwidths_and_memories = zeros(K,N,N);
     for k=1:K-1
@@ -85,11 +86,13 @@ elseif isa(bandwidth_model,'double')
 else
     error("Bandwidth model type not recognized (should be function handle or double)")
 end
-% Scale the prblem
+%% Scale the problem
 bandwidths_and_memories = bandwidths_and_memories/data_scaling_factor;
 observation_flows = swarm.Observation.flow/data_scaling_factor;
 
-% Sanity check: how many carriers are there?
+
+%% Sanity check: how many carriers are there?
+
 num_carriers = 0;
 carrier_id = zeros(N,1); % This is a map from spacecraft_number to carrier_number
 carrier_index = 1;
@@ -106,7 +109,7 @@ if num_carriers>1
 end
 
 
-% Pose the problem
+%% Pose the problem
 cvx_begin quiet
     variable effective_science(N,K) nonnegative
     variable flows(K,N,N) nonnegative
@@ -139,7 +142,11 @@ cvx_begin quiet
     
     % No need for carrier to memorize
     for k=1:K
-        flows(k,N,N) == 0;
+        for j=1:N
+            if swarm.Parameters.types{j}==0            
+                flows(k,j,j) == 0;
+            end
+        end
     end
     
     % Do not violate bandwidth and memory constraints
