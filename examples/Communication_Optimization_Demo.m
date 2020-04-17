@@ -54,7 +54,7 @@ for i_sc = 1:n_spacecraft
 end
 sc_types{n_spacecraft} = 0; % Mark the carrier so it will not be used in the Monte Carlo optimization
 
-max_memory = ones(n_spacecraft,1)*1e10; %1TB
+max_memory = ones(n_spacecraft,1)*1e10;
 
 swarm = SpacecraftSwarm(time_bounds, sc_types, max_memory);
 

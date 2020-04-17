@@ -5,6 +5,8 @@ ICC_Simulation;
 
 Monte_Carlo_Coverage_Optimization_Demo;
 
+Observation_and_Communication_Optimizer_Demo;
+
 Communication_Optimization_Demo;
 
 Relay_Orbit_Optimization_Demo;

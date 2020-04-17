@@ -51,7 +51,7 @@ switch sc_type
             sun_angle_ranges{i} = [sun_angles(i)-tolerance, sun_angles(i)+tolerance]; % [rad]
         end
         sc_angle_ranges{1}  = deg2rad([-5, 5]); % [rad]
-        distance_ranges{1}  = [30, 36].*1000; % [m]
+        distance_ranges{1}  = [0, 36].*1000; % [m]
         data_rate = 1*8e9; % [bit/s]
         
     case 2 % X Ray Spectrometer
@@ -61,7 +61,7 @@ switch sc_type
             sun_angle_ranges{i} = [sun_angles(i)-tolerance, sun_angles(i)+tolerance]; % [rad]
         end
         sc_angle_ranges{1}  = deg2rad([-5, 5]); % [rad]
-        distance_ranges{1}  = [30, 36].*1000; % [m]
+        distance_ranges{1}  = [0, 36].*1000; % [m]
         data_rate = 1*8e9; % [bit/s]
         
     case 3 % Camera      
@@ -84,7 +84,7 @@ switch sc_type
         
     case 6 % Magnetometer 
         sun_angle_ranges{1} = [-2*pi, 2*pi];
-        sc_angle_ranges{1}  = [-2*pi, 2*pi]; % [rad]
+        sc_angle_ranges{1}  = [-pi/2, pi/2]; % [rad]
         distance_ranges{1}  = [0, 40].*1000; % [m]
         data_rate = 1*8e6; % [bit/s]
         
