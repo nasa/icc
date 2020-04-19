@@ -39,7 +39,7 @@ addpath(genpath("../utilities/"));
 constants = initialize_SBDT();
 
 % Tolerance accepted in solver output
-assert_tol = 1e-10;
+assert_tol = 1e-9;
 close_enough = @(x,y) (abs(x-y)<=assert_tol);
 
 % Load Eros
@@ -65,6 +65,8 @@ sc_types = cell(1,sc_number);
 for sc =1:sc_number
     sc_types{sc} = [1];
 end
+% Set the last SC to be the carrier
+sc_types{sc_number} = 0;
 
 % Initialize spacecraft maximum memory
 sc_max_memory = 9999 * ones(1,sc_number);
@@ -104,6 +106,8 @@ sc_types = cell(1,sc_number);
 for sc =1:sc_number
     sc_types{sc} = [1];
 end
+% Set the last SC to be the carrier
+sc_types{sc_number} = 0;
 sc_max_memory = 9999*ones(sc_number,1);
 
 swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
@@ -140,6 +144,9 @@ sc_types = cell(1,sc_number);
 for sc =1:sc_number
     sc_types{sc} = [1];
 end
+% Set the last SC to be the carrier
+sc_types{sc_number} = 0;
+
 sc_max_memory = 9999*ones(sc_number,1);
 
 swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
@@ -180,6 +187,9 @@ sc_types = cell(1,sc_number);
 for sc =1:sc_number
     sc_types{sc} = [1];
 end
+% Set the last SC to be the carrier
+sc_types{sc_number} = 0;
+
 sc_max_memory = 9999*ones(sc_number,1);
 
 swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
@@ -221,6 +231,9 @@ sc_types = cell(1,sc_number);
 for sc =1:sc_number
     sc_types{sc} = [1];
 end
+% Set the last SC to be the carrier
+sc_types{sc_number} = 0;
+
 sc_max_memory = 9999*ones(sc_number,1);
 
 swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
@@ -265,6 +278,9 @@ sc_types = cell(1,sc_number);
 for sc =1:sc_number
     sc_types{sc} = [1];
 end
+% Set the last SC to be the carrier
+sc_types{sc_number} = 0;
+
 sc_max_memory = 9999*ones(sc_number,1);
 
 swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
@@ -329,6 +345,9 @@ sc_types = cell(1,sc_number);
 for sc =1:sc_number
     sc_types{sc} = [1];
 end
+% Set the last SC to be the carrier
+sc_types{sc_number} = 0;
+
 sc_max_memory = 9999*ones(sc_number,1);
 
 swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
@@ -389,6 +408,8 @@ sc_types = cell(1,sc_number);
 for sc =1:sc_number
     sc_types{sc} = [1];
 end
+% Set the last SC to be the carrier
+sc_types{sc_number} = 0;
 
 orbital_period = 2*pi*sqrt(orbit_radius^3/GM);
 T=4/8*orbital_period;
@@ -443,5 +464,111 @@ assert(swarm.is_valid());
 assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),1))
 assert(close_enough(swarm.Communication.flow(3,1,2),1))
 
+%% Test 7: no carrier, should fail
+T = 2;
+t_stride=.5;
+sc_number = 2;
+orbit_radius = 50000;
+
+time_vector=(1:t_stride:T);
+sc_types = cell(1,sc_number);
+for sc =1:sc_number
+    sc_types{sc} = [1];
+end
+sc_max_memory = 9999*ones(sc_number,1);
+
+swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
+
+% Create orbits
+sc_initial_state_array = zeros(sc_number, 6);
+rotmat_x = @(angle) [1, 0, 0; 0, cos(angle), -sin(angle); 0, sin(angle), cos(angle)];
+for sc = 1:sc_number
+    sc_initial_state_array(sc, 1:3) = [orbit_radius; 0; 0];
+    sc_orbital_vel = sqrt(GM/orbit_radius);    
+    sc_initial_state_array(sc, 4:6) = rotmat_x((sc-1)/sc_number*pi)*[0; sc_orbital_vel; 0;];
+end
+swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
+
+% Science
+for sc = 1:sc_number
+    swarm.Observation.flow(sc,:) = 0.;
+    swarm.Observation.priority(sc,:) = 1.;
+end
+
+try
+    [swarm] = communication_optimizer(swarm);
+    test_asserted=false;
+catch
+%     disp("Successfully failed")
+    test_asserted=true;
+end
+assert(test_asserted, "If you get here, something went wrong - the communication optimizer should have asserted")
+
+%% Test 8: two carriers
+T = 3;
+t_stride=1;
+sc_number = 4;
+
+time_vector=(1:t_stride:T);
+sc_types = cell(1,sc_number);
+for sc =1:sc_number
+    sc_types{sc} = [1];
+end
+% Set the last SC to be the carrier
+sc_types{2} = 0;
+sc_types{4} = 0;
+
+sc_max_memory = 9999*ones(sc_number,1);
+
+swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
+
+% % Create orbits
+sc_initial_state_array = zeros(sc_number, 6);
+
+sc_initial_state_array(1, 1:3) = [orbit_radius; 0; 0];
+sc_orbital_vel = sqrt(GM/orbit_radius);    
+sc_initial_state_array(1, 4:6) = 	[0; sc_orbital_vel; 0;];
+
+sc_initial_state_array(2, 1:3) = [2*orbit_radius; 0; 0];
+sc_orbital_vel = sqrt(GM/(2*orbit_radius));    
+sc_initial_state_array(2, 4:6) = 	[0; -sc_orbital_vel; 0;];
+
+sc_initial_state_array(3, 1:3) = [-orbit_radius; 0; 0];
+sc_orbital_vel = sqrt(GM/orbit_radius);    
+sc_initial_state_array(3, 4:6) = 	[0; sc_orbital_vel; 0;];
+
+sc_initial_state_array(4, 1:3) = [-2*orbit_radius; 0; 0];
+sc_orbital_vel = sqrt(GM/(2*orbit_radius));    
+sc_initial_state_array(4, 4:6) = [0; sc_orbital_vel; 0;];
+% 1 and 2 are 1 radii apart, 3 and 4 are 1 radii apart, and they are >2
+% radii away on opposite sides of the asteroid.
+
+swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
+
+% Science
+for sc = 1:sc_number
+    swarm.Observation.flow(sc,:) = 0.;
+    swarm.Observation.priority(sc,:) = 1.;
+end
+
+
+bandwidth_model = @(x1,x2) 1*(norm(x1-x2)<1.5*orbit_radius);
+% 1 bandwidth between 1-2 and 3-4. 0 bandwidth elsewhere.
+
+swarm.Observation.flow(1,1) = 1;
+swarm.Observation.flow(3,1) = 1;
+swarm.Observation.priority(1,1) = 1;
+swarm.Observation.priority(3,1) = .9;
+
+[swarm] = communication_optimizer(swarm,bandwidth_model);
+
+assert(swarm.is_valid());
+assert(close_enough(swarm.Communication.effective_source_flow(1,1),1))
+assert(close_enough(swarm.Communication.effective_source_flow(3,1),1))
+assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),2))
+assert(close_enough(swarm.Communication.flow(2,1,2),1))
+assert(close_enough(swarm.Communication.flow(2,3,4),1))
+
+%% End
 disp("Tests succeeded!")
 return
