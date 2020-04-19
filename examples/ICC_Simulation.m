@@ -32,7 +32,7 @@
 clear, clc, close all, run ../startup.m  % refresh
 
 % Do you want to record video?
-record_video = true;
+record_video = false;
 
 % Do you want to save the output of the optimization in 42 format?
 save_42_inputs = false;
@@ -60,9 +60,6 @@ for i_sc = 1:n_spacecraft
 end
 carrier_index = n_spacecraft-2;
 sc_types{carrier_index} = 0; % Mark the carrier so it will not be used in the Monte Carlo optimization
-carrier_index = n_spacecraft-4;
-sc_types{carrier_index} = 0; % Mark the carrier so it will not be used in the Monte Carlo optimization
-                            
                             
 delta_t = 10*60; % [s]; simulation time step
 total_t = 1*24*60*60; % [s]; 1 day, total time of simulation
