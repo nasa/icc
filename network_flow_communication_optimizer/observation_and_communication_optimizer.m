@@ -49,7 +49,7 @@ function [swarm, goal] = observation_and_communication_optimizer(asteroid_model,
 prelim_tic = tic;
 
 if nargin<4
-    data_scaling_factor = 1;
+    data_scaling_factor = NaN; % Just a placeholder, will fix once we have instrument data rates
 end
 if nargin<3
     bandwidth_model = @(x1,x2) quadratic_comm_model(x1,x2);
@@ -100,6 +100,19 @@ for i_sc=1:N
     end
 end
 datarate_time = toc(drtic);
+
+% Numerical conditioning is critical to get a good solution from the
+% communication optimizer. Mosek 9 will deal with ill-conditioned problems,
+% but just about every free solver (and Mosek 8) will report infeasibility
+% if appropriate scaling is not applied.
+% Here, we attempt to make a guess at the "mean" information flow by
+% taking the mean instrument data rate. We use the mean, as opposed
+% to the median, because we do _not_ want to throw out outlier instruments
+% generating a disproportionate amount of data.
+
+if isnan(data_scaling_factor)
+    data_scaling_factor = mean(mean(data_rates(data_rates>0)));
+end
 
 % We also make a list of all the vertices that can be observed ever. We
 % will have one constraint per vertex saying "only observe this once"
@@ -434,7 +447,7 @@ for obs_index = 1:M
     reward = w(obs_index); % Reward
     if observations_flat(obs_index)>observation_threshold
         if swarm.Observation.observed_points(j,k) ~= 0
-            fprintf("SC %d, time %d: more than one point observed! (old: %d w. total flow %f, new: %d with flow %f))\n",j,k,swarm.Observation.observed_points(j,k),swarm.Observation.flow(j,k),v,observations_flat(obs_index))
+            fprintf("SC %d, time %d: more than one point observed! (old: %d w. total flow %f, new: %d with flow %f))\n",j,k,swarm.Observation.observed_points(j,k),swarm.Observation.flow(j,k),v,observations_flat(obs_index)*(data_rates(j,k)*data_scaling_factor))
         end
         swarm.Observation.observed_points(j,k) = v;
     end

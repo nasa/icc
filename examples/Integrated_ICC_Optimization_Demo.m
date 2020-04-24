@@ -20,16 +20,25 @@
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
-%        Usage example of Observation and Communication Optimizer         %
+%                    Usage example of ICC simulation                      %
 %                                                                         %
-% Demonstrates usage of the integrated observation and relay optimization %
-% module by finding the best observation points _and_ relays that         %
-% maximize the amount of data collected and relayed to the carrier for a  %
-% given set of orbits.                                                    %
+% Demonstrates the usage of various utility functions in the context of   %
+% creating a complete icc simulation. Heuristics are used to determine    %
+% design parameters such as communication flow and initial state of the   %
+% spacecraft.                                                             %
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 clear, clc, close all, run ../startup.m  % refresh
+
+% Do you want to record video?
+record_video = true;
+videoname = ['ICC_integrated_',datestr(now,'yyyymmdd_HHMMSS'),'.mp4'];
+
+% Do you want to save the output of the optimization in 42 format?
+save_42_inputs = false;
+
+rng default % Pseudo-random but repeatable scenario
 
 % Add Required Packages to PATH
 addpath(genpath(strcat(ROOT_PATH,'/small_body_dynamics/EROS 433')))
@@ -37,27 +46,38 @@ addpath(strcat(ROOT_PATH,'/small_body_dynamics'))
 addpath(genpath(strcat(ROOT_PATH,'/utilities'))) % Add all utilities
 addpath(genpath(strcat(ROOT_PATH,'/visualization')))
 addpath(strcat(ROOT_PATH,'/observed_points_optimizer'))
+addpath(strcat(ROOT_PATH,'/monte_carlo_coverage_optimizer'))
+addpath(strcat(ROOT_PATH,'/relay_orbit_optimizer'))
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                   User Options: Flags and Parameters                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-rng(0); % Get a consistent seed
+n_spacecraft = 7;  % Number of Spacecraft, counting the carrier
 
-n_spacecraft = 4;  % Number of Spacecraft, including the carrier
-
-sc_types = {2, 3, 5, 0};  % Spectrometer, camera, radio science, carrier
-
-sc_max_memory = ones(n_spacecraft,1)*1e12; %1TB
-
-sc_max_memory(n_spacecraft) = 5*1e13; % 50 TB
-
+sc_types = cell(1,n_spacecraft);
+for i_sc = 1:n_spacecraft
+    sc_types{i_sc}  = i_sc; %randi([1,6]); % Indicies for instruments on board
+end
+carrier_index = n_spacecraft;
+sc_types{carrier_index} = 0; % Mark the carrier so it will not be used in the Monte Carlo optimization
+                            
+                            
 delta_t = 10*60; % [s]; simulation time step
-total_t = 0.5*24*60*60; % [s]; 1 day, total time of simulation
+total_t = 1*24*60*60; % [s]; 1 day, total time of simulation
 time_vector = 0:delta_t:total_t; % sample times
 
-color_array = ['k', 'r', 'b', 'g', 'c', 'm', 'y'];
 
+% Maximum time for the trust region integrated orbit optimizer, in seconds
+max_optimization_time = 1800;
+
+sc_max_memory = 8*20*1e9.*ones(1,n_spacecraft); % 20 GB max memory for instrument spacecraft
+sc_max_memory(1,carrier_index) = 8*10000*1e9; % Memory limit for carrier spacecraft
+
+% Parameters for bandwidth model
+bandwidth_parameters.reference_bandwidth = 250000;
+bandwidth_parameters.reference_distance = 100000;
+bandwidth_parameters.max_bandwidth = 100*1e6;
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                       Initialize Eros Model                             %
@@ -68,12 +88,10 @@ constantsModel = 1;
 addpath(strcat(SBDT_PATH,'/Startup'));
 constants = addSBDT(SBDT_PATH, userModelsPath, constantsModel);
 
-% Create a gravity model
 % In order to select a different gravity model, change the inputs to
 % the loadEros function. See the help for assistance
-[~, eros_sbdt] = evalc("loadEros( constants, 1, 1, 4, 3 );");
-ErosGravity = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt);
-GM = eros_sbdt.gravity.gm * 1e9;  % Convert to m from km
+eros_sbdt = loadEros( constants, 1, 1, 4, 3 );
+ErosModel = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt, constants);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                        Initialize Swarm Model                           %
@@ -82,58 +100,45 @@ GM = eros_sbdt.gravity.gm * 1e9;  % Convert to m from km
 % Instantiate SpacecraftSwarm class for handling spacecraft data
 Swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
 
-% Add four orbits for two sciencecrafts, one relay, and one carrier
-sc_initial_locations = {[25*1e3;0;0],[25*1e3;0;0],[50*1e3;0;0], [100*1e3;0;0]};
-sc_initial_velocity_orientations = {[0; sqrt(2)/2; sqrt(2)/2;],[0;1;0],[0;1;0], [0;1;0]};
+% Add the carrier orbit.
+carrier_index = Swarm.get_indicies_of_type(0);
+if length(carrier_index)>1
+    error("More than one carrier - while this may work, it is not supported")
+end
+if length(carrier_index)<1
+    error("No carrier! This will not work")
+end
+carrier_initial_conditions = initialize_carrier_orbit(ErosModel);
+Swarm.integrate_trajectory(carrier_index, ErosModel, carrier_initial_conditions);
 
-sc_initial_state_array = zeros(n_spacecraft,6);
-
-for spacecraft_no = 1:n_spacecraft
-    sc_location = sc_initial_locations{spacecraft_no};
-    sc_vel_orientation = sc_initial_velocity_orientations{spacecraft_no};
-    sc_orbital_vel = sqrt(GM/norm(sc_location));
-    sc_vel = sc_vel_orientation*sc_orbital_vel;
-    sc_initial_state_array(spacecraft_no,:) = [sc_location; sc_vel];
+% Initalize non-carrier trajectories
+trial_initial_states = initialize_random_orbits(n_spacecraft, ErosModel);
+for i_sc = setdiff(1:n_spacecraft, Swarm.get_indicies_of_type(0))
+    Swarm.integrate_trajectory(i_sc, ErosModel, trial_initial_states(i_sc, :));
 end
 
-% Integrate the spacecraft' orbits
-Swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
 
-% Check for collisions
-if Swarm.collision_with_asteroid(ErosGravity)
-    fprintf('\nCollision with the asteroid!\n\n')
-    percentage_seen = 0;
-    return
+% % Get Sun Position - handled in constructor
+% Swarm.sun_state_array = get_sun_state(Swarm.sample_times); 
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                     Integrated Orbit Optimization                       %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+[Swarm] = integrated_optimization(Swarm, ErosModel, bandwidth_parameters, max_optimization_time);
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                           Show Combined Results                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Do you want the 3d plot to be in an absolute or relative frame?
+absolute = true;
+
+plot_coverage_and_communications_with_insets(Swarm, ErosModel,'absolute', absolute, 'record_video', record_video, 'video_name', videoname)
+
+% Create 42 representation of the orbits
+if save_42_inputs
+    fortytwo_bridge(Swarm, ErosModel, "../utilities/42_bridge/defaults", strcat("42_EROS_ICC_ICC_",datestr(now,'yyyymmdd_HHMMSS')));    
 end
-
-% Set up the communication model
-bandwidth_parameters.reference_bandwidth = 250000;
-bandwidth_parameters.reference_distance = 100000;
-bandwidth_parameters.max_bandwidth = 100*1e6;
-
-spherical_asteroid_parameters.max_radius = ErosGravity.BodyModel.shape.maxRadius*1e3;
-spherical_asteroid_parameters.min_radius = ErosGravity.BodyModel.shape.maxRadius*1e3;
-
-occlusion_test =  @(x1, x2) is_occluded(x1, x2, spherical_asteroid_parameters);
-bandwidth_model = @(x1,x2) quadratic_comm_model(x1, x2, bandwidth_parameters, occlusion_test);
-
-data_scaling_factor = 1e6;
-
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%             Find Best Observation Points for Given Orbits               %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Swarm = observed_points_optimizer_main(ErosModel, Swarm, bandwidth_model);
-
-[Swarm] = observation_and_communication_optimizer(ErosGravity, Swarm, bandwidth_model, data_scaling_factor);
-
-
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                   Show Observed Points Simulation                       %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 
-absolute = false;
-
-plot_coverage_and_communications_with_insets(Swarm, ErosGravity,'absolute', absolute, 'record_video', false)
 
 cspice_kclear % This cleares the SPICE files from Matlab's memory
