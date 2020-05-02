@@ -58,7 +58,7 @@ sc_types = cell(1,n_spacecraft);
 for i_sc = 1:n_spacecraft
     sc_types{i_sc}  = randi([1,6]); % Indicies for instruments on board
 end
-carrier_index = n_spacecraft-2;
+carrier_index = n_spacecraft;
 sc_types{carrier_index} = 0; % Mark the carrier so it will not be used in the Monte Carlo optimization
                             
 delta_t = 10*60; % [s]; simulation time step
@@ -118,7 +118,6 @@ Swarm.sun_state_array = get_sun_state(Swarm.sample_times);
 %                    Sciencecraft Orbit Optimization                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Optimize Orbits and Observed Points with Monte Carlo
 Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -126,6 +125,12 @@ Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
 [Swarm] = relay_optimization(Swarm, ErosModel, bandwidth_parameters, relay_orbit_indices, max_relay_optimization_time);
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                 Science and Network Flow Optimization                   %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Swarm = observed_points_network_flow_optimizer(Swarm, ErosModel, bandwidth_parameters);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                           Show Combined Results                         %
