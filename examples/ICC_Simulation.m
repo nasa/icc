@@ -52,15 +52,14 @@ addpath(strcat(ROOT_PATH,'/relay_orbit_optimizer'))
 %                   User Options: Flags and Parameters                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-n_spacecraft = 7;  % Number of Spacecraft, counting the carrier
+n_spacecraft = 10;  % Number of Spacecraft, counting the carrier
 
 sc_types = cell(1,n_spacecraft);
 for i_sc = 1:n_spacecraft
-    sc_types{i_sc}  = i_sc; %randi([1,6]); % Indicies for instruments on board
+    sc_types{i_sc}  = randi([1,6]); % Indicies for instruments on board
 end
 carrier_index = n_spacecraft;
 sc_types{carrier_index} = 0; % Mark the carrier so it will not be used in the Monte Carlo optimization
-                            
                             
 delta_t = 10*60; % [s]; simulation time step
 total_t = 1*24*60*60; % [s]; 1 day, total time of simulation
@@ -119,7 +118,6 @@ Swarm.integrate_trajectory(carrier_index, ErosModel, carrier_initial_conditions)
 %                    Sciencecraft Orbit Optimization                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Optimize Orbits and Observed Points with Monte Carlo
 Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -127,6 +125,12 @@ Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
 [Swarm] = relay_optimization(Swarm, ErosModel, bandwidth_parameters, relay_orbit_indices, max_relay_optimization_time);
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                 Science and Network Flow Optimization                   %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Swarm = observed_points_network_flow_optimizer(Swarm, ErosModel, bandwidth_parameters);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                           Show Combined Results                         %

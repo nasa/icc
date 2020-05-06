@@ -68,5 +68,5 @@ octave-workspace
 *.mov
 *.mp4
 
-# CPLEX log files 
-*.log
+# CPLEX log files
+clone*.log

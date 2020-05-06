@@ -95,14 +95,14 @@ hold on
 
 axis equal
 % Initial plot - just to get a sense of the size
-plot_coverage_and_communications_frame(Swarm, AsteroidModel,length(Swarm.sample_times), 'absolute', absolute, 'color_array', color_array, 'title_font_size', title_font_size, 'standard_font_size', standard_font_size, ... 
+plot_coverage_and_communications_frame(Swarm, AsteroidModel, Swarm.get_num_timesteps, 'absolute', absolute, 'color_array', color_array, 'title_font_size', title_font_size, 'standard_font_size', standard_font_size, ... 
     'font_name', font_name, 'min_line_thickness',min_line_thickness, 'max_line_thickness',max_line_thickness, 'max_memory_marker_size',max_memory_marker_size, 'link_color_steps',link_color_steps);
 axis equal
 three_d_plot_axes = axis();
 
 clf;
 
-for time_step = 1:length(Swarm.sample_times)
+for time_step = 1:Swarm.get_num_timesteps
     subplot(2,4,[1 2 5 6]);
     if time_step == 1
         initialize_spatial_plot_3d('standard_font_size', standard_font_size, 'font_name', font_name);
@@ -143,7 +143,7 @@ for time_step = 1:length(Swarm.sample_times)
 end
 
 subplot(2,4,[1 2 5 6]);
-plot_coverage_and_communications_frame(Swarm, AsteroidModel,length(Swarm.sample_times), 'absolute', absolute, 'color_array', color_array, 'title_font_size', title_font_size, 'standard_font_size', standard_font_size, ... 
+plot_coverage_and_communications_frame(Swarm, AsteroidModel, Swarm.get_num_timesteps, 'absolute', absolute, 'color_array', color_array, 'title_font_size', title_font_size, 'standard_font_size', standard_font_size, ... 
     'font_name', font_name, 'min_line_thickness',min_line_thickness, 'max_line_thickness',max_line_thickness, 'max_memory_marker_size',max_memory_marker_size, 'link_color_steps',link_color_steps);
 
 if record_video

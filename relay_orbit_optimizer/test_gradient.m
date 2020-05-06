@@ -21,6 +21,10 @@ GM = eros_sbdt.gravity.gm * 1e9;  % Convert to m from km
 n_spacecraft = 4;
 time_bounds = [0:300:86400];
 sc_types = cell(n_spacecraft,1);
+sc_types{1} = 1;
+sc_types{2} = 1;
+sc_types{3} = 1;
+sc_types{4} = 0;
 max_memory = ones(n_spacecraft,1)*1e10; %1TB
 
 swarm = SpacecraftSwarm(time_bounds, sc_types, max_memory);
