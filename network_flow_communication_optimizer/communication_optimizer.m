@@ -189,6 +189,15 @@ for k=1:K-1
     end
 end
 
+% Constraint 5: Do not violate bandwidth and memory constraints
+% Imposed _before_ the other, more stringend constraints on UB.
+% dual_bandwidth_and_memory: flows<=bandwidths_and_memories;
+for k=1:K
+    for i=1:N
+        ub(flows_finder(k,i,1:N)) = bandwidths_and_memories(k,i,1:N);
+    end
+end
+
 % Constraint 2: No science delivered at t=0
 % delivered_science(1, :) == 0;
 for c=1:num_carriers
@@ -209,14 +218,6 @@ for j=1:N
         for k=1:K      
             ub(flows_finder(k,j,j)) = 0;
         end
-    end
-end
-
-% Constraint 5: Do not violate bandwidth and memory constraints
-% dual_bandwidth_and_memory: flows<=bandwidths_and_memories;
-for k=1:K
-    for i=1:N
-        ub(flows_finder(k,i,1:N)) = bandwidths_and_memories(k,i,1:N);
     end
 end
 
