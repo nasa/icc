@@ -48,6 +48,7 @@ addpath(genpath(strcat(ROOT_PATH,'/visualization')))
 addpath(strcat(ROOT_PATH,'/observed_points_optimizer'))
 addpath(strcat(ROOT_PATH,'/monte_carlo_coverage_optimizer'))
 addpath(strcat(ROOT_PATH,'/relay_orbit_optimizer'))
+addpath(strcat(ROOT_PATH,'/integrated_orbit_optimizer'))
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                   User Options: Flags and Parameters                    %
