@@ -34,12 +34,20 @@ n_constraints = N*K + n_observed_vertices;
 
 % Create pointer vectors to keep track of the time, vertex, and agent
 % corresponding to the pth position in the decision variable
-p = 0; p_k=zeros(1,M); p_v=zeros(1,M); p_s=zeros(1,M); w=zeros(1,M);
+p = 0; % This index will run over all possible observations
+p_k=zeros(1,M); % Decision variable m corresponds to time p_k(m)
+p_v=zeros(1,M); % Decision variable m corresponds to vertex p_v(m)
+p_s=zeros(1,M); % Decision variable m corresponds to spacecraft p_s(m)
+w=zeros(1,M);   % w(m) is the reward for decision variable m
+
 for i_sc = sc_optimized
     % observable_points_list is a vector of size n_nonzero_entries*3.
     % the first column is the row location, in this case i_v.
     % the second column is the column location, in this case k
     % the third column is the value, in this case always 1
+    
+    % i_v_vec is a list of the observable points for agent i_sc, and k_vec
+    % are the correspinding observation times
     [i_v_vec, k_vec, ~] = find(observable_points_map{i_sc});
     for observable_point_index = 1:length(i_v_vec)
         i_v = i_v_vec(observable_point_index);
@@ -69,6 +77,7 @@ num_constraint_entries = 0;
 sigma_ik = cell(N,K);
 for k = 1:K
     for i_sc = sc_optimized
+        % sigma_ik(i,k) contains the points observed by sc i_sc at time k
         sigma_ik{i_sc,k} = intersect(find(p_k==k),find(p_s==i_sc));
         num_constraint_entries = num_constraint_entries+length(sigma_ik{i_sc,k});
     end
@@ -77,6 +86,7 @@ end
 % Store sets of indicies for observations of the same vertex at different times (and by different spacecraft)
 sigma_v = cell(1,n_observed_vertices);
 for p = 1:n_observed_vertices
+    % sigma_v{p} contains the set of observations of vertex p 
     sigma_v{p} = find(p_v==observable_vertices(p));
     num_constraint_entries = num_constraint_entries+length(sigma_v{p});
 end
@@ -87,6 +97,7 @@ A = zeros(num_constraint_entries,3);
 
 i_constraint = 0;
 i_entry = 0;
+% Every spacecraft observes at most one point per unit time
 for k=1:K
     for i_sc = sc_optimized
         i_constraint = i_constraint + 1;
@@ -96,6 +107,7 @@ for k=1:K
         end
     end
 end
+% Observe every point at most once
 for p=1:n_observed_vertices
     i_constraint = i_constraint+1;
     for entry= sigma_v{p}

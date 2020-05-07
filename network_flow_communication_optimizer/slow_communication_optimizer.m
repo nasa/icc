@@ -26,11 +26,11 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [swarm, goal] = communication_optimizer(swarm, bandwidth_model, data_scaling_factor)
+function [swarm, goal] = slow_communication_optimizer(swarm, bandwidth_model, data_scaling_factor)
 
 % How to best get data from a number of science spacecraft to a carrier
 % s/c, given a network bandwidth model. Solves the problem as a
-% single-commodity flow, leveraging MOSEK.
+% single-commodity flow, leveraging CVX.
 % Syntax:
 %  communication_optimizer(swarm, bandwidth_model, data_scaling_factor)
 % Inputs:
@@ -110,170 +110,60 @@ end
 
 
 %% Pose the problem
-
-effective_science_finder = @(j,k) K*(j-1)+k;
-flows_finder = @(k,i,j) K*N + N*N*(k-1)+N*(i-1)+j;
-delivered_science_finder = @(k,c) K*N+ K*N*N + num_carriers*(k-1) + c;
-
-num_variables = K*N+K*N*N+num_carriers*K;
-
-% Objective
-f = zeros(num_variables,1);
-% swarm.Observation.priority(j,k)*effective_science(j,k).
-f(1:K*N) = -reshape(swarm.Observation.priority',[1,K*N]);
-
-ub= Inf*ones(num_variables,1);
-lb= zeros(num_variables,1);
-
-% Equality constraints:
-num_equality_constraints = ...
-    N*(K-1); % continuity
-%    + num_carriers ... % No science delivered at t=0 - enforced by UB
-%    + N*N ... % Initial flows are zero - enforced by UB
-%    + num_carriers*K ... % No need for carrier to memorize - enforced by UB
-%    + N; % Empty memory at the end - enforced by UB
-
-% All inequality constraints enforced by upper bound
-% num_inequality_constraints = ...
-%     N*N*K + ... % Flows<bandwidths
-%     K*N; % Don't do more science than is available
-
-num_equality_entries = ...
-    2*N*N*(K-1) + ...% flows appear twice in continuity, except at first and last step
-    N*(K-1) + ... % Effective science appears once
-    num_carriers*(K-1); % Delivered science. END of continuity
-%     num_carriers + ... % Initially delivered science is zero - enforced by UB
-%     N*N + ... % Initial flows are zero  - enforced by UB
-%     K*num_carriers + ... % memory at carriers is zero - enforced by UB
-%     N*N; % Final flows are zero - enforced by UB
-
-% All inequality constraints enforced by upper bound
-% num_inequality_entries = ...
-%     K*N*N + ... % Don't exceed bandwidth constraint
-%     K*N; % Don't do more science than is available
-
-% Preallocate sparse representation of equality matrices. (Row, column,
-% value)
-A_eq_sparse = zeros(num_equality_entries,3);
-b_eq = zeros(num_equality_constraints,1);
-
-% A_ineq_sparse = zeros(num_inequality_entries,3);
-% b_ineq = zeros(num_inequality_constraints,1);
-
-% Indices to keep track of constraint and entry.
-eq_constraint_ix = 1;
-eq_entry_ix = 1;
-% ineq_constraint_ix = 1;
-% ineq_entry_ix = 1;
-
-% Constraint 1: continuity
-
-for k=1:K-1
+cvx_begin quiet
+    variable effective_science(N,K) nonnegative
+    variable flows(K,N,N) nonnegative
+    variable delivered_science(K, num_carriers) nonnegative
+    dual variable dual_bandwidth_and_memory
+    
+    maximize sum(sum(swarm.Observation.priority.*effective_science))
+    %maximize sum(delivered_science)
+    
+    subject to
+    % Continuity for all except carrier
+    for k=1:K-1
+        for j=1:N
+            if swarm.Parameters.types{j}~=0
+                sum(flows(k,:,j)) + effective_science(j,k) == sum(flows(k+1,j,:))
+            else
+                sum(flows(k,:,j)) + effective_science(j,k) == sum(flows(k+1,j,:))+delivered_science(k+1, carrier_id(j));
+            end
+        end
+    end
+    
+    % No communicating beyond time limit unless it is with carrier -
+    % enforced by bandwidth limits at K.
+    
+    % No science delivered at t=0
+    delivered_science(1, :) == 0;
+    
+    % Initial flows are nil - don't make up information
+    flows(1,:,:) == 0;
+    
+    % No need for carrier to memorize
     for j=1:N
-%             sum(flows(k,:,j)) + effective_science(j,k) == sum(flows(k+1,j,:))
-%             sum(flows(k,:,j)) + effective_science(j,k) == sum(flows(k+1,j,:))+delivered_science(k+1, carrier_id(j));
-        for i=1:N
-            A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, flows_finder(k,i,j), 1];
-            eq_entry_ix = eq_entry_ix +1;
-            A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, flows_finder(k+1,j,i), -1];
-            eq_entry_ix = eq_entry_ix +1;
+        if swarm.Parameters.types{j}==0      
+%             for k=1:K      
+                flows(:,j,j) == 0;
+%             end
         end
-        A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, effective_science_finder(j,k), 1];
-        eq_entry_ix = eq_entry_ix +1;
-        if swarm.Parameters.types{j}==0
-            A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, delivered_science_finder(k+1,carrier_id(j)), -1];
-            eq_entry_ix = eq_entry_ix +1;
-        end
-        b_eq(eq_constraint_ix) = 0;
-        eq_constraint_ix = eq_constraint_ix+1;
     end
-end
-
-% Constraint 5: Do not violate bandwidth and memory constraints
-% Imposed _before_ the other, more stringend constraints on UB.
-% dual_bandwidth_and_memory: flows<=bandwidths_and_memories;
-for k=1:K
-    for i=1:N
-        ub(flows_finder(k,i,1:N)) = bandwidths_and_memories(k,i,1:N);
-    end
-end
-
-% Constraint 2: No science delivered at t=0
-% delivered_science(1, :) == 0;
-for c=1:num_carriers
-    ub(delivered_science_finder(1,c)) = 0.;
-end
-
-% Constraint 3: Initial flows are nil - don't make up information
-% flows(1,:,:) == 0;
-for i=1:N
-%     for j=1:N
-        ub(flows_finder(1,i,1:N)) = 0;
-%     end
-end
     
-% Constraint 4: No need for carrier to memorize
-for j=1:N
-    if swarm.Parameters.types{j}==0      
-        for k=1:K      
-            ub(flows_finder(k,j,j)) = 0;
+    % Do not violate bandwidth and memory constraints
+
+    dual_bandwidth_and_memory: flows<=bandwidths_and_memories;
+    
+    % Empty memory at the end
+    for i=1:1:N
+        if ~isnan(swarm.Parameters.available_memory(i)) && ~isinf(swarm.Parameters.available_memory(i))
+            flows(K,i,i) == 0;
         end
     end
-end
-
-% Constraint 6: Empty memory at the end
-for i=1:1:N
-    if ~isnan(swarm.Parameters.available_memory(i)) && ~isinf(swarm.Parameters.available_memory(i))
-%         flows(K,i,i) == 0;
-        ub(flows_finder(K,i,i)) = 0;
-    end
-end
     
-% Constraint 7: Don't do more science than is available
-for j=1:N
-    ub(effective_science_finder(j,1:K)) = observation_flows(j,1:K);
-end
-%     effective_science<=observation_flows;
-  
-%% Build the equality matrix
-% First, sanity checks
-if eq_constraint_ix-1 ~= num_equality_constraints
-    fprintf("WARNING: number of equality constraints is unexpected (expected %d, actual %d)\n", num_equality_constraints, eq_constraint_ix-1);
-end
-if eq_entry_ix-1 ~= num_equality_entries
-    fprintf("WARNING: number of equality entries is unexpected (expected %d, actual %d)\n", num_equality_entries, eq_entry_ix-1);
-end
-
-A_eq = sparse(A_eq_sparse(:,1), A_eq_sparse(:,2), A_eq_sparse(:,3), num_equality_constraints, num_variables);
-
-
-%% Solve the problem
-
-[X, tgoal, exitflag, output, lambdas] = linprog(f, [], [], A_eq, b_eq, lb, ub);
-
-%% Unpack the variables
-
-effective_science = reshape(X(effective_science_finder(1,1):effective_science_finder(N,K)), [K,N])';
-
-flows = zeros(K,N,N);
-for k=1:K
-    for i=1:N
-      flows(k,i,:) = X(flows_finder(k,i,1):flows_finder(k,i,N));
-% reshape(X(flows_finder(1,1,1):flows_finder(K,N,N)),[N,N,K])
-    end
-end
-
-delivered_science = reshape(X(delivered_science_finder(1,1):delivered_science_finder(K,num_carriers)), [num_carriers, K])';
-
-dual_bandwidth_and_memory = zeros(K,N,N);
-for k=1:K
-    for i=1:N
-        dual_bandwidth_and_memory(k,i,1:N) = lambdas.upper(flows_finder(k,i,1):flows_finder(k,i,N));
-    end
-end
-
-
-%% Set the output
+    % Don't do more science than is available
+    effective_science<=observation_flows;
+    
+cvx_end
 
 swarm.Communication.flow = flows*data_scaling_factor;
 swarm.Communication.effective_source_flow = effective_science*data_scaling_factor;

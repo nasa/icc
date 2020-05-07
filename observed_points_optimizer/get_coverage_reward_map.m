@@ -18,7 +18,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function reward_map = get_coverage_reward_map(AsteroidModel, Swarm, observable_points_map, sc_optimized)
+function reward_map = get_coverage_reward_map(AsteroidModel, Swarm, sc_optimized)
 %GET_COVERAGE_REWARD Defines the value of the observed points
 %   reward_map{i}(j,k) defines the reward accociated with agent i observing
 %   vertex j at time k
@@ -31,15 +31,23 @@ function reward_map = get_coverage_reward_map(AsteroidModel, Swarm, observable_p
 %    observable combinations of i,j,k (i.e. if
 %    observable_points_map{i}(j,k)==1)
 
-flag_map = 0; % 0 for uniform reward
+if nargin<3
+    sc_optimized = Swarm.which_trajectories_set();
+end
 
-N = length(observable_points_map);
+flag_map = 3; % 0 for uniform reward
+
+N = Swarm.get_num_spacecraft();
 pos_points = AsteroidModel.BodyModel.shape.vertices;
 Nv = size(pos_points,1);
-K = size(observable_points_map{sc_optimized(1)},2);
+K = Swarm.get_num_timesteps();
 reward_map = cell(1,N);
 
 for i_sc = sc_optimized
+    sc_type = Swarm.Parameters.types{i_sc};
+    % Every instrument has a different reward
+    instr_reward = instrument_reward(sc_type);
+    
     if flag_map==0
         %% Uniform Map
         reward_map{i_sc} = ones(Nv,K);
@@ -67,7 +75,21 @@ for i_sc = sc_optimized
             reward_map{i_sc}(:,k) = location_reward;
         end
     end
+    reward_map{i_sc} = reward_map{i_sc}*instr_reward;
     
 end
 
+end
+
+function [reward] = instrument_reward(sc_type)
+    switch sc_type
+        case -1
+            reward = 1;
+        case -2
+            reward = 0;
+        case -3
+            reward = 0.9;
+        otherwise
+            reward = 1.;
+    end
 end

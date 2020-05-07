@@ -1,6 +1,8 @@
 % Run all demo files
 clear all; close all; clc;
 
+% version 1 codes
+
 ICC_Simulation;
 
 Monte_Carlo_Coverage_Optimization_Demo;
@@ -22,3 +24,10 @@ SBDT_Demo_Eros;
 Plot_Orbits;
 
 
+% version 2 codes
+
+Observation_and_Communication_Optimizer_Demo;
+
+Integrated_ICC_Optimization_Demo;
+
+test_observation_and_communication_optimizer;

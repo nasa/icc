@@ -12,13 +12,12 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
         Parameters % Fixed properties of spacecraft
         state_transition_matrix % [6 x 6 x N_TIMESTEPS x N_SPACECRAFT] Array containing the state transition matrix of the spacecraft
         state_transition_matrix_frame % {N_SPACECRAFT} Cell array containing the frame in which the STM was computed
-        
+        sun_state_array % [6 X N_TIMESTEPS] Array containing the trajectory of the Sun in IAU_EROS frame
     end
     
     properties(SetAccess=public, GetAccess=public)
         Observation % Variables related to observation of the small body by the spacecraft
         Communication % Variables related to communication between spacecraft
-        sun_state_array % [6 X N_TIMESTEPS] Array containing the trajectory of the Sun in IAU_EROS frame
         
     end
     
@@ -41,7 +40,7 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             obj.state_transition_matrix_frame = cell(N,1);
             
             obj.Parameters.available_memory = sc_max_memory; % [bits]; [1 x N] vector of the memory capacity of each spacecraft
-            obj.Parameters.types = sc_types; % [1 x N] cell containing the list of instruments (indices) carried by each spacecraft
+            obj.Parameters.types = sc_types; % [1 x N] cell containing the list of instruments (indices) carried by each spacecraft. Conventionally, type 0 corresponds to the carrier spacecraft.
             obj.Parameters.n_spacecraft = N; % Number of spacecraft in the swarm
             
             obj.Observation.observed_points = zeros(N, K); % observed_points(i,k) = index of vertex on asteroid observed by spacecraft i at time k
@@ -57,7 +56,7 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             obj.all_trajectories_set = false;
             obj.unset_trajectories = 1:N;
             
-            obj.sun_state_array = zeros(6, K); % Sun trajectory in IAU_EROS frame
+            obj.sun_state_array = get_sun_state(time_vector); % Sun trajectory in IAU_EROS frame
             
         end
         

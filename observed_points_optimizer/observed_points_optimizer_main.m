@@ -103,7 +103,7 @@ if flag_optimization_approach==0
         reward_map{i_sc} = ones(Nv, K);
     end
 else
-    reward_map = get_coverage_reward_map(AsteroidModel, Swarm, observable_points_map, sc_optimized);
+    reward_map = get_coverage_reward_map(AsteroidModel, Swarm, sc_optimized);
 end
 
 %% Choose Observation Points

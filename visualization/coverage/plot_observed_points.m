@@ -46,7 +46,7 @@ if length(varargin) >= 4
 end
 plot_time = Swarm.sample_times(i_time);
 
-h_op = zeros(2*length(spacecraft_ids),1);
+% h_op = zeros(2*length(spacecraft_ids),1);
 for i_sc = spacecraft_ids
     % Actually observed points - if any
     if sum(Swarm.Observation.observed_points(i_sc, start_time:i_time))>0

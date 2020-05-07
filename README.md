@@ -7,8 +7,7 @@ The examples folder contains example _main_ scripts, which demonstrate usage of 
 ___
 ## Requirements
 
-- [CVX](http://cvxr.com/cvx/). The academic version with the Mosek solver is highly recommended.
-> **WARNING**: The communication optimization problem is known to falsely return infeasible with the SDPT3 solver. please use Mosek (if available) or SeDuMi.
+- [Mosek](https://www.mosek.com/) or [CPLEX](https://www.ibm.com/analytics/cplex-optimizer). Both Mosek and CPLEX provide free academic versions. If neither MOSEK nor CPLEX are available, it is possible to fall back to MATLAB's built-in `linprog` and `intlinprog`, but performance will be compromised.
 - JPL's [Small Body Dynamics Toolkit (SBDT)](https://engineering.purdue.edu/people/kathleen.howell.1/Publications/Conferences/2015_AAS_SBDT.pdf). SBDT is not open-source. A license can be requested from [download.jpl.nasa.gov](download.jpl.nasa.gov) mentioning NTR-49005. 
 - NASA's [SPICE](https://naif.jpl.nasa.gov/naif/aboutspice.html) MATLAB toolkit (MICE), available at [this link](https://naif.jpl.nasa.gov/naif/toolkit_MATLAB.html).
 - In order to automatically download SPICE data, the [Expect/TCL](https://en.wikipedia.org/wiki/Expect) scripting language should be available. On Debian-based systems, you can `sudo apt-get install expect`. On MacOS, `brew install expect` with [Homebrew](https://brew.sh/). On Windows, either use the Windows Subsystem for Linux, or manually download SPICE data as discussed below..
