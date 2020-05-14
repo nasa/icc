@@ -29,10 +29,10 @@
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-clear, clc, close all, run ../startup.m  % refresh
+clear, clc, close all, run ../startup_matlab.m  % refresh
 
 % Do you want to record video?
-record_video = true;
+record_video = false;
 
 % Do you want to save the output of the optimization in 42 format?
 save_42_inputs = false;
@@ -110,9 +110,6 @@ if length(carrier_index)>1
 end
 carrier_initial_conditions = initialize_carrier_orbit(ErosModel);
 Swarm.integrate_trajectory(carrier_index, ErosModel, carrier_initial_conditions);
-
-% % Get Sun Position - handled in constructor
-% Swarm.sun_state_array = get_sun_state(Swarm.sample_times); 
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                    Sciencecraft Orbit Optimization                      %

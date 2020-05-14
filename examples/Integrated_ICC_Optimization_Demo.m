@@ -29,7 +29,7 @@
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-clear, clc, close all, run ../startup.m  % refresh
+clear, clc, close all, run ../startup_matlab.m  % refresh
 
 % Do you want to record video?
 record_video = true;

@@ -22,7 +22,7 @@
 %         Usage example of the small body dynamics integrators.           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-clear, clc, close all, run ../startup.m  % refresh 
+clear, clc, close all, run ../startup_matlab.m  % refresh 
 
 % Add Required Packages to PATH 
 addpath(genpath(strcat(ROOT_PATH,'/small_body_dynamics/EROS 433')))

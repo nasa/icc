@@ -83,7 +83,7 @@ if timeLimitSpecified == false
 end
 
 % Location of the points
-pos_points = AsteroidModel.BodyModel.shape.vertices ; 
+pos_points = AsteroidModel.BodyModel.shape.faceCenters ; 
 n_spacecraft = Swarm.get_num_spacecraft();
 
 % Which spacecraft (if any) observes a point

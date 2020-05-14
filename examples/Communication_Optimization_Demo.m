@@ -29,7 +29,7 @@
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-clear, clc, close all, run ../startup.m  % refresh
+clear, clc, close all, run ../startup_matlab.m  % refresh
 
 % Load utilities that will be leveraged here
 addpath(genpath('../utilities/'))
