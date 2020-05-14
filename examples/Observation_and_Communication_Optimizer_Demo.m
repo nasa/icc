@@ -47,7 +47,7 @@ rng(0); % Get a consistent seed
 
 n_spacecraft = 4;  % Number of Spacecraft, including the carrier
 
-sc_types = {2, 3, 5, 0};  % Spectrometer, camera, radio science, carrier
+sc_types = {2, 3, 4, 0};  % Spectrometer, camera, radio science, carrier
 
 sc_max_memory = ones(n_spacecraft,1)*1e12; %1TB
 
