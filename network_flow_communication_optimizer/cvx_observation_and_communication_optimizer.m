@@ -62,7 +62,7 @@ observation_threshold = 1e-4;
 
 K = swarm.get_num_timesteps();
 N = swarm.get_num_spacecraft();
-Nv = size(asteroid_model.BodyModel.shape.vertices,1);
+Nv = size(asteroid_model.BodyModel.shape.faceCenters,1);
 
 %% Get observability and reward
 % First, let's find out what points are observable
