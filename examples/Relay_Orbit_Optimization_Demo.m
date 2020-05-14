@@ -24,7 +24,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-clear, clc, close all, run ../startup_matlab.m  % refresh
+clear, clc, close all, run ../startup.m  % refresh
 
 % Load things
 addpath(genpath('../utilities/'))
