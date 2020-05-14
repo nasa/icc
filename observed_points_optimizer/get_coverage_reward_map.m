@@ -38,7 +38,7 @@ end
 flag_map = 3; % 0 for uniform reward
 
 N = Swarm.get_num_spacecraft();
-pos_points = AsteroidModel.BodyModel.shape.vertices;
+pos_points = AsteroidModel.BodyModel.shape.faceCenters;
 Nv = size(pos_points,1);
 K = Swarm.get_num_timesteps();
 reward_map = cell(1,N);

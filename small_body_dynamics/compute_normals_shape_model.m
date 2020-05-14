@@ -133,3 +133,16 @@ obj.BodyModel.shape.normals = vertices_normals;
 %     
 % end
 % hold off
+% 
+% 
+% figure()
+% hold on
+% for i=1:1:length(ErosModel.BodyModel.shape.faceCenters)
+%     plot3([ErosModel.BodyModel.shape.faceCenters(i,1) ErosModel.BodyModel.shape.faceCenters(i,1)+ErosModel.BodyModel.shape.faceNormals(i,1)],...
+%         [ErosModel.BodyModel.shape.faceCenters(i,2) ErosModel.BodyModel.shape.faceCenters(i,2)+ErosModel.BodyModel.shape.faceNormals(i,2)],...
+%         [ErosModel.BodyModel.shape.faceCenters(i,3) ErosModel.BodyModel.shape.faceCenters(i,3)+ErosModel.BodyModel.shape.faceNormals(i,3)],...
+%         '-k')
+%     plot3(ErosModel.BodyModel.shape.faceCenters(i,1), ErosModel.BodyModel.shape.faceCenters(i,2), ErosModel.BodyModel.shape.faceCenters(i,3),'.r')
+%     
+% end
+% hold off

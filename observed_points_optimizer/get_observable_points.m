@@ -22,8 +22,8 @@ function observable_points = get_observable_points(AsteroidModel, Swarm, i_time,
 %GET_OBSERVABLE_POINTS Returns a vector of the asteroid vertex indicies
 %which are feasible for observation by the spacecraft in the given position
 
-asteroid_vertices = AsteroidModel.BodyModel.shape.vertices; % Verticies composing surface of asteroid
-asteroid_normals = AsteroidModel.BodyModel.shape.normals; % Normals at Verticies
+asteroid_vertices = AsteroidModel.BodyModel.shape.faceCenters; % faceCenters composing surface of asteroid
+asteroid_normals = AsteroidModel.BodyModel.shape.faceNormals; % Normals at faceCenters
 sc_position = Swarm.rel_trajectory_array(i_time, 1:3, i_sc );
 sun_position = Swarm.sun_state_array(1:3,i_time)';
 sc_type = Swarm.Parameters.types{i_sc};
