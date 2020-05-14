@@ -37,6 +37,7 @@ addpath(strcat(ROOT_PATH,'/small_body_dynamics'))
 addpath(genpath(strcat(ROOT_PATH,'/utilities'))) % Add all utilities
 addpath(genpath(strcat(ROOT_PATH,'/visualization')))
 addpath(strcat(ROOT_PATH,'/observed_points_optimizer'))
+addpath(strcat(ROOT_PATH,'/network_flow_communication_optimizer'))
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                   User Options: Flags and Parameters                    %
