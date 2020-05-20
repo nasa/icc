@@ -40,7 +40,7 @@ flag_use_instruments = true; % if false, will use simplified function, not deriv
 get_angle =@(x,y) acos( dot(x(:), y(:)) / (norm(x(:)) * norm(y(:))) ); % Returns angle between two vectors using cos
 
 % Get information
-[sun_angle_ranges, sc_angle_ranges, distance_ranges, ~] = get_instrument_constraints(sc_type);
+[sun_angle_ranges, sc_angle_ranges, distance_ranges] = get_instrument_constraints(sc_type);
 Nv = size(asteroid_vertices,1);
 
 %% Get Observable Points

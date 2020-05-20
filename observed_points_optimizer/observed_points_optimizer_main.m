@@ -140,18 +140,10 @@ end
 
 %% Calculate Observation Flow
 
-data_rate_Magnetometer_RadioScience = get_instrument_constraints_Magnetometer_RadioScience(Swarm); % [bits]
-
 for i_sc = 1:Swarm.get_num_spacecraft()
-    [~, ~, ~, data_rate_per_point] = get_instrument_constraints(Swarm.Parameters.types{i_sc});
-    
-    if isempty(data_rate_per_point)
-        % Some instruments do not have a data rate
-        Swarm.Observation.flow(i_sc,:) = data_rate_Magnetometer_RadioScience*ones(1,K);
-    else
-        Swarm.Observation.flow(i_sc,:) = data_rate_Magnetometer_RadioScience*ones(1,K) + data_rate_per_point.*sign(Swarm.Observation.observed_points(i_sc,:)) ;
-    end
-    
+    data_rate = get_data_rates(Swarm.Parameters.types{i_sc},AsteroidModel,Swarm.Observation.observed_points(i_sc,:));
+    Swarm.Observation.flow(i_sc,:) = data_rate;
+             
     % Here, we pre-allocate Swarm.Communication.effective_source_flow
     % to Swarm.Observation.flow . The idea is, if we do not run the
     % communication optimizer, we assume we collect _all_ data. This is
