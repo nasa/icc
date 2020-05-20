@@ -175,11 +175,12 @@ swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
 
 
 [swarm] = observation_and_communication_optimizer(ErosGravity, swarm);
+data_rate_Magnetometer_RadioScience = get_instrument_constraints_Magnetometer_RadioScience(swarm); % [bits]
 
 assert(swarm.is_valid());
-assert(close_enough(swarm.Communication.effective_source_flow(1,1),1))
-assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),1))
-assert(close_enough(swarm.Communication.flow(2,1,2),1))
+assert(close_enough(swarm.Communication.effective_source_flow(1,1),1+data_rate_Magnetometer_RadioScience))
+assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),1+data_rate_Magnetometer_RadioScience))
+assert(close_enough(swarm.Communication.flow(2,1,2),1+data_rate_Magnetometer_RadioScience))
 disp("Test 2 passed")
 %% Test 3: two agents produce two units of science
 T = 3;
@@ -210,13 +211,14 @@ swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
 
 
 [swarm] = observation_and_communication_optimizer(ErosGravity, swarm);
+data_rate_Magnetometer_RadioScience = get_instrument_constraints_Magnetometer_RadioScience(swarm); % [bits]
 
 assert(swarm.is_valid());
-assert(close_enough(swarm.Communication.effective_source_flow(1,1),1))
-assert(close_enough(swarm.Communication.effective_source_flow(2,1),1))
-assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),2))
-assert(close_enough(swarm.Communication.flow(2,1,3),1))
-assert(close_enough(swarm.Communication.flow(2,2,3),1))
+assert(close_enough(swarm.Communication.effective_source_flow(1,1),1+data_rate_Magnetometer_RadioScience))
+assert(close_enough(swarm.Communication.effective_source_flow(2,1),1+data_rate_Magnetometer_RadioScience))
+assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),2+2*data_rate_Magnetometer_RadioScience))
+assert(close_enough(swarm.Communication.flow(2,1,3),1+data_rate_Magnetometer_RadioScience))
+assert(close_enough(swarm.Communication.flow(2,2,3),1+data_rate_Magnetometer_RadioScience))
 disp("Test 3 passed")
 %% Test 4: bandwidth constraints
 T = 3;
