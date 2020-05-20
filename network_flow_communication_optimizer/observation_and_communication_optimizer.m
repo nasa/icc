@@ -89,15 +89,22 @@ reward_time = toc(rtic);
 
 % We also need the instrument data rates
 drtic = tic;
+
+data_rate_Magnetometer_RadioScience = get_instrument_constraints_Magnetometer_RadioScience(swarm); % [bits]
+
 data_rates = zeros(N,K);
 for i_sc=1:N
     [~, ~, ~, data_rate_per_point] = get_instrument_constraints(swarm.Parameters.types{i_sc});
+        
+    data_rate_per_point = data_rate_per_point + data_rate_Magnetometer_RadioScience;
+    
     if ~isempty(data_rate_per_point)
         data_rates(i_sc,1:end-1) = data_rate_per_point*ones(1,K-1);
         % Cheat at the end - information collected there can't be
         % transmitted anyway
         data_rates(i_sc,end) = data_rates(i_sc,end-1);
     end
+    
 end
 datarate_time = toc(drtic);
 

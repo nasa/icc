@@ -140,7 +140,7 @@ end
 
 %% Calculate Observation Flow
 
-data_rate_Magnetometer_RadioScience = (Swarm.sample_times(2)-Swarm.sample_times(1))*(48 + (Swarm.get_num_spacecraft-1)*192); % [bits]
+data_rate_Magnetometer_RadioScience = get_instrument_constraints_Magnetometer_RadioScience(Swarm); % [bits]
 
 for i_sc = 1:Swarm.get_num_spacecraft()
     [~, ~, ~, data_rate_per_point] = get_instrument_constraints(Swarm.Parameters.types{i_sc});
