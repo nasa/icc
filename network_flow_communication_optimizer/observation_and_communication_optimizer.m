@@ -26,7 +26,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [swarm, goal] = observation_and_communication_optimizer(asteroid_model, swarm, bandwidth_model, data_scaling_factor)
+function [swarm, goal, problem_solve_time] = observation_and_communication_optimizer(asteroid_model, swarm, bandwidth_model, data_scaling_factor)
 
 % How to best collect observations and route data from a number of science
 % spacecraft to a carrier s/c, given an observation model and a network
@@ -462,7 +462,7 @@ end
 swarm.Communication.flow = flows*data_scaling_factor;
 swarm.Communication.effective_source_flow = swarm.Observation.flow;
 swarm.Communication.bandwidths_and_memories = bandwidths_and_memories*data_scaling_factor;
-swarm.Communication.dual_bandwidths_and_memories = dual_bandwidth_and_memory;  % Effective_flow is reduced by data_scaling_factor, but so is the cost.
+swarm.Communication.dual_bandwidths_and_memories = dual_bandwidth_and_memory/data_scaling_factor;  % data_rates is divided by data_scaling_factor, cost is unaffected.
 
 problem_unpack_time = toc(unpack_tic);
 

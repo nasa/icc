@@ -27,7 +27,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% function [goal, gradient, dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dlocation_dic] = integrated_optimization_cost_function(swarm, sc_initial_condition_vector, initial_condition_scaling_factor, gravity_model, bandwidth_parameters)
+% function [goal, gradient, dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dlocation_dic, dgoal_drewards, drewards_dlocation] = integrated_optimization_cost_function(swarm, sc_initial_condition_vector, initial_condition_scaling_factor, gravity_model, bandwidth_parameters)
 function [goal] = integrated_optimization_cost_function(swarm, sc_initial_condition_vector, initial_condition_scaling_factor, gravity_model, bandwidth_parameters)
 
 % Cost function for GBO.
@@ -53,8 +53,8 @@ if nargin<5
     bandwidth_parameters.max_bandwidth = 100*1e6;
 end
 
-addpath(genpath('../utilities'))
-addpath('../network_flow_communication_optimizer')
+% addpath(genpath('../utilities'))
+% addpath('../network_flow_communication_optimizer')
 
 %% Unpack initial conditions and sanity check them
 N = swarm.get_num_spacecraft();

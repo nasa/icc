@@ -6,7 +6,6 @@ clear all; close all; clc;
 
 % Load things
 addpath(genpath('../utilities/'))
-
 addpath(genpath('../small_body_dynamics/'))
 addpath(genpath('../network_flow_communication_optimizer/'))
 addpath(genpath('../relay_orbit_optimizer/'))
@@ -18,7 +17,7 @@ eros_sbdt = loadEros( constants, 1, 1, 3, 3 );
 ErosGravity = SphericalHarmonicsGravityIntegrator_SBDT(eros_sbdt);
 GM = eros_sbdt.gravity.gm * 1e9;  % Convert to m from km
 
-% Create a swarm object
+% Create a swarm object 
 n_spacecraft = 4;
 time_bounds = [0:300:86400];
 sc_types = cell(n_spacecraft,1);
@@ -72,70 +71,52 @@ bandwidth_parameters.reference_distance = 100000;
 bandwidth_parameters.max_bandwidth = 100*1e6;
 
 % Try optimizing comms right now for sanity - maybe with wrong comms model
-[swarm] = communication_optimizer(swarm);
-% plot_communications(swarm, ErosGravity,true)
-
-relay_orbit_indices = [3, 4];
-% relay_orbit_indices =[2];
-
-
-% Stolen from relay_optimization
-
-gravity_model = ErosGravity;
-
-
-addpath(genpath('../utilities/'))
+[swarm] = observation_and_communication_optimizer(ErosGravity, swarm);
+% plot_communications(swarm, ErosGravity,true)addpath(genpath('../utilities/'))
 initialize_SBDT();
 
-% Empty inputs to the optimizer
-ub = [];
-lb = [];
-options = optimoptions('fmincon',...
-    'SpecifyObjectiveGradient',true,...
-    'Display', 'Iter',...
-    'CheckGradients', true, ...
-    'UseParallel', true, ...
-    'PlotFcn', 'optimplotstepsize');
-A = [];
-b = [];
-Aeq = [];
-beq = [];
+% This scales the variables size to attempt to make the problem better
+% conditioned. 
+optvar_scaling_factor = [1e-4; 1e-4; 1e-4; 1; 1; 1];
 
-optvar_scaling_factor = ones(6,1);
+N = swarm.get_num_spacecraft();
+% Create initial conditions from Swarm object
 
-% Create bandwidth model
 
-relay_initial_condition = zeros(6*length(relay_orbit_indices),1);
-for relay_sc =1:length(relay_orbit_indices)
-    offset = 6*(relay_sc-1);
-    assert(all(size(swarm.abs_trajectory_array(1,:,relay_orbit_indices(relay_sc))') == size(optvar_scaling_factor)));
-    relay_initial_condition(1+offset:6+offset) = swarm.abs_trajectory_array(1,:,relay_orbit_indices(relay_sc))'.*optvar_scaling_factor;
+initial_conditions = zeros(6*N,1);
+for sc =1:N
+    offset = 6*(sc-1);
+    assert(all(size(swarm.abs_trajectory_array(1,:,sc)') == size(optvar_scaling_factor)));
+    initial_conditions(1+offset:6+offset) = swarm.abs_trajectory_array(1,:,sc)'.*optvar_scaling_factor;
 end
 
 % One test call to the cost function
-[goal, semi_analytical_gradient, dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dlocation_dic] = relay_optimization_cost_function(swarm,relay_orbit_indices,relay_initial_condition, optvar_scaling_factor, gravity_model, bandwidth_parameters);
-if (isnan(goal) || any(isnan(semi_analytical_gradient)))
+%[goal, gradient] = integrated_optimization_cost_function(swarm,initial_conditions, optvar_scaling_factor, gravity_model, bandwidth_parameters);
+[goal] = integrated_optimization_cost_function(swarm,initial_conditions, optvar_scaling_factor, ErosGravity, bandwidth_parameters);
+% if (isnan(goal) || any(isnan(gradient)))
+if (isnan(goal))
     error('ERROR: initial location is infeasible. fmincon will crash.')
 end
 
 % Proper cost function
-fun = @(params) relay_optimization_cost_function(swarm, relay_orbit_indices, params, optvar_scaling_factor, gravity_model, bandwidth_parameters);
+fun = @(params) integrated_optimization_cost_function(swarm, params, optvar_scaling_factor, ErosGravity, bandwidth_parameters);
 
 % Try calling the "proper cost function"
-[goal, semi_analytical_gradient, dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dlocation_dic] = fun(relay_initial_condition);
+% [goal, gradient] = fun(initial_conditions);
+[goal] = fun(initial_conditions);
 disp("Ready");
 
  %% Compute numerical gradients
 % gradient_steps = [1e3, 1e2, 1e1, 1, 1e-2, 1e-4, 1e-6, 1e-8];
-gradient_steps = [10, 1, 0.1, 0.01,0.001, 0.0001];
+gradient_steps = [1, 0.1, 0.01,0.001, 0.0001];
 % gradient_perturbation = [.05; .05; .05; 10.; 10.; 10.;];
 gradient_perturbation = [100; 100; 100; 1.; 1.; 1.;];
-gradient_perturbation = [gradient_perturbation; gradient_perturbation];
+gradient_perturbation = repmat(gradient_perturbation,N,1);
 
 num_gradient = cell(size(gradient_steps));
 legend_labels = cell(length(gradient_steps)+1, 1);
 for step_index = 1:length(gradient_steps)
-    num_gradient{step_index} = numerical_gradient(fun, relay_initial_condition, gradient_steps(step_index).*gradient_perturbation);
+    num_gradient{step_index} = numerical_gradient(fun, initial_conditions, gradient_steps(step_index).*gradient_perturbation);
     legend_labels{step_index} = sprintf("Numerical, %d", gradient_steps(step_index));
 end
 legend_labels{end} = "Analytical";
@@ -157,7 +138,7 @@ end
 step_index = length(gradient_steps)+1;
 stroke_idx = mod(step_index, length(line_available_strokes))+1;
 mark_idx = mod(step_index, length(line_available_marks))+1;
-semilogy(abs(semi_analytical_gradient), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}))
+% semilogy(abs(semi_analytical_gradient), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}))
 legend(legend_labels, 'location', 'best')
 title("Full gradient of reward wrt initial location")
 
@@ -191,19 +172,21 @@ data_scaling_factor = 1e6;
 
 swarmb = copy(swarm);
 
-fun_b = @(params) communication_optimizer(swarmb, params, data_scaling_factor);
+% [swarm] = observation_and_communication_optimizer(ErosGravity, swarmb, params);
 
-parfor step_index = 1:length(gradient_steps)
+fun_b = @(params) observation_and_communication_optimizer(ErosGravity, swarmb, params, data_scaling_factor);
+
+for step_index = 1:length(gradient_steps)
     gradient_step = gradient_steps(step_index);
     fprintf("Gradient step %d / %d (%d)\n", step_index, length(gradient_steps), gradient_step)
     semi_analytical_gradient = zeros(num_bandwidths_to_perturb,1);
-    for entry = 1:num_bandwidths_to_perturb
+    parfor entry = 1:num_bandwidths_to_perturb
         fprintf("Entry %d/%d\n", entry, num_bandwidths_to_perturb)
         perturbation = zeros(size(bandwidths_and_memories));
         perturbation(k_ix(entry), n1_ix(entry), n2_ix(entry)) = gradient_step;
         try
-            [~, goalplus] = fun_b(max(bandwidths_and_memories+perturbation,0));
-            [~, goalminus] = fun_b(max(bandwidths_and_memories-perturbation,0));
+            [~, goalplus] = fun_b(max(0,bandwidths_and_memories+perturbation));
+            [~, goalminus] = fun_b(max(0,bandwidths_and_memories-perturbation));
             semi_analytical_gradient(entry) = (goalplus - goalminus)/(2*gradient_step);
         catch e
            semi_analytical_gradient(entry)= NaN;
@@ -216,7 +199,9 @@ parfor step_index = 1:length(gradient_steps)
     legend_labels{step_index} = sprintf("Numerical, %d", gradient_steps(step_index));
 end
 
-[swarmc, goal] = communication_optimizer(swarmb, swarmb.Communication.bandwidths_and_memories, data_scaling_factor);
+% observation_and_communication_optimizer(ErosGravity, swarmb, swarmb.Communication.bandwidths_and_memories);
+
+[swarmc, goal] = observation_and_communication_optimizer(ErosGravity, swarmb, swarmb.Communication.bandwidths_and_memories);
 analytical_gradient_bw = zeros(num_bandwidths_to_perturb,1);
 for entry=1:num_bandwidths_to_perturb
     analytical_gradient_bw(entry) = swarmc.Communication.dual_bandwidths_and_memories(k_ix(entry), n1_ix(entry), n2_ix(entry));
@@ -224,15 +209,16 @@ end
 % Another way
 % Reuse the gradient we had computed before
 % [dk_dic, dk_dbandwidth, dbandwidth_dlocation, dlocation_dic] = compute_gradient(swarmc, bandwidth_parameters.reference_distance, bandwidth_parameters.reference_bandwidth, bandwidth_parameters.max_bandwidth);
-analytical_gradient_bw_c = zeros(num_bandwidths_to_perturb,1);
-for entry=1:num_bandwidths_to_perturb
-    index = N*K*(n2_ix(entry)-1) + K*(n1_ix(entry)-1) + k_ix(entry);
-    analytical_gradient_bw_c(entry) = dk_dbandwidth(index);
-end
+% analytical_gradient_bw_c = zeros(num_bandwidths_to_perturb,1);
+% for entry=1:num_bandwidths_to_perturb
+%     index = N*K*(n2_ix(entry)-1) + K*(n1_ix(entry)-1) + k_ix(entry);
+%     analytical_gradient_bw_c(entry) = dk_dbandwidth(index);
+% end
 
 
 legend_labels{end-1} = "Analytical";
 legend_labels{end} = "Analytical (fun)";
+
 
 % Plotting
 
@@ -249,14 +235,16 @@ for step_index = 1:length(gradient_steps)
     hold all
 end
 
+
 step_index = length(gradient_steps)+1;
 stroke_idx = mod(step_index, length(line_available_strokes))+1;
+
 mark_idx = mod(step_index, length(line_available_marks))+1;
 semilogy(abs(analytical_gradient_bw), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}))
 step_index = length(gradient_steps)+2;
 stroke_idx = mod(step_index, length(line_available_strokes))+2;
 mark_idx = mod(step_index, length(line_available_marks))+2;
-semilogy(abs(analytical_gradient_bw_c), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}))
+% semilogy(abs(analytical_gradient_bw_c), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}))
 
 legend(legend_labels, 'location', 'best')
 title("Gradient of reward wrt bandwidth")
