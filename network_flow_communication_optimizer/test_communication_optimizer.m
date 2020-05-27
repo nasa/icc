@@ -63,7 +63,7 @@ orbit_radius = 50000;
 % Initialize spacecraft types (currently not in use)
 sc_types = cell(1,sc_number);
 for sc =1:sc_number
-    sc_types{sc} = [1];
+    sc_types{sc} = randi([1,4]);
 end
 % Set the last SC to be the carrier
 sc_types{sc_number} = 0;

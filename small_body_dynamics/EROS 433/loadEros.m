@@ -38,8 +38,8 @@ function [bodyModel] = loadEros(constants, orbitNumber, frameNumber, ...
     %  shapeNumber -   Number indicating which shape model to use.
     %                  (1)  Spherical Shape
     %                  (2)  Ellipsoid Shape
-    %                  (3)  Polyhedral Shape (1708 vertices)
-    %                  (4)  Polyhedral Shape (10152 vertices)
+    %                  (3)  Polyhedral Shape (856 vertices, 1708 faces)
+    %                  (4)  Polyhedral Shape (5078 vertices, 10152 faces)
     %  gravityNumber - Number indicating which gravity model to use.
     %                  (1)  Pointmass Gravity
     %                  (2)  Constant Density Gravity
@@ -187,7 +187,7 @@ function [bodyModel] = loadEros(constants, orbitNumber, frameNumber, ...
 
       case 3
         % Orientation parameters model name
-        shapeName = 'Polyhedral Shape (1708 vertices)';
+        shapeName = 'Polyhedral Shape (856 vertices)';
         % MSI data from https://sbn.psi.edu/pds/resource/nearbrowse.html
         disp(cat(2, '- ', shapeName, ' Model.'));
         
@@ -213,7 +213,7 @@ function [bodyModel] = loadEros(constants, orbitNumber, frameNumber, ...
         
       case 4
         % Orientation parameters model name
-        shapeName = 'Polyhedral Shape (10152 vertices)';
+        shapeName = 'Polyhedral Shape (5078 vertices)';
         % MSI data from https://sbn.psi.edu/pds/resource/nearbrowse.html
         disp(cat(2, '- ', shapeName, ' Model.'));
         

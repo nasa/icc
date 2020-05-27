@@ -75,7 +75,7 @@ if absolute == true && isnan(plot_time)
     assert(false, "ERROR: if absolute plotting is selected, the variable 'plot_time' should be specified");
 end
 
-pos_points = AsteroidModel.BodyModel.shape.vertices ; % Convert to [km] for plotting
+pos_points = AsteroidModel.BodyModel.shape.faceCenters ; % Convert to [km] for plotting
 Nv = size(pos_points,1);
 if absolute == true
     rot_angle_z = AsteroidModel.BodyModel.bodyFrame.pm.w0+ AsteroidModel.BodyModel.bodyFrame.pm.w * plot_time;

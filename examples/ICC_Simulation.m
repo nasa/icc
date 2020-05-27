@@ -32,7 +32,7 @@
 clear, clc, close all, run ../startup.m  % refresh
 
 % Do you want to record video?
-record_video = true;
+record_video = false;
 
 % Do you want to save the output of the optimization in 42 format?
 save_42_inputs = false;
@@ -52,11 +52,11 @@ addpath(strcat(ROOT_PATH,'/relay_orbit_optimizer'))
 %                   User Options: Flags and Parameters                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-n_spacecraft = 10;  % Number of Spacecraft, counting the carrier
+n_spacecraft = 5;  % Number of Spacecraft, counting the carrier
 
 sc_types = cell(1,n_spacecraft);
 for i_sc = 1:n_spacecraft
-    sc_types{i_sc}  = randi([1,6]); % Indicies for instruments on board
+    sc_types{i_sc}  = i_sc; % randi([1,4]); % Indicies for instruments on board
 end
 carrier_index = n_spacecraft;
 sc_types{carrier_index} = 0; % Mark the carrier so it will not be used in the Monte Carlo optimization
@@ -72,10 +72,10 @@ n_trial_orbits = 10 ;
 max_relay_optimization_time = 300;
 % Which spacecraft should be optimized as relays?
 relay_orbit_indices = [3, 4];
-assert(max(relay_orbit_indices)<=n_spacecraft, "ERROR: relay orbit indices exceed number of spacecraft");
+assert(max(relay_orbit_indices)<=(n_spacecraft-1), "ERROR: relay orbit indices exceed number of spacecraft");
 
-sc_max_memory = 8*20*1e9.*ones(1,n_spacecraft); % 20 GB max memory for instrument spacecraft
-sc_max_memory(1,carrier_index) = 8*10000*1e9; % Memory limit for carrier spacecraft
+sc_max_memory = 20*8e9.*ones(1,n_spacecraft); % [bits] 20 GB, max memory for instrument spacecraft
+sc_max_memory(1,carrier_index) = 10*8e12;     % [bits] 10 TB, Memory limit for carrier spacecraft
 
 % Parameters for bandwidth model
 bandwidth_parameters.reference_bandwidth = 250000;
@@ -110,9 +110,6 @@ if length(carrier_index)>1
 end
 carrier_initial_conditions = initialize_carrier_orbit(ErosModel);
 Swarm.integrate_trajectory(carrier_index, ErosModel, carrier_initial_conditions);
-
-% % Get Sun Position - handled in constructor
-% Swarm.sun_state_array = get_sun_state(Swarm.sample_times); 
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                    Sciencecraft Orbit Optimization                      %

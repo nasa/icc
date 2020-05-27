@@ -48,9 +48,9 @@ n_spacecraft = 8; % Number of Spacecraft, counting the carrier
 
 sc_types = cell(1,n_spacecraft);
 for i_sc = 1:n_spacecraft
-    sc_types{i_sc}  = randi([1,6]); % Indicies for instruments on board
+    sc_types{i_sc}  = randi([1,4]); % Indicies for instruments on board
 end
-carrier_index = n_spacecraft - 1;
+carrier_index = n_spacecraft;
 sc_types{carrier_index} = 0; % Mark the carrier so it will not be used in the Monte Carlo optimization
 
 delta_t = 10*60; % [s]; simulation time step

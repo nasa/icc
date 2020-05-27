@@ -63,9 +63,9 @@ flag_optimization_approach = 1; % 0 returns nadir point and unit reward (no opti
 sc_type = Swarm.Parameters.types; % 0 for carrier; 1 for instrument carrying spacecraft
 K = Swarm.get_num_timesteps(); % number of time samples
 N = Swarm.get_num_spacecraft(); % number of spacecraft
-Nv = size(AsteroidModel.BodyModel.shape.vertices,1); % number of vertices in shape model
-% asteroid_vertices = AsteroidModel.BodyModel.shape.vertices; % Verticies composing surface of asteroid
-% asteroid_normals = AsteroidModel.BodyModel.shape.normals; % Normals at Verticies
+Nv = size(AsteroidModel.BodyModel.shape.faceCenters,1); % number of faceCenters in shape model
+% asteroid_vertices = AsteroidModel.BodyModel.shape.faceCenters; % Verticies composing surface of asteroid
+% asteroid_normals = AsteroidModel.BodyModel.shape.faceNormals; % Normals at Verticies
 
 %% Get Set of Feasible Observation Points at Each Timestep
 observable_points = Swarm.Observation.observable_points;
@@ -139,21 +139,18 @@ else % Batch optimization
 end
 
 %% Calculate Observation Flow
+
 for i_sc = 1:Swarm.get_num_spacecraft()
-    [~, ~, ~, data_rate] = get_instrument_constraints(Swarm.Parameters.types{i_sc});
-    % Some spacecraft do not have a data rate - skip those
-    if isempty(data_rate)
-        continue
-    else
-        bits_per_point = data_rate.*Swarm.sample_times;
-        Swarm.Observation.flow(i_sc,:) = bits_per_point.*sign(Swarm.Observation.observed_points(i_sc,:)) ;
-        % Here, we pre-allocate Swarm.Communication.effective_source_flow
-        % to Swarm.Observation.flow . The idea is, if we do not run the
-        % communication optimizer, we assume we collect _all_ data. This is
-        % done primarily for plotting purposes. The variable will be
-        % overridden when communication_optimizer is called.
-        Swarm.Communication.effective_source_flow(i_sc,:) = Swarm.Observation.flow(i_sc,:);
-    end
+    data_rate = get_data_rates(Swarm.Parameters.types{i_sc},AsteroidModel,Swarm.Observation.observed_points(i_sc,:));
+    Swarm.Observation.flow(i_sc,:) = data_rate;
+             
+    % Here, we pre-allocate Swarm.Communication.effective_source_flow
+    % to Swarm.Observation.flow . The idea is, if we do not run the
+    % communication optimizer, we assume we collect _all_ data. This is
+    % done primarily for plotting purposes. The variable will be
+    % overridden when communication_optimizer is called.
+    Swarm.Communication.effective_source_flow(i_sc,:) = Swarm.Observation.flow(i_sc,:);
+    
 end
 
 end

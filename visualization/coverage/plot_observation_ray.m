@@ -51,10 +51,10 @@ if absolute == true
     sc_trajectories = Swarm.abs_trajectory_array;
     rot_angle_z = AsteroidModel.BodyModel.bodyFrame.pm.w0+ AsteroidModel.BodyModel.bodyFrame.pm.w * plot_time;
     Rot_i2b = rotmat(rot_angle_z,3);
-    body_vertices = (Rot_i2b'*AsteroidModel.BodyModel.shape.vertices')';
+    body_vertices = (Rot_i2b'*AsteroidModel.BodyModel.shape.faceCenters')';
 else
     sc_trajectories = Swarm.rel_trajectory_array;
-    body_vertices =  AsteroidModel.BodyModel.shape.vertices;
+    body_vertices =  AsteroidModel.BodyModel.shape.faceCenters;
 end
 
 for i_sc = spacecraft_ids
