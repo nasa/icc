@@ -22,12 +22,16 @@ function observable_points = get_observable_points(AsteroidModel, Swarm, i_time,
 %GET_OBSERVABLE_POINTS Returns a vector of the asteroid vertex indicies
 %which are feasible for observation by the spacecraft in the given position
 
-asteroid_vertices = AsteroidModel.BodyModel.shape.vertices; % Verticies composing surface of asteroid
-asteroid_normals = AsteroidModel.BodyModel.shape.normals; % Normals at Verticies
+asteroid_vertices = AsteroidModel.BodyModel.shape.faceCenters; % faceCenters composing surface of asteroid
+asteroid_normals = AsteroidModel.BodyModel.shape.faceNormals; % Normals at faceCenters
 sc_position = Swarm.rel_trajectory_array(i_time, 1:3, i_sc );
 sun_position = Swarm.sun_state_array(1:3,i_time)';
 sc_type = Swarm.Parameters.types{i_sc};
 
+next_sc_position = sc_position;
+if i_time < Swarm.get_num_timesteps()
+    next_sc_position = Swarm.rel_trajectory_array(i_time+1, 1:3, i_sc );
+end
 
 flag_use_instruments = true; % if false, will use simplified function, not derived from science
 
@@ -36,7 +40,7 @@ flag_use_instruments = true; % if false, will use simplified function, not deriv
 get_angle =@(x,y) acos( dot(x(:), y(:)) / (norm(x(:)) * norm(y(:))) ); % Returns angle between two vectors using cos
 
 % Get information
-[sun_angle_ranges, sc_angle_ranges, distance_ranges, ~] = get_instrument_constraints(sc_type);
+[sun_angle_ranges, sc_angle_ranges, distance_ranges] = get_instrument_constraints(sc_type);
 Nv = size(asteroid_vertices,1);
 
 %% Get Observable Points
@@ -56,10 +60,14 @@ if flag_use_instruments==true
             
             % Check altitude range
             sc_altitude = norm(sc_position - r_vertices); % height of spacecraft above point i_v
-            if is_in_range_dist(sc_altitude, distance_ranges) % Altitude check
+            next_sc_altitude = norm(next_sc_position - r_vertices); % height of spacecraft above point i_v
+            if (is_in_range_dist(sc_altitude, distance_ranges)) && (is_in_range_dist(next_sc_altitude, distance_ranges)) % Altitude check
+                
                 % Check sc angle range
                 sc_angle = get_angle(r_normal, sc_position-r_vertices);
-                if is_in_range_angle(sc_angle, sc_angle_ranges)
+                next_sc_angle = get_angle(r_normal, next_sc_position-r_vertices);
+                if (is_in_range_angle(sc_angle, sc_angle_ranges)) && (is_in_range_angle(next_sc_angle, sc_angle_ranges))
+                    
                     % Check sun angle range
                     sun_angle = get_angle(r_normal, sun_position-r_vertices);
                     if is_in_range_angle(sun_angle, sun_angle_ranges)

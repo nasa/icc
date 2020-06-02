@@ -36,7 +36,7 @@ function [h] = render_observed_points_3d(varargin)
 AsteroidModel = varargin{1}; 
 Swarm = varargin{2}; 
 
-pos_points = AsteroidModel.BodyModel.shape.vertices ; % Convert to [km] for plotting
+pos_points = AsteroidModel.BodyModel.shape.faceCenters ; % Convert to [km] for plotting
 n_spacecraft = Swarm.get_num_spacecraft(); 
 
 point_index = zeros(1,size(pos_points,1));

@@ -44,7 +44,7 @@ n_spacecraft = 4;
 time_bounds = [0:300:86400*2];
 sc_types = cell(n_spacecraft,1);
 for i_sc = 1:n_spacecraft
-    sc_types{i_sc}  = randi([1,6]); % Indicies for instruments on board
+    sc_types{i_sc}  = randi([1,4]); % Indicies for instruments on board
 end
 sc_types{n_spacecraft} = 0; % Mark the carrier so it will not be used in the Monte Carlo optimization
 

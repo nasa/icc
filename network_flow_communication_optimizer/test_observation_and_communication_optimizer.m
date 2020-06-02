@@ -434,9 +434,9 @@ bandwidth_model = @(x1,x2) 1*(norm(x1-x2)<1e4);
 assert(swarm.is_valid());
 [swarm] = observation_and_communication_optimizer(ErosGravity, swarm, bandwidth_model);
 
-assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),1))
-assert(close_enough(swarm.Communication.flow(2,1,1),1)) % Memorize
-assert(close_enough(swarm.Communication.flow(3,1,2),1)) % Transmit
+assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),0))
+assert(close_enough(swarm.Communication.flow(2,1,1),0)) % Memorize
+assert(close_enough(swarm.Communication.flow(3,1,2),0)) % Transmit
 disp("Test 6 passed")
 
 %%

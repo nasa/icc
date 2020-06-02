@@ -21,7 +21,7 @@
 function observable_points = get_nadir_point(AsteroidModel, Swarm, i_time, i_sc)
 %GET_NADIR_POINT Returns nadir point
 
-asteroid_vertices = AsteroidModel.BodyModel.shape.vertices; % Verticies composing surface of asteroid
+asteroid_vertices = AsteroidModel.BodyModel.shape.faceCenters; % faceCenters composing surface of asteroid
 sc_position = Swarm.rel_trajectory_array(i_time, 1:3, i_sc );
 
 %% Return Nadir Point 
