@@ -57,6 +57,9 @@
 
 function [C, Ceq] = communication_constraints(swarm,relay_orbit_index, sc_initial_condition_vector, initial_condition_scaling_factor, gravity_model, max_distance, min_distance)
 
+disp("IC size (constraint)")
+disp(size(sc_initial_condition_vector))
+
 Ceq = 0;
 if nargin<7
     disp("Default min. distance of 25 km")
@@ -76,6 +79,9 @@ for relay_sc_index = 1:length(relay_orbit_index)
 	sc_state = sc_initial_condition_vector(1+offset:6+offset)./initial_condition_scaling_factor;
 
 	[time_re,abs_traj_re,~] = gravity_model.integrate([swarm.sample_times(1), swarm.sample_times(end)], sc_state);
+	if ~isempty(lastwarn)
+		% This suggests that the orbit goes inside the body with warning Warning: HARMONIC_GRAVITY.DLL - Computing gravity inside the spherical harmonic reference radius
+	end
 
     % fmincon expects the number of constraints to stay constant in time -
     % hence the interpolation

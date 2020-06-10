@@ -74,11 +74,15 @@ end
 for i_sc = 1:N
     try
         swarm.integrate_trajectory(i_sc, gravity_model, sc_initial_condition(:, i_sc)', 'absolute');
-    catch
-        warning("ERROR: something went wrong with integrating the trajectory. Inspect the warnings above.")
-        goal = inf;
-        gradient = nan;
-        return
+    catch ME
+        if (strcmp(ME.identifier, 'SBDT:harmonic_gravity:inside_radius'))
+            warning("ERROR: something went wrong with integrating the trajectory. Inspect the warnings above.")
+            goal = inf;
+            gradient = nan;
+            return
+        else
+            rethrow(ME);
+        end
     end
 end
 

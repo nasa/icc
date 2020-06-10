@@ -79,7 +79,11 @@ if length(varargin) > 2
 end
 
 if record_video    
-    writerObj = VideoWriter(videoname, 'MPEG-4');
+    if ismac || ispc
+        writerObj = VideoWriter(videoname, 'MPEG-4');
+    else
+        writerObj = VideoWriter(videoname);
+    end
     writerObj.FrameRate = 30;   % Default 30
     writerObj.Quality = 100;    % Default 75
     open(writerObj);

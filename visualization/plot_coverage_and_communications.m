@@ -29,7 +29,7 @@ absolute = true;
 color_array = ['r', 'b', 'g', 'c', 'm']; %rand(3,Swarm.get_num_spacecraft());
 record_video = false;
 videoname = ['ICC_sim_',datestr(now,'yyyymmdd_HHMMSS'),'.mp4'];
-
+m
 min_line_thickness = 1;
 max_line_thickness = 20;
 max_memory_marker_size = 40;
@@ -56,7 +56,11 @@ if length(varargin) > 2
 end
 
 if record_video
-    writerObj = VideoWriter(videoname, 'MPEG-4');
+    if ismac || ispc
+        writerObj = VideoWriter(videoname, 'MPEG-4');
+    else
+        writerObj = VideoWriter(videoname);
+    end
     writerObj.FrameRate = 30;   % Default 30
     writerObj.Quality = 100;    % Default 75
     open(writerObj);

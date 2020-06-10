@@ -122,6 +122,13 @@ end
 % % Get Sun Position - handled in constructor
 % Swarm.sun_state_array = get_sun_state(Swarm.sample_times); 
 
+%% Inside-the-reference-radius error
+% This should turn the warning
+% "Warning: HARMONIC_GRAVITY.DLL - Computing gravity inside the spherical harmonic reference radius"
+% into an error. The plan is to catch the error inside communication_constraints.m
+% To get this to work, ensure to patch SBDT as described in the README
+warning('error', 'SBDT:harmonic_gravity:inside_radius')
+
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                     Integrated Orbit Optimization                       %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
