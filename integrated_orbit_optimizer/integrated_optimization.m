@@ -116,7 +116,37 @@ stop_fun = @(x,optimValues,state) stop_function(x,optimValues,state, start_time,
 options.OutputFcn = stop_fun;
 
 % Optimize!
-[x,fval,exitflag,output] = fmincon(fun,initial_conditions,A,b,Aeq,beq,lb,ub,nonlcon,options);
+
+problem = createOptimProblem('fmincon', 'objective', fun, ...
+    'x0', initial_conditions, 'Aineq', A, 'bineq', b, ...
+    'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, ...
+    'nonlcon', nonlcon, 'options', options);
+% [x,fval,exitflag,output] = fmincon(fun,initial_conditions,A,b,Aeq,beq,lb,ub,nonlcon,options);
+
+%% Global Search
+gs = GlobalSearch('Display','iter');
+[x, fval, exitflag, output] = gs(problem);
+
+%% Multistart
+% ms = MultiStart;
+% [x, fval, exitflag, output] = ms(problem);
+
+%% Pattern Search
+% [x, fval, exitflag, output] = patternsearch(problem);
+
+%% Genetic Algorithn
+[x, fval, exitflag, output] = patternsearch(fun,len(initial_conditions),A,b,Aeq,beq,lb,ub,nonlcon,options);
+
+%% Particle Swarm
+[x, fval, exitflag, output] = patternsearch(fun,len(initial_conditions),lb,ub,nonlcon,options);
+
+%% Surrogate optimization requires constraints on the inputs
+
+%% Simulated annealing
+[x, fval, exitflag, output] = simulannealbnd(problem);
+
+%% Vanilla fmincon
+% [x,fval,exitflag,output] = fmincon(problem);
 
 
 % Add the inputs to the swarm

@@ -149,7 +149,7 @@ disp("Test 1 passed")
 % range constraint, at the perigee of a slightly eccentric orbit.
 T = 3;
 t_stride=1;
-orbit_radius = 39999;
+orbit_radius = 40012.6252; %This guarantees the SC can only see ONE point from where it is
 sc_number = 2;
 
 time_vector=(1:t_stride:T);
@@ -168,7 +168,7 @@ sc_initial_state_array = zeros(sc_number, 6);
 rotmat_x = @(angle) [1, 0, 0; 0, cos(angle), -sin(angle); 0, sin(angle), cos(angle)];
 for sc = 1:sc_number
     sc_initial_state_array(sc, 1:3) = [orbit_radius; 0; 0];
-    sc_orbital_vel = 1.2*sqrt(GM/orbit_radius);    
+    sc_orbital_vel = 2.*sqrt(GM/orbit_radius);    
     sc_initial_state_array(sc, 4:6) = rotmat_x((sc-1)/sc_number*pi)*[0; sc_orbital_vel; 0;];
 end
 swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
@@ -177,14 +177,14 @@ swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
 [swarm] = observation_and_communication_optimizer(ErosGravity, swarm);
 
 assert(swarm.is_valid());
-assert(close_enough(swarm.Communication.effective_source_flow(1,1),1))
+assert(close_enough(sum(swarm.Communication.effective_source_flow(1,:)),1))
 assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),1))
-assert(close_enough(swarm.Communication.flow(2,1,2),1))
+assert(close_enough(sum(swarm.Communication.flow(:,1,2)),1))
 disp("Test 2 passed")
 %% Test 3: two agents produce two units of science
 T = 3;
 t_stride=1;
-orbit_radius = 39999;
+orbit_radius = 40012.5622; % They can observe exactly two points collectively
 sc_number = 3;
 
 time_vector=(1:t_stride:T);
@@ -203,7 +203,7 @@ sc_initial_state_array = zeros(sc_number, 6);
 rotmat_x = @(angle) [1, 0, 0; 0, cos(angle), -sin(angle); 0, sin(angle), cos(angle)];
 for sc = 1:sc_number
     sc_initial_state_array(sc, 1:3) = [orbit_radius; 0; 0];
-    sc_orbital_vel = 1.2*sqrt(GM/orbit_radius);    
+    sc_orbital_vel = 2.5*sqrt(GM/orbit_radius);    
     sc_initial_state_array(sc, 4:6) = rotmat_x((sc-1)/sc_number*pi)*[0; sc_orbital_vel; 0;];
 end
 swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
@@ -215,8 +215,8 @@ assert(swarm.is_valid());
 assert(close_enough(swarm.Communication.effective_source_flow(1,1),1))
 assert(close_enough(swarm.Communication.effective_source_flow(2,1),1))
 assert(close_enough(sum(sum(swarm.Communication.effective_source_flow)),2))
-assert(close_enough(swarm.Communication.flow(2,1,3),1))
-assert(close_enough(swarm.Communication.flow(2,2,3),1))
+assert(close_enough(sum(swarm.Communication.flow(:,1,3)),1))
+assert(close_enough(sum(swarm.Communication.flow(:,2,3)),1))
 disp("Test 3 passed")
 %% Test 4: bandwidth constraints
 T = 3;
@@ -239,7 +239,7 @@ sc_initial_state_array = zeros(sc_number, 6);
 rotmat_x = @(angle) [1, 0, 0; 0, cos(angle), -sin(angle); 0, sin(angle), cos(angle)];
 for sc = 1:sc_number
     sc_initial_state_array(sc, 1:3) = [orbit_radius; 0; 0];
-    sc_orbital_vel = sqrt(GM/orbit_radius);    
+    sc_orbital_vel = 2.5*sqrt(GM/orbit_radius);    
     sc_initial_state_array(sc, 4:6) = rotmat_x((sc-1)/sc_number*pi)*[0; sc_orbital_vel; 0;];
 end
 swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);

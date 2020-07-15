@@ -70,12 +70,18 @@ N = swarm.get_num_spacecraft();
 op_tic = tic;
 observable_points = swarm.Observation.observable_points; % Get an empty container of the right size from the constructor
 
+observable_points_values = observable_points;
+observable_points_gradients = observable_points;
+observable_points_gradients_next = observable_points;
+
 for i_sc = swarm.which_trajectories_set()
     for i_time = 1:K
-        observable_points{i_sc, i_time} = get_observable_points(asteroid_model, swarm, i_time, i_sc) ;
+        [observable_points{i_sc, i_time}, observable_points_values{i_sc, i_time}, observable_points_gradients{i_sc, i_time}, observable_points_gradients_next{i_sc, i_time}] = get_observable_points(asteroid_model, swarm, i_time, i_sc) ;
     end
 end
 swarm.Observation.observable_points = observable_points;
+
+observable_points
 
 observability_time = toc(op_tic);
  
@@ -207,26 +213,33 @@ for i_time = 1:K-1
     end
 end
 
+
 % Create pointer vectors to keep track of the time, vertex, and agent
 % corresponding to the pth position in the decision variable
 p = 0; % This index will run over all possible observations
 p_k=zeros(1,M); % Decision variable m corresponds to time p_k(m)
 p_v=zeros(1,M); % Decision variable m corresponds to vertex p_v(m)
 p_s=zeros(1,M); % Decision variable m corresponds to spacecraft p_s(m)
-w=zeros(1,M);   % w(m) is the reward for decision variable m
+w = zeros(1,M); % w(m) is the reward for decision variable m
+
+dobservations_dspacecraft = zeros(M, K, N, 3);
 
 for k = 1:K-1
     for i_sc = swarm.which_trajectories_set()
-        for i_v = observable_points{i_sc, k}
+        for i_v_index = 1:length(observable_points{i_sc, k})
+            i_v = observable_points{i_sc, k}(i_v_index);
             p = p+1;
             p_k(p) = k;
             p_v(p) = i_v;
             p_s(p) = i_sc;
-            w(p) = reward_map{i_sc}(i_v,k); 
+            w(p) = reward_map{i_sc}(i_v,k) * observable_points_values{i_sc, k}(i_v_index);
+            dobservations_dspacecraft(p, k, i_sc, :) = observable_points_gradients{i_sc, k}(i_v_index, :);
+            dobservations_dspacecraft(p, k+1, i_sc, :) = observable_points_gradients_next{i_sc, k}(i_v_index, :);
         end
     end
 end
 
+dobservations_dspacecraft;
 % assert(p==M, "ERROR: mismatch in length of observation variables")
 
 % In the interest of speed, we also build an index for the variables
@@ -249,7 +262,13 @@ delivered_science_finder = @(k,c) M+ K*N*N + num_carriers*(k-1) + c;
 num_variables = M +K*N*N+num_carriers*K;
 
 % Objective - remember we MINIMIZE
-f = zeros(num_variables,1);
+% This encourages spacecraft to not send information needlessly on the
+% links. Careful! This is a penalty per bit. If it is too high, we will not
+% collect data _at all_.
+sparsification_penalty = 1/(max(max(data_rates(data_rates>0))));
+
+f = sparsification_penalty*ones(num_variables,1);
+% f = zeros(num_variables,1);
 f(1:M) = -w;
 % sum(sum(sum(reward_with_observability_matrix.*observations)))
 
@@ -326,7 +345,11 @@ for k=1:K-1
         for i=1:N
             A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, flows_finder(k,i,j), 1];
             eq_entry_ix = eq_entry_ix +1;
-            A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, flows_finder(k+1,j,i), -1];
+            if i==j  % Memory
+                A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, flows_finder(k+1,j,i), -1];
+            else  % Radio
+                A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, flows_finder(k,j,i), -1];
+            end
             eq_entry_ix = eq_entry_ix +1;
         end
         
@@ -363,10 +386,13 @@ end
 
 % Constraint 3: Initial flows are nil - don't make up information
 % flows(1,:,:) == 0;
+% for i=1:N
+% %     for j=1:N
+%         ub(flows_finder(1,i,1:N)) = 0;
+% %     end
+% end
 for i=1:N
-%     for j=1:N
-        ub(flows_finder(1,i,1:N)) = 0;
-%     end
+    ub(flows_finder(1,i,i)) = 0;
 end
 
 % Constraint 4: No need for carrier to memorize
