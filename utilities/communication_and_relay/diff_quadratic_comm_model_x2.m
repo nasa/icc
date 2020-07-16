@@ -22,5 +22,10 @@ function [db_dx2] = diff_quadratic_comm_model_x2(x1, x2, dir, bandwidth_paramete
     if nargin<6
         scaling_factor=bandwidth_parameters.reference_distance;
     end
-    db_dx2 = - diff_quadratic_comm_model_x1(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor);
+    if nargin<5
+        occlusion_test = @(x1, x2) 0.;
+    end
+    [db_dx1, db_dx2] = diff_quadratic_comm_model(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor);
+        
+%     db_dx2 = - diff_quadratic_comm_model_x1(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor);
 end
