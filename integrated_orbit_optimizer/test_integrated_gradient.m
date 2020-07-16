@@ -436,6 +436,196 @@ end
 legend(legend_labels, 'location', 'best')
 title("Gradient of bandwidth wrt location (log)")
 
+%% Occlusion gradients: line to point
+
+num_locations_to_perturb = 30;
+gradient_steps= [.05, .005,.0005, .00005];
+
+legend_labels = cell(length(gradient_steps)+1,1);
+legend_labels{end} = "Analytical";
+
+numerical_gradient_v1 = zeros(length(gradient_steps), num_locations_to_perturb);
+numerical_gradient_v2 = zeros(length(gradient_steps), num_locations_to_perturb);
+analytical_gradient_v1 = zeros(1,num_locations_to_perturb);
+analytical_gradient_v2 = zeros(1,num_locations_to_perturb);
+
+for loc=1:num_locations_to_perturb
+    fprintf("Location %d/%d\n", loc, num_locations_to_perturb)    
+    v1 = rand(3,1)*1e4;
+    v2 = rand(3,1)*1e3;
+    vp = rand(3,1)*1e2;
+    % Analytical
+    [distance, closest_point, ddistance_dv1, ddistance_dv2] = distance_line_to_point(v1, v2, vp)
+    
+    perturbation_direction = randi(3,1);
+    perturbation_sign = 2*(round(rand)-.5);
+    
+    analytical_gradient_v1(loc) = ddistance_dv1(perturbation_direction)*perturbation_sign;
+    
+    for delta_pose_ix = 1:length(gradient_steps)
+        delta_pos = gradient_steps(delta_pose_ix);
+        legend_labels{delta_pose_ix} = sprintf("Numerical, %d", delta_pos);
+        fprintf("Delta pose %d/%d\n", delta_pose_ix, length(gradient_steps))
+        
+        perturbation = zeros(3,1);
+        perturbation(perturbation_direction) = delta_pos*perturbation_sign;
+        [distance_plus] = distance_line_to_point(v1+perturbation, v2, vp);
+        [distance_minus] = distance_line_to_point(v1-perturbation, v2, vp);
+
+        numerical_gradient_v1(delta_pose_ix, loc) = (distance_plus-distance_minus)/(2*(abs(delta_pos)));
+    end
+end
+% Plotting
+figure()
+subplot(2,1,1)
+line_available_strokes = {'-', ':', '-.', '--'};
+line_available_marks = {'.', 'o', 'x', '+', '*', 's', 'd', 'v', '^', '<', '>', 'p', 'h'};
+
+for step_index = 1:length(gradient_steps)
+    stroke_idx = mod(step_index, length(line_available_strokes))+1;
+    mark_idx = mod(step_index, length(line_available_marks))+1;
+    semilogy(abs(numerical_gradient_v1(step_index, :)), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}));
+    hold all
+end
+
+step_index = length(gradient_steps)+1;
+stroke_idx = mod(step_index, length(line_available_strokes))+1;
+mark_idx = mod(step_index, length(line_available_marks))+1;
+semilogy(abs(analytical_gradient_v1), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}))
+
+legend(legend_labels, 'location', 'best')
+title("Gradient of distance wrt v1 (line)")
+
+for loc=1:num_locations_to_perturb
+    fprintf("Location %d/%d\n", loc, num_locations_to_perturb)    
+    v1 = rand(3,1)*1e4;
+    v2 = rand(3,1)*1e3;
+    vp = rand(3,1)*1e2;
+    % Analytical
+    [distance, closest_point, ddistance_dv1, ddistance_dv2] = distance_line_to_point(v1, v2, vp)
+    
+    perturbation_direction = randi(3,1);
+    perturbation_sign = 2*(round(rand)-.5);
+    
+    analytical_gradient_v2(loc) = ddistance_dv2(perturbation_direction)*perturbation_sign;
+    
+    for delta_pose_ix = 1:length(gradient_steps)
+        delta_pos = gradient_steps(delta_pose_ix);
+        legend_labels{delta_pose_ix} = sprintf("Numerical, %d", delta_pos);
+        fprintf("Delta pose %d/%d\n", delta_pose_ix, length(gradient_steps))
+        
+        perturbation = zeros(3,1);
+        perturbation(perturbation_direction) = delta_pos*perturbation_sign;
+        [distance_plus_v2] = distance_line_to_point(v1, v2+perturbation, vp);
+        [distance_minus_v2] = distance_line_to_point(v1, v2-perturbation, vp);
+
+        numerical_gradient_v2(delta_pose_ix, loc) = (distance_plus_v2-distance_minus_v2)/(2*(abs(delta_pos)));
+    end
+end
+% Plotting
+subplot(2,1,2)
+line_available_strokes = {'-', ':', '-.', '--'};
+line_available_marks = {'.', 'o', 'x', '+', '*', 's', 'd', 'v', '^', '<', '>', 'p', 'h'};
+
+for step_index = 1:length(gradient_steps)
+    stroke_idx = mod(step_index, length(line_available_strokes))+1;
+    mark_idx = mod(step_index, length(line_available_marks))+1;
+    semilogy(abs(numerical_gradient_v2(step_index, :)), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}));
+    hold all
+end
+
+step_index = length(gradient_steps)+1;
+stroke_idx = mod(step_index, length(line_available_strokes))+1;
+mark_idx = mod(step_index, length(line_available_marks))+1;
+semilogy(abs(analytical_gradient_v2), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}))
+
+legend(legend_labels, 'location', 'best')
+title("Gradient of distance wrt v2 (line)")
+
+%% Occlusion gradients: segment to point
+
+num_locations_to_perturb = 30;
+gradient_steps= [.05, .005,.0005, .00005];
+
+legend_labels = cell(length(gradient_steps)+1,1);
+legend_labels{end} = "Analytical";
+
+numerical_gradient_v1 = zeros(length(gradient_steps), num_locations_to_perturb);
+numerical_gradient_v2 = zeros(length(gradient_steps), num_locations_to_perturb);
+analytical_gradient_v1 = zeros(1,num_locations_to_perturb);
+analytical_gradient_v2 = zeros(1,num_locations_to_perturb);
+
+for loc=1:num_locations_to_perturb
+    fprintf("Location %d/%d\n", loc, num_locations_to_perturb)    
+    v1 = rand(3,1)*1e3;
+    v2 = rand(3,1)*1e3;
+    vp = rand(3,1)*1e2;
+    % Analytical
+    [distance, closest_point, ddistance_dv1, ddistance_dv2] = distance_segment_to_point(v1, v2, vp)
+    
+    perturbation_direction = randi(3,1);
+    perturbation_sign = 2*(round(rand)-.5);
+    
+    analytical_gradient_v1(loc) = ddistance_dv1(perturbation_direction)*perturbation_sign;
+    analytical_gradient_v2(loc) = ddistance_dv2(perturbation_direction)*perturbation_sign;
+    
+    for delta_pose_ix = 1:length(gradient_steps)
+        delta_pos = gradient_steps(delta_pose_ix);
+        legend_labels{delta_pose_ix} = sprintf("Numerical, %d", delta_pos);
+        fprintf("Delta pose %d/%d\n", delta_pose_ix, length(gradient_steps))
+        
+        perturbation = zeros(3,1);
+        perturbation(perturbation_direction) = delta_pos*perturbation_sign;
+        [distance_plus_v1] = distance_segment_to_point(v1+perturbation, v2, vp);
+        [distance_minus_v1] = distance_segment_to_point(v1-perturbation, v2, vp);
+        [distance_plus_v2] = distance_segment_to_point(v1, v2+perturbation, vp);
+        [distance_minus_v2] = distance_segment_to_point(v1, v2-perturbation, vp);
+
+        numerical_gradient_v1(delta_pose_ix, loc) = (distance_plus_v1-distance_minus_v1)/(2*(abs(delta_pos)));
+        numerical_gradient_v2(delta_pose_ix, loc) = (distance_plus_v2-distance_minus_v2)/(2*(abs(delta_pos)));
+
+    end
+end
+% Plotting
+figure()
+subplot(2,1,1)
+line_available_strokes = {'-', ':', '-.', '--'};
+line_available_marks = {'.', 'o', 'x', '+', '*', 's', 'd', 'v', '^', '<', '>', 'p', 'h'};
+
+for step_index = 1:length(gradient_steps)
+    stroke_idx = mod(step_index, length(line_available_strokes))+1;
+    mark_idx = mod(step_index, length(line_available_marks))+1;
+    semilogy(abs(numerical_gradient_v1(step_index, :)), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}));
+    hold all
+end
+
+step_index = length(gradient_steps)+1;
+stroke_idx = mod(step_index, length(line_available_strokes))+1;
+mark_idx = mod(step_index, length(line_available_marks))+1;
+semilogy(abs(analytical_gradient_v1), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}))
+
+legend(legend_labels, 'location', 'best')
+title("Gradient of distance wrt v1 (segment)")
+
+subplot(2,1,2)
+line_available_strokes = {'-', ':', '-.', '--'};
+line_available_marks = {'.', 'o', 'x', '+', '*', 's', 'd', 'v', '^', '<', '>', 'p', 'h'};
+
+for step_index = 1:length(gradient_steps)
+    stroke_idx = mod(step_index, length(line_available_strokes))+1;
+    mark_idx = mod(step_index, length(line_available_marks))+1;
+    semilogy(abs(numerical_gradient_v2(step_index, :)), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}));
+    hold all
+end
+
+step_index = length(gradient_steps)+1;
+stroke_idx = mod(step_index, length(line_available_strokes))+1;
+mark_idx = mod(step_index, length(line_available_marks))+1;
+semilogy(abs(analytical_gradient_v2), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}))
+
+legend(legend_labels, 'location', 'best')
+title("Gradient of distance wrt v2 (segment)")
+
 %% Range gradients
 num_locations_to_perturb = 30;
 gradient_steps= [.05, .005,.0005, .00005];
@@ -454,7 +644,6 @@ for loc =1:num_locations_to_perturb
     
     v1 = rand(3,1)*1e4;
     v2 = rand(3,1)*1e3;
-    voffset = rand(3,1);
     [range_margin, drange_margin] = ...
         range_check(v1, v2, distance_ranges, distance_tolerances);
 

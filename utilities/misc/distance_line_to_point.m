@@ -18,7 +18,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [distance, closest_point] = distance_line_to_point(line_pt_1, line_pt_2, ref_point)
+function [distance, closest_point, ddist_dp1, ddist_dp2] = distance_line_to_point(line_pt_1, line_pt_2, ref_point)
     % Compute distance between a line defined by points line_pt_1 and
     % line_pt_2, and a point ref_point.
     % Follows https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
@@ -36,6 +36,8 @@ function [distance, closest_point] = distance_line_to_point(line_pt_1, line_pt_2
     if norm(line_pt_2-line_pt_1) == 0
         distance = norm(line_pt_2-ref_point);
         closest_point = line_pt_2;
+        ddist_dp1 = (line_pt_1-ref_point)/norm(line_pt_1-ref_point);
+        ddist_dp2 = (line_pt_2-ref_point)/norm(line_pt_2-ref_point);
         return
     end
     % Define the line as line_pt_1 + (line_pt_2-line_pt_1)*t
@@ -53,4 +55,26 @@ function [distance, closest_point] = distance_line_to_point(line_pt_1, line_pt_2
     % Just to be sure, assert that distance_vector is perpendicular to n
 %   assert(distance_vector'*n_unit_vec<10*eps, "ERROR: distance vector is not perpendicular to line")
 
+    distsquared = norm(line_pt_1-ref_point,2)^2 - dot(line_pt_2-line_pt_1, line_pt_1-ref_point)^2/...
+        (norm(line_pt_2-line_pt_1)^2);
+    
+%     (sqrt(distsquared) - distance)/distance
+    distance = sqrt(distsquared);
+
+    ddistsquared_dp1 = 2*(line_pt_1-ref_point) - ...
+        (2*dot(line_pt_2-line_pt_1,line_pt_1-ref_point)*...
+        (line_pt_2-2*line_pt_1+ref_point)*...
+        norm(line_pt_2-line_pt_1,2)^2 - ...
+        dot(line_pt_2-line_pt_1, line_pt_1-ref_point)^2 *...
+        (-1)*(2)*(line_pt_2-line_pt_1))...
+        /(norm(line_pt_2-line_pt_1,2)^4);
+    ddist_dp1 = ddistsquared_dp1*.5/distance;
+    
+    ddistsquared_dp2 = - (2*dot(line_pt_2-line_pt_1,line_pt_1-ref_point)*...
+        (line_pt_1-ref_point)*...
+        norm(line_pt_2-line_pt_1,2)^2 - ...
+        dot(line_pt_2-line_pt_1, line_pt_1-ref_point)^2 *...
+        (2)*(line_pt_2-line_pt_1))...
+        /(norm(line_pt_2-line_pt_1,2)^4);
+    ddist_dp2 = ddistsquared_dp2*.5/distance;
 end

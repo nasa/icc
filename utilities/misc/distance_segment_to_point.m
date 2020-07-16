@@ -18,7 +18,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [distance, closest_point] = distance_segment_to_point(line_pt_1, line_pt_2, ref_point)
+function [distance, closest_point, ddistance_dp1, ddistance_dp2] = distance_segment_to_point(line_pt_1, line_pt_2, ref_point)
     % Compute distance between a segment defined by points line_pt_1 and
     % line_pt_2, and a point ref_point.
     % Ensure everything is a column vector
@@ -32,7 +32,7 @@ function [distance, closest_point] = distance_segment_to_point(line_pt_1, line_p
         ref_point = ref_point';
     end
     
-    [distance, closest_point] = distance_line_to_point(line_pt_1, line_pt_2, ref_point);
+    [distance, closest_point, ddistance_dp1, ddistance_dp2] = distance_line_to_point(line_pt_1, line_pt_2, ref_point);
     % Now, is closest_point on the segment between line_pt_1 and line_pt_2?
     pt_1_to_closest = closest_point-line_pt_1;
     pt_2_to_closest = closest_point-line_pt_2;
@@ -48,9 +48,15 @@ function [distance, closest_point] = distance_segment_to_point(line_pt_1, line_p
         if distance_1<distance_2
             distance = distance_1;
             closest_point = line_pt_1;
+            ddistance_dp1 = (line_pt_1-ref_point)/norm(line_pt_1-ref_point);
+            ddistance_dp2 = zeros(3,1);
+            % derivative is simply the derivative of the norm of norm(line_pt_1-ref_point)
         else
             distance = distance_2;
             closest_point = line_pt_2;
+            ddistance_dp1 = zeros(3,1);
+            ddistance_dp2 = (line_pt_2-ref_point)/norm(line_pt_2-ref_point);
+            % derivative is simply the derivative of the norm of norm(line_pt_2-ref_point)
         end
     end
 end
