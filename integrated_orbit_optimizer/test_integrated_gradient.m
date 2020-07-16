@@ -33,19 +33,19 @@ swarm = SpacecraftSwarm(time_bounds, sc_types, max_memory);
 sc_initial_state_array = zeros(n_spacecraft,6);
 % SC 1
 sc_ix = 1;
-sc_location = [30*1e3;0;0];
+sc_location = [24*1e3;0;0];
 sc_orbital_vel = sqrt(GM/norm(sc_location));
 sc_vel = [0; sc_orbital_vel*sqrt(2)/2; sc_orbital_vel*sqrt(2)/2];
 sc_initial_state_array(sc_ix,:) = [sc_location; sc_vel];
 sc_ix = sc_ix+1;
 % SC 2
-sc_location = [30*1e3;0;0];
+sc_location = [24*1e3;0;0];
 sc_orbital_vel = sqrt(GM/norm(sc_location));
 sc_vel = [0; sc_orbital_vel; 0];
 sc_initial_state_array(sc_ix,:) = [sc_location; sc_vel];
 sc_ix = sc_ix+1;
 % Relay
-sc_location = [50*1e3;0;0];
+sc_location = [32*1e3;0;0];
 sc_orbital_vel = sqrt(GM/norm(sc_location));
 sc_vel = [0; sc_orbital_vel; 0];
 sc_initial_state_array(sc_ix,:) = [sc_location; sc_vel];
@@ -91,8 +91,8 @@ for sc =1:N
 end
 
 % One test call to the cost function
-%[goal, gradient] = integrated_optimization_cost_function(swarm,initial_conditions, optvar_scaling_factor, gravity_model, bandwidth_parameters);
-[goal] = integrated_optimization_cost_function(swarm,initial_conditions, optvar_scaling_factor, ErosGravity, bandwidth_parameters);
+[goal, gradient] = integrated_optimization_cost_function(swarm,initial_conditions, optvar_scaling_factor, ErosGravity, bandwidth_parameters);
+% [goal] = integrated_optimization_cost_function(swarm,initial_conditions, optvar_scaling_factor, ErosGravity, bandwidth_parameters);
 % if (isnan(goal) || any(isnan(gradient)))
 if (isnan(goal))
     error('ERROR: initial location is infeasible. fmincon will crash.')
@@ -102,13 +102,13 @@ end
 fun = @(params) integrated_optimization_cost_function(swarm, params, optvar_scaling_factor, ErosGravity, bandwidth_parameters);
 
 % Try calling the "proper cost function"
-% [goal, gradient] = fun(initial_conditions);
-[goal] = fun(initial_conditions);
+[goal, semi_analytical_gradient] = fun(initial_conditions);
+% [goal] = fun(initial_conditions);
 disp("Ready");
 
  %% Compute numerical gradients
 % gradient_steps = [1e3, 1e2, 1e1, 1, 1e-2, 1e-4, 1e-6, 1e-8];
-gradient_steps = [1, 0.1, 0.01,0.001, 0.0001];
+gradient_steps = [0.01,0.001, 0.0001, 0.00001];
 % gradient_perturbation = [.05; .05; .05; 10.; 10.; 10.;];
 gradient_perturbation = [100; 100; 100; 1.; 1.; 1.;];
 gradient_perturbation = repmat(gradient_perturbation,N,1);
@@ -128,7 +128,7 @@ line_type = cell(length(gradient_steps)+1, 1);
 line_available_strokes = {'-', ':', '-.', '--'};
 line_available_marks = {'.', 'o', 'x', '+', '*', 's', 'd', 'v', '^', '<', '>', 'p', 'h'};
 
-for step_index = 1:length(gradient_steps)
+for step_index = 2:length(gradient_steps)
     stroke_idx = mod(step_index, length(line_available_strokes))+1;
     mark_idx = mod(step_index, length(line_available_marks))+1;
     semilogy(abs(num_gradient{step_index}), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}));
@@ -138,8 +138,8 @@ end
 step_index = length(gradient_steps)+1;
 stroke_idx = mod(step_index, length(line_available_strokes))+1;
 mark_idx = mod(step_index, length(line_available_marks))+1;
-% semilogy(abs(semi_analytical_gradient), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}))
-legend(legend_labels, 'location', 'best')
+semilogy(abs(semi_analytical_gradient), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}))
+legend(legend_labels(2:length(gradient_steps)+1), 'location', 'best')
 title("Full gradient of reward wrt initial location")
 
 %% Test just communications on targeted links
@@ -155,13 +155,13 @@ bandwidth_model = @(x1,x2) min(bandwidth_parameters.reference_bandwidth * (bandw
 bandwidths_and_memories = swarm.Communication.bandwidths_and_memories;
 
 % Choose a few bandwidths to perturb
-num_bandwidths_to_perturb = 10;
+num_bandwidths_to_perturb = 5;
 k_ix = randi(K, num_bandwidths_to_perturb,1);
 n1_ix = randi(N, num_bandwidths_to_perturb,1);
 n2_ix = randi(N, num_bandwidths_to_perturb,1);
 
 % gradient_steps = [1e3, 1e2, 1e1, 1, 1e-2, 1e-4, 1e-6, 1e-8];
-gradient_steps = [1e2, 1e1, 1, 1e-2];
+gradient_steps = [1e1, 1e0, 1e-2];
 
 
  % Compute gradients
@@ -201,10 +201,10 @@ end
 
 % observation_and_communication_optimizer(ErosGravity, swarmb, swarmb.Communication.bandwidths_and_memories);
 
-[swarmc, goal] = observation_and_communication_optimizer(ErosGravity, swarmb, swarmb.Communication.bandwidths_and_memories);
+[swarmf, goal] = observation_and_communication_optimizer(ErosGravity, swarmb, swarmb.Communication.bandwidths_and_memories);
 analytical_gradient_bw = zeros(num_bandwidths_to_perturb,1);
 for entry=1:num_bandwidths_to_perturb
-    analytical_gradient_bw(entry) = swarmc.Communication.dual_bandwidths_and_memories(k_ix(entry), n1_ix(entry), n2_ix(entry));
+    analytical_gradient_bw(entry) = swarmf.Communication.dual_bandwidths_and_memories(k_ix(entry), n1_ix(entry), n2_ix(entry));
 end
 % Another way
 % Reuse the gradient we had computed before
@@ -262,7 +262,7 @@ bandwidth_model = @(x1,x2) min(bandwidth_parameters.reference_bandwidth * (bandw
 
 data_scaling_factor = 1e6;
 
-num_locations_to_perturb = 20;
+num_locations_to_perturb = 10;
 k_ix = randi(K, num_locations_to_perturb,1);
 dir_ix=randi(3, num_locations_to_perturb,1);
 n_ix = randi(N, num_locations_to_perturb,1);
@@ -273,17 +273,17 @@ n_ix = randi(N, num_locations_to_perturb,1);
 % dir_ix = [1, 2, 3]; 
 % n_ix = [2, 2, 2];
 
-gradient_steps= [50, 5, .5];
+gradient_steps= [5, .5, .05, .005];
 
-semi_analytical_gradient = zeros(num_locations_to_perturb, length(gradient_steps)+1);
+semi_analytical_gradient = zeros(num_locations_to_perturb, length(gradient_steps)+3);
 gradient_bw_wrt_pos = cell(num_locations_to_perturb, length(gradient_steps)+1);
+legend_labels = cell(length(gradient_steps)+3,1);
+
 
 % Perturb locations
-
 abs_trajectory_array = swarmb.abs_trajectory_array;
 sample_times = swarmb.sample_times;
 
-legend_labels = cell(length(gradient_steps)+1,1);
 
 for delta_pose_ix = 1:length(gradient_steps)
     fprintf("Delta pose %d/%d\n", delta_pose_ix, length(gradient_steps))
@@ -326,8 +326,8 @@ for delta_pose_ix = 1:length(gradient_steps)
 
         % Compute the perturbed bw numerically
         try
-            [~, goalplus]   = communication_optimizer(swarmb, bandwidths_and_memories_plus, data_scaling_factor);
-            [~, goalminus]  = communication_optimizer(swarmb, bandwidths_and_memories_minus, data_scaling_factor);
+            [~, goalplus]   = observation_and_communication_optimizer(ErosGravity, swarmb, bandwidths_and_memories_plus, data_scaling_factor);
+            [~, goalminus]  = observation_and_communication_optimizer(ErosGravity, swarmb, bandwidths_and_memories_minus, data_scaling_factor);
             local_gradient = (goalplus - goalminus)/(2*abs(delta_pos));
         catch e
            local_gradient= NaN;
@@ -341,23 +341,34 @@ for delta_pose_ix = 1:length(gradient_steps)
     end
 end
 
+% We want to test how the reward changes if we perturb the orbits but NOT
+% the bandwidths, which will tell us about dk_dposition_obs
+% To do this, we call o_a_c_o with unchanged bws, but perturbed orbits.
+
 % Compute the perturbed bw analytically
 % Reuse dk_dbandwidth from above
 
-% [swarmb, goal] = communication_optimizer(swarmb, bandwidth_model, data_scaling_factor);
-% [dk_dic, dk_dbandwidth, dbandwidth_dlocation, dlocation_dic] = compute_gradient(swarmb, bandwidth_parameters.reference_distance, bandwidth_parameters.reference_bandwidth, bandwidth_parameters.max_bandwidth);
+[swarmb, goal] =  observation_and_communication_optimizer(ErosGravity, swarmb, bandwidth_model, data_scaling_factor);
 
-dk_dlocation = dk_dbandwidth*dbandwidth_dlocation;
+spherical_asteroid_parameters.max_radius = ErosGravity.BodyModel.shape.maxRadius*1e3;
+spherical_asteroid_parameters.min_radius = ErosGravity.BodyModel.shape.maxRadius*1e3;
+
+[dk_dic, dk_dbandwidth, dbandwidth_dlocation, dk_dlocation_obs, dlocation_dic] = compute_integrated_gradient(swarm, bandwidth_parameters, spherical_asteroid_parameters);
+
+dk_dlocation_bw = dk_dbandwidth*dbandwidth_dlocation;
 
 for loc=1:num_locations_to_perturb
-    % THis indexing is iffy - and indeed the problem may lie here?
     index = K*N*(dir_ix(loc)-1) + K*( n_ix(loc)-1) + k_ix(loc);
-    semi_analytical_gradient(loc,end) = dk_dlocation(index);
-            temp_gradient_bw_wrt_pos = reshape(dbandwidth_dlocation(:,index),K,N,N);
+    semi_analytical_gradient(loc,end-2) = dk_dlocation_bw(index);
+    semi_analytical_gradient(loc,end-1) = dk_dlocation_obs(index);
+    semi_analytical_gradient(loc,end) = dk_dlocation_bw(index)+dk_dlocation_obs(index);;
+    temp_gradient_bw_wrt_pos = reshape(dbandwidth_dlocation(:,index),K,N,N);
 
     gradient_bw_wrt_pos{loc,end} = temp_gradient_bw_wrt_pos(k_ix(loc),:,:);
 end
-legend_labels{end} = sprintf("Analytical");
+legend_labels{end-2} = sprintf("Analytical (BW)");
+legend_labels{end-1} = sprintf("Analytical (Obs)");
+legend_labels{end} = sprintf("Analytical (BW+Obs)");
 
 % Plotting
 figure()
@@ -372,19 +383,24 @@ for step_index = 1:length(gradient_steps)
     hold all
 end 
 
+% Gradient WRT bandwidth
 step_index = length(gradient_steps)+1;
 stroke_idx = mod(step_index, length(line_available_strokes))+1;
 mark_idx = mod(step_index, length(line_available_marks))+1;
+semilogy(abs(semi_analytical_gradient(:,end-2)), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}))
+% % Gradient WRT obs
+% step_index = length(gradient_steps)+2;
+% stroke_idx = mod(step_index, length(line_available_strokes))+1;
+% mark_idx = mod(step_index, length(line_available_marks))+1;
+% semilogy(abs(semi_analytical_gradient(:,end-1)), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}))
+% % Gradient WRT both
+% step_index = length(gradient_steps)+3;
+% stroke_idx = mod(step_index, length(line_available_strokes))+1;
+% mark_idx = mod(step_index, length(line_available_marks))+1;
+% semilogy(abs(semi_analytical_gradient(:,end)), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}))
 
-semilogy(abs(semi_analytical_gradient(:,end)), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}))
 legend(legend_labels, 'location', 'best')
 title("Gradient of reward wrt location")
-
-
-% AHA. The error seems to be here. Specifically, in how we compute the
-% numerical gradient wrt the bandwidth model. All the numerical gradients
-% agree remarkably well, and the analytical gradient has similar shape but
-% wildly different values.
 
 gradient_bw_wrt_loc_norm = zeros(num_locations_to_perturb,length(gradient_steps)+1);
 fprintf(strcat("Location: ",mat2str(gradient_steps),"\n"))
@@ -399,9 +415,6 @@ for loc =1:num_locations_to_perturb
     gradient_bw_wrt_loc_norm(loc,end) = sum(sum(sum(abs(gradient_bw_wrt_pos{loc,end}))));
 
 end
-
-% figure()
-% spy(abs(gradient_bw_wrt_pos{loc,delta_pose_ix}-gradient_bw_wrt_pos{loc,end}))
 
 figure()
 for delta_pose_ix = 1:length(gradient_steps)+1
@@ -423,90 +436,445 @@ end
 legend(legend_labels, 'location', 'best')
 title("Gradient of bandwidth wrt location (log)")
 
-%% I feel I am going crazy.
+%% Range gradients
+num_locations_to_perturb = 30;
+gradient_steps= [.05, .005,.0005, .00005];
+
+legend_labels = cell(length(gradient_steps)+1,1);
+legend_labels{end} = "Analytical";
+
+distance_ranges{1} = [0,15000];
+distance_tolerances{1} = 200;
+numerical_gradient = zeros(length(gradient_steps), num_locations_to_perturb);
+analytical_gradient = zeros(1,num_locations_to_perturb);
+
+for loc =1:num_locations_to_perturb
+    fprintf("Location %d/%d\n", loc, num_locations_to_perturb)
+    
+    
+    v1 = rand(3,1)*1e4;
+    v2 = rand(3,1)*1e3;
+    voffset = rand(3,1);
+    [range_margin, drange_margin] = ...
+        range_check(v1, v2, distance_ranges, distance_tolerances);
+
+    perturbation_direction = randi(3,1);
+    perturbation_sign = 2*(round(rand)-.5);
+    
+    analytical_gradient(loc) = drange_margin(perturbation_direction)*perturbation_sign;
+    for delta_pose_ix = 1:length(gradient_steps)
+        delta_pos = gradient_steps(delta_pose_ix);
+        legend_labels{delta_pose_ix} = sprintf("Numerical, %d", delta_pos);
+        fprintf("Delta pose %d/%d\n", delta_pose_ix, length(gradient_steps))
+        perturbation = zeros(3,1);
+        perturbation(perturbation_direction) = delta_pos*perturbation_sign;
+        [range_margin_plus] = ...
+                range_check(v1+perturbation, v2, distance_ranges, distance_tolerances);
+        [range_margin_minus] = ...
+                range_check(v1-perturbation, v2, distance_ranges, distance_tolerances);
+        numerical_gradient(delta_pose_ix, loc) = (range_margin_plus-range_margin_minus)/(2*(abs(delta_pos)));
+    end
+end
+
+% Plotting
+figure()
+line_available_strokes = {'-', ':', '-.', '--'};
+line_available_marks = {'.', 'o', 'x', '+', '*', 's', 'd', 'v', '^', '<', '>', 'p', 'h'};
+
+for step_index = 1:length(gradient_steps)
+    stroke_idx = mod(step_index, length(line_available_strokes))+1;
+    mark_idx = mod(step_index, length(line_available_marks))+1;
+    semilogy(abs(numerical_gradient(step_index, :)), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}));
+    hold all
+end
+
+step_index = length(gradient_steps)+1;
+stroke_idx = mod(step_index, length(line_available_strokes))+1;
+mark_idx = mod(step_index, length(line_available_marks))+1;
+semilogy(abs(analytical_gradient), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}))
+
+legend(legend_labels, 'location', 'best')
+title("Gradient of margin wrt range (obs)")
+
+%% Angle gradients
+num_locations_to_perturb = 30;
+gradient_steps= [5, .5, .05, .005,.0005];
+
+legend_labels = cell(length(gradient_steps)+1,1);
+legend_labels{end} = "Analytical";
+
+angle_ranges{1} = [0,3];
+angle_tolerances{1} = .5;
+numerical_gradient = zeros(length(gradient_steps), num_locations_to_perturb);
+analytical_gradient = zeros(1,num_locations_to_perturb);
+
+for loc =1:num_locations_to_perturb
+    fprintf("Location %d/%d\n", loc, num_locations_to_perturb)
+    delta_pos = gradient_steps(delta_pose_ix);
+    
+    v1 = rand(3,1);
+    v2 = rand(3,1);
+    [range_margin, drange_margin] = ...
+        angle_check(v1, v2, angle_ranges, angle_tolerances);
+
+    perturbation_direction = randi(3,1);
+    perturbation_sign = 2*(round(rand)-.5);
+    
+    analytical_gradient(loc) = drange_margin(perturbation_direction)*perturbation_sign;
+    for delta_pose_ix = 1:length(gradient_steps)
+        legend_labels{delta_pose_ix} = sprintf("Numerical, %d", delta_pos);
+        fprintf("Delta pose %d/%d\n", delta_pose_ix, length(gradient_steps))
+        perturbation = zeros(3,1);
+        perturbation(perturbation_direction) = delta_pos*perturbation_sign;
+        [margin_plus] = ...
+                angle_check(v1+perturbation, v2, angle_ranges, angle_tolerances);
+        [margin_minus] = ...
+                angle_check(v1-perturbation, v2, angle_ranges, angle_tolerances);
+        numerical_gradient(delta_pose_ix, loc) = (margin_plus-margin_minus)/(2*(abs(delta_pos)));
+    end
+end
+
+% Plotting
+figure()
+line_available_strokes = {'-', ':', '-.', '--'};
+line_available_marks = {'.', 'o', 'x', '+', '*', 's', 'd', 'v', '^', '<', '>', 'p', 'h'};
+
+for step_index = 1:length(gradient_steps)
+    stroke_idx = mod(step_index, length(line_available_strokes))+1;
+    mark_idx = mod(step_index, length(line_available_marks))+1;
+    semilogy(abs(numerical_gradient(step_index, :)), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}));
+    hold all
+end
+
+step_index = length(gradient_steps)+1;
+stroke_idx = mod(step_index, length(line_available_strokes))+1;
+mark_idx = mod(step_index, length(line_available_marks))+1;
+semilogy(abs(analytical_gradient), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}))
+
+legend(legend_labels, 'location', 'best')
+title("Gradient of margin wrt angle (obs)")
+
+%% Gradient of individual points' observation rewards with respect to sc position
+num_locations_to_perturb = 30;
+
+gradient_steps= [5, .5, .05, .005,.0005];
+
+swarme = copy(swarm);
+N = swarme.get_num_spacecraft;
+K = swarme.get_num_timesteps;
+
+bandwidth_model = @(x1,x2) min(bandwidth_parameters.reference_bandwidth * (bandwidth_parameters.reference_distance/norm(x2-x1,2))^2, bandwidth_parameters.max_bandwidth); 
+% bandwidths_and_memories = zeros(K,N,N);
+
+data_scaling_factor = 1e6;
 % 
+% [swarme, goal] =  observation_and_communication_optimizer(ErosGravity, swarme, bandwidth_model, data_scaling_factor);
 % 
-% bandwidth_parameters.reference_bandwidth = 250000;
-% bandwidth_parameters.reference_distance = 100000;
-% bandwidth_parameters.max_bandwidth = 100*1e6;
-% scaling_factor = bandwidth_parameters.reference_distance;
+% spherical_asteroid_parameters.max_radius = ErosGravity.BodyModel.shape.maxRadius*1e3;
+% spherical_asteroid_parameters.min_radius = ErosGravity.BodyModel.shape.maxRadius*1e3;
 % 
-% bandwidth_model = @(x1,x2) quadratic_comm_model(x1,x2,bandwidth_parameters.reference_distance, bandwidth_parameters.reference_bandwidth,bandwidth_parameters.max_bandwidth,scaling_factor);
-% 
-% test_len=1e4;
-% x1=linspace(40000,60000,test_len);
-% x2=30000*ones(size(x1));
-% % linspace(0,30000,test_len);
-% 
-% bw = zeros(test_len,1);
-% dbw_dx1 = zeros(size(bw));
-% dbw_dx2 = zeros(size(bw));
-% dbw_dx1_num = zeros(size(bw));
-% dbw_dx2_num = zeros(size(bw));
-% 
-% for i = 1:length(bw)
-%     bw(i) = bandwidth_model(x1(i),x2(i));
-%     dbw_dx1(i) = diff_quadratic_comm_model_x1(x1(i),x2(i),1,bandwidth_parameters.reference_distance,bandwidth_parameters.reference_bandwidth,bandwidth_parameters.max_bandwidth,scaling_factor);
-%     dbw_dx2(i) = diff_quadratic_comm_model_x2(x1(i),x2(i),1,bandwidth_parameters.reference_distance,bandwidth_parameters.reference_bandwidth,bandwidth_parameters.max_bandwidth,scaling_factor);
-% end
-% for i = 2:length(bw)-1
-%     dbw_dx1_num(i) = (bw(i+1)-bw(i-1))./(x1(i+1)-x1(i-1));
-%     dbw_dx2_num(i) = (bw(i+1)-bw(i-1))./(x2(i+1)-x2(i-1));        
-% end
-% 
-% 
-% 
-% figure()
-% % plot(x1,bw)
-% hold all
-% plot(x1,dbw_dx1,':')
-% plot(x1,dbw_dx1_num,'-.')
-% plot(x1,dbw_dx1-dbw_dx1_num,'r')
-% legend("Analytical", "Numerical","Difference")
-% figure()
-% % plot(x2,bw)
-% hold all
-% plot(x2,dbw_dx2)
-% plot(x2,dbw_dx2_num)
-% legend("Analytical", "Numerical")
-% 
-% 
-% function [bandwidth] = quadratic_comm_model(x1, x2, reference_distance,reference_bandwidth,max_bandwidth, scaling_factor)
-%     if nargin<6
-%         scaling_factor=reference_distance;
-%     end
-%     x1=x1./scaling_factor;
-%     x2=x2./scaling_factor;
-%     reference_distance=reference_distance./scaling_factor;
-%     bandwidth = min(max_bandwidth, reference_bandwidth*(reference_distance/norm(x2-x1,2))^2);
-% end
-% 
-% function [db_dx1] = diff_quadratic_comm_model_x1(x1, x2, dir, reference_distance,reference_bandwidth,max_bandwidth,scaling_factor)
-%     if nargin<7
-%         scaling_factor=reference_distance;
-%     end
-% 
-%     if quadratic_comm_model(x1, x2, reference_distance,reference_bandwidth,max_bandwidth,scaling_factor)>=max_bandwidth
-%         db_dx1 = 0; %zeros(size(x1));
-%     else
-%         x1=x1./scaling_factor;
-%         x2=x2./scaling_factor;
-%         reference_distance=reference_distance./scaling_factor;        
-% %          db_dx1 = -2*reference_bandwidth*(reference_distance/norm(x2-x1,2)^2)^2 * (x1(dir)-x2(dir));
-%         % Numerical conditioning - let's try and get something that looks
-%         % like a distance before squaring
-%          db_dx1 = -2*reference_bandwidth.* ( reference_distance/norm(x2-x1,2)^2 ).^2 .* (x1(dir)-x2(dir));
-%          db_dx1 = db_dx1./scaling_factor;
-%     end
-%     
-% end
-% 
-% function [db_dx2] = diff_quadratic_comm_model_x2(x1, x2, dir, reference_distance,reference_bandwidth,max_bandwidth, scaling_factor)
-%     if nargin<7
-%         scaling_factor=reference_distance;
-%     end
-%     db_dx2 = - diff_quadratic_comm_model_x1(x1, x2, dir, reference_distance,reference_bandwidth,max_bandwidth, scaling_factor);
-% end
+% [dk_dic, dk_dbandwidth, dbandwidth_dlocation, dk_dlocation_obs, dlocation_dic] = compute_integrated_gradient(swarm, bandwidth_parameters, spherical_asteroid_parameters);
+
+% Now let's pick a few points. For each point, let's perturb the location
+% of the observing spacecraft. Let's then check whether the gradient
+% matches the one returned by get_observable_points
+
+observable_points = cell(N,K);
+observable_points_values = cell(N,K);
+observable_points_gradients = cell(N,K);
+observable_points_gradients_next_sc = cell(N,K);
+
+perturbed_location_index = 0;
+
+pt_id = zeros(num_locations_to_perturb,1);
+pt_index = zeros(num_locations_to_perturb,1);
+k_ix = zeros(num_locations_to_perturb,1);
+dir_ix = zeros(num_locations_to_perturb,1);
+n_ix = zeros(num_locations_to_perturb,1);
+
+perturbed_location_analytical_gradients = zeros(num_locations_to_perturb,1);
+
+for i_sc=1:N
+    for i_time=1:K
+        [observable_points{i_sc,i_time}, ...
+            observable_points_values{i_sc,i_time}, ...
+            observable_points_gradients{i_sc,i_time}, ...
+            observable_points_gradients_next_sc{i_sc,i_time}] = ...
+            get_observable_points(ErosGravity, swarme, i_time, i_sc, 0.);
+        if ~isempty(observable_points{i_sc,i_time})
+            for observable_pt_ix = 1:length(observable_points{i_sc,i_time})
+                if observable_points_gradients{i_sc,i_time}(observable_pt_ix)>1e-8
+                    perturbed_location_index = perturbed_location_index+1;
+
+                    pt_id(perturbed_location_index) = observable_points{i_sc,i_time}(observable_pt_ix);
+                    pt_index(perturbed_location_index) = observable_pt_ix;
+                    k_ix(perturbed_location_index)= i_time;
+                    dir_ix(perturbed_location_index)= randi(3,1);
+                    n_ix(perturbed_location_index)= i_sc;
+                    perturbed_location_analytical_gradients(perturbed_location_index) = ...
+                        observable_points_gradients{i_sc,i_time}(observable_pt_ix, dir_ix(perturbed_location_index));
+
+                    if perturbed_location_index>=num_locations_to_perturb
+                        break
+                    end
+                end
+            end
+        end
+        if perturbed_location_index>=num_locations_to_perturb
+            break
+        end
+    end
+    if perturbed_location_index>=num_locations_to_perturb
+        break
+    end
+end
+
+if perturbed_location_index<num_locations_to_perturb
+    disp("Not enough nonzero entries!")
+    num_locations_to_perturb = perturbed_location_index
+end
+
+
+semi_analytical_gradient = zeros(num_locations_to_perturb, length(gradient_steps));
+legend_labels = cell(length(gradient_steps)+1,1);
+legend_labels{end} = "Analytical";
+
+% Perturb locations
+rel_trajectory_array = swarme.rel_trajectory_array;
+
+for delta_pose_ix = 1:length(gradient_steps)
+    fprintf("Delta pose %d/%d\n", delta_pose_ix, length(gradient_steps))
+    delta_pos = gradient_steps(delta_pose_ix);
+    legend_labels{delta_pose_ix} = sprintf("Numerical, %d", delta_pos);
+    for loc =1:num_locations_to_perturb
+        fprintf("Location %d/%d\n", loc, num_locations_to_perturb)
+        rel_trajectory_array_plus = swarme.rel_trajectory_array;
+        rel_trajectory_array_minus = swarme.rel_trajectory_array;
+        % sample_times = swarm.sample_times;
+        rel_trajectory_array_plus(k_ix(loc), dir_ix(loc), n_ix(loc))  = rel_trajectory_array(k_ix(loc), dir_ix(loc), n_ix(loc)) + delta_pos; 
+        rel_trajectory_array_minus(k_ix(loc), dir_ix(loc), n_ix(loc)) = rel_trajectory_array(k_ix(loc), dir_ix(loc), n_ix(loc)) - delta_pos; 
+        try
+            localswarm_plus = copy(swarme);
+            localswarm_plus.test_only_reset_relative_trajectory(rel_trajectory_array_plus);
+            [ops_plus,  opv_plus] = get_observable_points(ErosGravity, localswarm_plus, k_ix(loc), n_ix(loc), 0);
+            % Find the point
+            val_plus = NaN;
+            for plus_pt_ix = 1:length(ops_plus)
+                if ops_plus(plus_pt_ix) == pt_id(loc)
+                    val_plus = opv_plus(plus_pt_ix);
+                    if plus_pt_ix ~= pt_index(loc)
+                        fprintf("\nStrange, point %d has changed location (was %d, is %d)", ops_plus(plus_pt_ix), pt_ix(loc), plus_pt_ix);
+                    end
+                    break
+                end
+            end
+            if isnan(val_plus)
+                error("Could not find point %d in agent %d's + observations at time %d", pt_id(loc), n_ix(loc), k_ix(loc))
+            end
+            
+            localswarm_minus = copy(swarme);
+            localswarm_minus.test_only_reset_relative_trajectory(rel_trajectory_array_minus);
+            [ops_minus,  opv_minus] = get_observable_points(ErosGravity, localswarm_minus, k_ix(loc), n_ix(loc), 0);
+            val_minus= NaN;
+            for minus_pt_ix = 1:length(ops_minus)
+                if ops_minus(minus_pt_ix) == pt_id(loc)
+                    val_minus = opv_minus(minus_pt_ix);
+                    if minus_pt_ix ~= pt_index(loc)
+                        fprintf("\nStrange, point %d has changed location (was %d, is %d)", ops_minus(minus_pt_ix), pt_index(loc), minus_pt_ix);
+%                     else
+%                         fprintf("\nPoint %d found at same location (was %d: %d, is %d: %d)", ops_minus(minus_pt_ix), pt_index(loc), pt_id(loc), minus_pt_ix, ops_minus(minus_pt_ix));
+                    end
+                    break
+                end
+            end
+            if isnan(val_minus)
+                error("Could not find point %d in agent %d's - observations at time %d", pt_id(loc), n_ix(loc), k_ix(loc))
+            end
+            
+            local_gradient = (val_plus - val_minus)/(2*abs(delta_pos));
+        catch e
+           local_gradient= NaN;
+           warning("No gradient could be computed.")  % at point "+ sprintf(" %d", bandwidths_and_memories+perturbation))
+           fprintf(1,'The identifier was:\n%s',e.identifier);
+           fprintf(1,'There was an error! The message was:\n%s',e.message);
+        end
+        semi_analytical_gradient(loc,delta_pose_ix) = local_gradient;
+    end
+end
+
+% Plotting
+figure()
+line_available_strokes = {'-', ':', '-.', '--'};
+line_available_marks = {'.', 'o', 'x', '+', '*', 's', 'd', 'v', '^', '<', '>', 'p', 'h'};
+
+for step_index = 1:length(gradient_steps)
+    stroke_idx = mod(step_index, length(line_available_strokes))+1;
+    mark_idx = mod(step_index, length(line_available_marks))+1;
+    semilogy(abs(semi_analytical_gradient(:,step_index)), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}));
+    hold all
+end
+
+% Gradient WRT obs
+step_index = length(gradient_steps)+1;
+stroke_idx = mod(step_index, length(line_available_strokes))+1;
+mark_idx = mod(step_index, length(line_available_marks))+1;
+semilogy(abs(perturbed_location_analytical_gradients), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}))
+
+legend(legend_labels, 'location', 'best')
+title("Gradient of reward wrt location (obs)")
+
+%% gradient of overall reward with respect to sc positions (observations only)
+num_locations_to_perturb = 15;
+gradient_steps= [5, .5, .05, .005];
+
+% Change locations, but keep bandwidths constant
+
+swarmd = copy(swarm);
+N = swarmd.get_num_spacecraft;
+K = swarmd.get_num_timesteps;
+
+bandwidth_model = @(x1,x2) min(bandwidth_parameters.reference_bandwidth * (bandwidth_parameters.reference_distance/norm(x2-x1,2))^2, bandwidth_parameters.max_bandwidth); 
+% bandwidths_and_memories = zeros(K,N,N);
+
+data_scaling_factor = 1e6;
+
+[swarmd, goal] =  observation_and_communication_optimizer(ErosGravity, swarmd, bandwidth_model, data_scaling_factor);
+spherical_asteroid_parameters.max_radius = ErosGravity.BodyModel.shape.maxRadius*1e3;
+spherical_asteroid_parameters.min_radius = ErosGravity.BodyModel.shape.maxRadius*1e3;
+[dk_dic, dk_dbandwidth, dbandwidth_dlocation, dk_dlocation_obs, dlocation_dic] = compute_integrated_gradient(swarmd, bandwidth_parameters, spherical_asteroid_parameters);
+
+dk_dlocation_bw = dk_dbandwidth*dbandwidth_dlocation;
+
+
+% Indices of the random locations, picked to be nonzero
+k_ix = zeros(num_locations_to_perturb,1);
+dir_ix = zeros(num_locations_to_perturb,1);
+n_ix = zeros(num_locations_to_perturb,1);
+
+randix = 0;
+%randoffset = randi(len(dk_dlocation_obs)/2,1);
+for k=1:K
+    for n=1:N
+        for l=1:3
+            dk_dloc_ix = K*N*(l-1) + K*( n-1) + k;
+            if dk_dlocation_obs(dk_dloc_ix) >100*eps
+                dk_dlocation_obs(dk_dloc_ix);
+                randix = randix+1;
+                k_ix(randix) = k;
+                n_ix(randix) = n;
+                dir_ix(randix) = l;
+            end
+            if randix == num_locations_to_perturb
+                break
+            end
+        end
+        if randix == num_locations_to_perturb
+            break
+        end
+    end
+    if randix == num_locations_to_perturb
+        break
+    end
+end
+
+if randix<num_locations_to_perturb
+    disp("I could not find enough non-zero-gradient locations!")
+    k_ix(randix+1:num_locations_to_perturb)   = randi(K, num_locations_to_perturb-randix,1);
+    dir_ix(randix+1:num_locations_to_perturb) = randi(3, num_locations_to_perturb-randix,1);
+    n_ix(randix+1:num_locations_to_perturb)   = randi(N, num_locations_to_perturb-randix,1);
+end
+
+
+
+numerical_gradient = zeros(num_locations_to_perturb, length(gradient_steps));
+gradient_reward_wrt_pos = cell(num_locations_to_perturb, length(gradient_steps)+1);
+legend_labels = cell(length(gradient_steps)+1,1);
+
+
+% Perturb locations
+rel_trajectory_array = swarmd.rel_trajectory_array;
+sample_times = swarmd.sample_times;
+
+
+for delta_pose_ix = 1:length(gradient_steps)
+    fprintf("Delta pose %d/%d\n", delta_pose_ix, length(gradient_steps))
+    delta_pos = gradient_steps(delta_pose_ix);
+    legend_labels{delta_pose_ix} = sprintf("Numerical, %d", delta_pos);
+    parfor loc =1:num_locations_to_perturb
+        fprintf("Location %d/%d\n", loc, num_locations_to_perturb)
+        rel_trajectory_array_plus = swarmd.rel_trajectory_array;
+        rel_trajectory_array_minus = swarmd.rel_trajectory_array;
+        % sample_times = swarm.sample_times;
+        rel_trajectory_array_plus(k_ix(loc), dir_ix(loc), n_ix(loc))  = rel_trajectory_array(k_ix(loc), dir_ix(loc), n_ix(loc)) + delta_pos; 
+        rel_trajectory_array_minus(k_ix(loc), dir_ix(loc), n_ix(loc)) = rel_trajectory_array(k_ix(loc), dir_ix(loc), n_ix(loc)) - delta_pos; 
+
+        % Compute perturbed bandwidths 
+        bandwidths_and_memories = zeros(K,N,N);
+
+        for k=1:K-1
+            for i=1:N
+                for j=1:N
+                    if j~=i
+                        bandwidths_and_memories(k,i,j)= bandwidth_model(rel_trajectory_array(k,1:3,i),       rel_trajectory_array(k,1:3,j))* (sample_times(k+1)-sample_times(k));
+                    elseif ~isnan(swarm.Parameters.available_memory(i)) && ~isinf(swarm.Parameters.available_memory(i))
+                        bandwidths_and_memories(k,i,j)= swarm.Parameters.available_memory(i);
+                    else
+                        bandwidths_and_memories(k,i,j)= max_memory;
+                    end
+                end
+            end
+        end
+
+        % Compute the perturbed bw numerically
+        try
+            localswarm_plus = copy(swarmd);
+            localswarm_plus.test_only_reset_relative_trajectory(rel_trajectory_array_plus);
+            [~, goalplus]   = observation_and_communication_optimizer(ErosGravity, localswarm_plus, bandwidths_and_memories, data_scaling_factor);
+            localswarm_minus = copy(swarmd);
+            localswarm_minus.test_only_reset_relative_trajectory(rel_trajectory_array_minus);
+            [~, goalminus]  = observation_and_communication_optimizer(ErosGravity, localswarm_minus, bandwidths_and_memories, data_scaling_factor);
+            local_gradient = (goalplus - goalminus)/(2*abs(delta_pos));
+        catch e
+           local_gradient= NaN;
+           warning("No gradient could be computed.")  % at point "+ sprintf(" %d", bandwidths_and_memories+perturbation))
+           fprintf(1,'The identifier was:\n%s',e.identifier);
+           fprintf(1,'There was an error! The message was:\n%s',e.message);
+        end
+        numerical_gradient(loc,delta_pose_ix) = local_gradient;
+%         temp_gradient_bw_wrt_pos = (bandwidths_and_memories_plus-bandwidths_and_memories_minus)./(2*abs(delta_pos));
+%         gradient_reward_wrt_pos{loc, delta_pose_ix} = temp_gradient_bw_wrt_pos(k_ix(loc),:,:);
+    end
+end
+
+analytical_gradient = zeros(num_locations_to_perturb,1);
+
+for loc=1:num_locations_to_perturb
+    index = K*N*(dir_ix(loc)-1) + K*( n_ix(loc)-1) + k_ix(loc);
+    analytical_gradient(loc,1) = dk_dlocation_obs(index);
+end
+legend_labels{end} = sprintf("Analytical (Obs)");
+
+% Plotting
+figure()
+line_type = cell(length(gradient_steps)+1, 1);
+line_available_strokes = {'-', ':', '-.', '--'};
+line_available_marks = {'.', 'o', 'x', '+', '*', 's', 'd', 'v', '^', '<', '>', 'p', 'h'};
+
+for step_index = 1:length(gradient_steps)
+    stroke_idx = mod(step_index, length(line_available_strokes))+1;
+    mark_idx = mod(step_index, length(line_available_marks))+1;
+    semilogy(abs(numerical_gradient(:,step_index)), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}));
+    hold all
+end
+
+% Gradient WRT pos
+step_index = length(gradient_steps)+2;
+stroke_idx = mod(step_index, length(line_available_strokes))+1;
+mark_idx = mod(step_index, length(line_available_marks))+1;
+semilogy(abs(analytical_gradient(:,1)), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}))
+
+legend(legend_labels, 'location', 'best')
+title("Gradient of reward wrt location (obs)")
 
 %% Gradient of location with respect to initial position
 

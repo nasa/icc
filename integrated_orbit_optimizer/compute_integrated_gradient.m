@@ -18,7 +18,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [dk_dic, dk_dbandwidth, dbandwidth_dlocation, dlocation_dic] = compute_integrated_gradient(swarm, bandwidth_parameters, asteroid_parameters)
+function [dk_dic, dk_dbandwidth, dbandwidth_dlocation, dk_dlocation_obs, dlocation_dic] = compute_integrated_gradient(swarm, bandwidth_parameters, asteroid_parameters)
 if ~swarm.is_valid()
     error("Swarm is not valid")
 end
@@ -31,8 +31,6 @@ end
 
 N=swarm.get_num_spacecraft();
 K = swarm.get_num_timesteps;
-pos_points = asteroid_parameters.BodyModel.shape.vertices;
-Nv = size(pos_points,1);
 
 % Derivative of goal function wrt bandwidth
 
@@ -77,44 +75,61 @@ for sc=1:N
     dlocation_dic{sc} = reshape(dlocation_dic_mat(:,sc,:),[K*N*3,6]);
 end
 
-% Derivative of goal with respect to observation rewards is equal to the
-% primal variable at the optimum, i.e. which vertices we observe.
-dk_dobsreward_full = zeros(1,K,Nv,N);
-for j=1:N
-    for k=1:K
-        % This is the observed vertex, if any
-        v = swarm.Observation.observed_points(j,k); 
-        if v ~= 0
-            dk_dobsreward_full(1,k,v,j) = 1.;
-        end
-    end
-end
+% % Derivative of goal with respect to observation rewards is equal to the
+% % primal variable at the optimum, i.e. which vertices we observe.
+% dk_dobsreward_full = zeros(1,K,Nv,N);
+% for j=1:N
+%     for k=1:K
+%         % This is the observed vertex, if any
+%         v = swarm.Observation.observed_points(j,k); 
+%         if v ~= 0
+%             dk_dobsreward_full(1,k,v,j) = 1.;
+%         end
+%     end
+% end
+% 
+% dk_dobsreward = reshape(dk_dobsreward_full,[1,K*Nv*N]);
+% 
+% % Derivative of observation rewards with respect to spacecraft locations is
+% % computed by observations optimizer.
+% dobsreward_dlocation_full = zeros(K,Nv,N,K,N,3);
+% for i=1:N
+%     for k=1:K
+%         for v=1:Nv
+%             for l=1:3
+%                 % sensitivity(i,k,v,l) is the sensitivity (derivative) of the reward of
+%                 % vertex v with respect to the l-th coordinate of spacecraft i's position
+%                 % at time k.
+%                 dobsreward_dlocation_full(k,v,i,k,i,l) = obj.Observation.sensitivity(i,k,v,l);
+%             end
+%         end
+%     end
+% end
+% 
+% dobsreward_dlocation = reshape(dobsreward_dlocation_full,[K*Nv*N,K*N*3]);
 
-dk_dobsreward = reshape(dk_dobsreward_full,[1,K*Nv*N]);
+% Derivative of goal with respect to spacecraft locations (i.e., derivative
+% of goal with respect to point values, times derivative of point values
+% wrt sc positions) is computed by observations optimizer.
+% dk_dlocation_full = zeros(K,N,3);
+dk_dlocation_full = swarm.Observation.sensitivity;
+% for i=1:N
+%     for k=1:K
+%         for l=1:3
+%             % sensitivity(i,k,v,l) is the sensitivity (derivative) of the reward of
+%             % vertex v with respect to the l-th coordinate of spacecraft i's position
+%             % at time k.
+%             dk_dlocation_full(k,v,i,k,i,l) = obj.Observation.sensitivity(i,k,v,l);
+%         end        
+%     end
+% end
 
-% Derivative of observation rewards with respect to spacecraft locations is
-% computed by observations optimizer.
-dobsreward_dlocation_full = zeros(K,Nv,N,K,N,3);
-for i=1:N
-    for k=1:K
-        for v=1:Nv
-            for l=1:3
-                % sensitivity(i,k,v,l) is the sensitivity (derivative) of the reward of
-                % vertex v with respect to the l-th coordinate of spacecraft i's position
-                % at time k.
-                dobsreward_dlocation_full(k,v,i,k,i,l) = obj.Observation.sensitivity(i,k,v,l);
-            end
-        end
-    end
-end
-
-
-dobsreward_dlocation = reshape(dobsreward_dlocation_full,[K*Nv*N,K*N*3]);
+dk_dlocation_obs = reshape(dk_dlocation_full,[1,K*N*3]);
 
 
 dk_dic = cell(N,1);
 for sc = 1:N
-    dk_dic{sc} = dk_dbandwidth*dbandwidth_dlocation*dlocation_dic{sc} + dk_dobsreward*dobsreward_dlocation*dlocation_dic{sc};
+    dk_dic{sc} = dk_dbandwidth*dbandwidth_dlocation*dlocation_dic{sc} + dk_dlocation_obs*dlocation_dic{sc};
 end
 end
 

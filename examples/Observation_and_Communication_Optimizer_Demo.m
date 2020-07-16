@@ -84,7 +84,7 @@ GM = eros_sbdt.gravity.gm * 1e9;  % Convert to m from km
 Swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
 
 % Add four orbits for two sciencecrafts, one relay, and one carrier
-sc_initial_locations = {[25*1e3;0;0],[25*1e3;0;0],[50*1e3;0;0], [100*1e3;0;0]};
+sc_initial_locations = {[24*1e3;0;0],[24*1e3;0;0],[30*1e3;0;0], [100*1e3;0;0]};
 sc_initial_velocity_orientations = {[0; sqrt(2)/2; sqrt(2)/2;],[0;1;0],[0;1;0], [0;1;0]};
 
 sc_initial_state_array = zeros(n_spacecraft,6);
