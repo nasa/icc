@@ -27,8 +27,8 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% function [goal, gradient, dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dlocation_dic] = integrated_optimization_cost_function(swarm, sc_initial_condition_vector, initial_condition_scaling_factor, gravity_model, bandwidth_parameters)
-function [goal] = integrated_optimization_cost_function(swarm, sc_initial_condition_vector, initial_condition_scaling_factor, gravity_model, bandwidth_parameters)
+function [goal, gradient, dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dk_dlocation, dlocation_dic] = integrated_optimization_cost_function(swarm, sc_initial_condition_vector, initial_condition_scaling_factor, gravity_model, bandwidth_parameters)
+% function [goal] = integrated_optimization_cost_function(swarm, sc_initial_condition_vector, initial_condition_scaling_factor, gravity_model, bandwidth_parameters)
 
 % Cost function for GBO.
 % Inputs
@@ -53,8 +53,8 @@ if nargin<5
     bandwidth_parameters.max_bandwidth = 100*1e6;
 end
 
-addpath(genpath('../utilities'))
-addpath('../network_flow_communication_optimizer')
+% addpath(genpath('../utilities'))
+% addpath('../network_flow_communication_optimizer')
 
 %% Unpack initial conditions and sanity check them
 N = swarm.get_num_spacecraft();
@@ -109,17 +109,17 @@ bandwidth_model = @(x1, x2) quadratic_comm_model(x1, x2, bandwidth_parameters,oc
 
 [swarm, goal] = observation_and_communication_optimizer(gravity_model, swarm, bandwidth_model);
 
-% if nargout>1  % compute gradient
-%     [dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dlocation_dic] = compute_gradient(swarm, bandwidth_parameters,spherical_asteroid_parameters);
-%     gradient = zeros(size(sc_initial_condition_vector));
-%     for sc = 1:length(relay_orbit_index)
-%         offset = 6*(sc-1);
-%         assert(all(size(dgoal_dic{relay_orbit_index(sc)}) == size(initial_condition_scaling_factor')), "ERROR: scaling factor shape is wrong")
-%         gradient(1+offset:6+offset) = dgoal_dic{relay_orbit_index(sc)}./initial_condition_scaling_factor';
-%     end
-%         % Minimize
-%     gradient = -gradient;
-% end
+if nargout>1  % compute gradient
+    [dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dk_dlocation, dlocation_dic] = compute_integrated_gradient(swarm, bandwidth_parameters,spherical_asteroid_parameters);
+    gradient = zeros(size(sc_initial_condition_vector));
+    for sc = 1:N
+        offset = 6*(sc-1);
+        assert(all(size(dgoal_dic{sc}) == size(initial_condition_scaling_factor')), "ERROR: scaling factor shape is wrong")
+        gradient(1+offset:6+offset) = dgoal_dic{sc}./initial_condition_scaling_factor';
+    end
+        % Minimize
+    gradient = -gradient;
+end
 
 % Minimize
 goal = -goal;

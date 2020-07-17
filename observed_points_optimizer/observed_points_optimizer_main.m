@@ -70,6 +70,7 @@ Nv = size(AsteroidModel.BodyModel.shape.faceCenters,1); % number of faceCenters 
 %% Get Set of Feasible Observation Points at Each Timestep
 observable_points = Swarm.Observation.observable_points;
 for i_time = 1:K
+    fprintf("\nTime %d/%d\n",i_time,K)
     for i_sc = sc_find_observable_pts
         if ismember(0,sc_type{i_sc})
             observable_points{i_sc, i_time} = []; % carrier spacecraft does not observe anything
@@ -77,7 +78,7 @@ for i_time = 1:K
             if flag_optimization_approach==0
                 observable_points{i_sc, i_time} = get_nadir_point(AsteroidModel, Swarm, i_time, i_sc) ;
             else
-                observable_points{i_sc, i_time} = get_observable_points(AsteroidModel, Swarm, i_time, i_sc) ;
+                observable_points{i_sc, i_time} = get_observable_points(AsteroidModel, Swarm, i_time, i_sc, .2) ;
             end
         end
     end

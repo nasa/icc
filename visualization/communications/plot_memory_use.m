@@ -89,6 +89,10 @@ if isnan(max_memory)
     end
     max_memory = max(max(tmp_memories));
 end
+if max_memory == 0
+    max_memory = 1;
+%     warning("No spacecraft ever memorizes data, weird");
+end
 
 flows_to_carrier = Swarm.Communication.flow(:,:,end);
 flows_from_carrier = squeeze(Swarm.Communication.flow(:,end,:));
@@ -109,6 +113,9 @@ for sc1 = 1:n_spacecraft
     else
         ssymbol = '.';
         ssize = curr_memory/max_memory*(max_memory_marker_size-min_memory_marker_size) +min_memory_marker_size;
+    end
+    if ssize == 0
+        ssize=1;
     end
     % plot3(spacecraft.orbits{sc1}(1,time),spacecraft.orbits{sc1}(2,time),spacecraft.orbits{sc1}(3,time), ...
     sc_color = color_array(:,mod(Swarm.Parameters.types{sc1},size(color_array,2))+1)';

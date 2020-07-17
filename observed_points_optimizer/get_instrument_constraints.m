@@ -18,7 +18,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [sun_angle_ranges, sc_angle_ranges, distance_ranges] = get_instrument_constraints(varargin)
+function [sun_angle_ranges, sc_angle_ranges, distance_ranges, sc_angle_tolerances, distance_tolerances] = get_instrument_constraints(varargin)
 %GET_INSTRUMENT_CONSTRAINTS Defines the observation constraints on each instrument
 
 % Syntax: [] = get_instrument_constraints(sc_type, tolerance*)
@@ -40,7 +40,9 @@ switch sc_type
     case 0 % Carrier Spacecraft 
         sun_angle_ranges{1} = [];
         sc_angle_ranges{1}  = [];
+        sc_angle_tolerances{1} = [];
         distance_ranges{1}  = []; 
+        distance_tolerances{1} = [];
         
     case 1 % Imaging Spectrometer 
         sun_angles = deg2rad([0, 45]); % [rad]
@@ -50,6 +52,8 @@ switch sc_type
         end
         sc_angle_ranges{1}  = deg2rad([-5, 5]); % [rad]
         distance_ranges{1}  = [0, 50].*1000; % [m]
+        sc_angle_tolerances{1} = .25; %[rad]
+        distance_tolerances{1} = 200; % [m]
         
     case 2 % X Ray Spectrometer
         sun_angles = deg2rad([0, 45]); % [rad]
@@ -59,6 +63,8 @@ switch sc_type
         end
         sc_angle_ranges{1}  = deg2rad([-5, 5]); % [rad]
         distance_ranges{1}  = [0, 50].*1000; % [m]
+        sc_angle_tolerances{1} = .25; %[rad]
+        distance_tolerances{1} = 200; % [m]
         
     case 3 % Camera      
         sun_angles = deg2rad([0, 45]); % [rad]
@@ -68,26 +74,36 @@ switch sc_type
         end
         sc_angle_ranges{1}  = deg2rad([-10, 10]); % [rad]
         distance_ranges{1}  = [0, 50].*1000; % [m]
+        sc_angle_tolerances{1} = .25; %[rad]
+        distance_tolerances{1} = 200; % [m]
         
     case 4 % Altimeter
         sun_angle_ranges{1} = [-2*pi, 2*pi]; 
         sc_angle_ranges{1}  = deg2rad([-5, 5]); % [rad]
         distance_ranges{1}  = [0, 50].*1000; % [m]
+        sc_angle_tolerances{1} = .25; %[rad]
+        distance_tolerances{1} = 200; % [m]
                 
     case -1 % A permissive instrument used for testing purposes
         sun_angle_ranges{1} = [-2*pi, 2*pi];
         sc_angle_ranges{1}  = [-2*pi, 2*pi]; % [rad]
         distance_ranges{1}  = [0, 40].*1000; % [m]
+        sc_angle_tolerances{1} = .00001; %[rad]
+        distance_tolerances{1} = .00001; % [m]
         
     case -2 % A non-permissive instrument used for testing purposes
         sun_angle_ranges{1} = [0, 0];
         sc_angle_ranges{1}  = [0, 0]; % [rad]
         distance_ranges{1}  = [0, 0].*1000; % [m]
+        sc_angle_tolerances{1} = .00001; %[rad]
+        distance_tolerances{1} = .00001; % [m]
         
     case -3 % Same as -1, but has lower reward/priority in get_coverage_reward_map
         sun_angle_ranges{1} = [-2*pi, 2*pi];
         sc_angle_ranges{1}  = [-2*pi, 2*pi]; % [rad]
         distance_ranges{1}  = [0, 40].*1000; % [m]
+        sc_angle_tolerances{1} = .00001; %[rad]
+        distance_tolerances{1} = .00001; % [m]
         
     otherwise
         error('SC type is incorrect!')

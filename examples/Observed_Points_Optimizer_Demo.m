@@ -40,6 +40,7 @@ addpath(strcat(ROOT_PATH,'/observed_points_optimizer'))
 %                   User Options: Flags and Parameters                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+rng(0)
 n_spacecraft = 3;  % Number of Spacecraft, not counting the carrier
 
 sc_types = cell(1,n_spacecraft);

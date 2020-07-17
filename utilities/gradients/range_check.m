@@ -18,14 +18,19 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [db_dx2] = diff_quadratic_comm_model_x2(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor)
-    if nargin<6
-        scaling_factor=bandwidth_parameters.reference_distance;
+
+function [range_valid, drange_valid] = range_check(sc_position, r_vertices, range_cell, range_tolerances)
+% RANGE_CHECK Checks if the norm of the difference between two vectors is inside a given window. 
+    range_valid = -inf;
+    drange_valid = zeros(3,1);
+    for i = 1:length(range_cell)
+%         disp("range")
+%         i
+        % 200m window
+        [new_range_valid,new_drange_valid, ~] = fast_differentiable_window_of_norm_difference(sc_position, r_vertices, range_cell{i}(1),range_cell{i}(2), range_tolerances{i});
+        if new_range_valid >=range_valid
+            range_valid = new_range_valid;
+            drange_valid = new_drange_valid;
+        end
     end
-    if nargin<5
-        occlusion_test = @(x1, x2) 0.;
-    end
-    [db_dx1, db_dx2] = diff_quadratic_comm_model(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor);
-        
-%     db_dx2 = - diff_quadratic_comm_model_x1(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor);
 end

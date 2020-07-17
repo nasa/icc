@@ -6,6 +6,7 @@ clear all; close all; clc;
 
 % Load things
 addpath(genpath('../utilities/'))
+
 addpath(genpath('../small_body_dynamics/'))
 addpath(genpath('../network_flow_communication_optimizer/'))
 addpath(genpath('../relay_orbit_optimizer/'))
@@ -192,17 +193,17 @@ swarmb = copy(swarm);
 
 fun_b = @(params) communication_optimizer(swarmb, params, data_scaling_factor);
 
-for step_index = 1:length(gradient_steps)
+parfor step_index = 1:length(gradient_steps)
     gradient_step = gradient_steps(step_index);
     fprintf("Gradient step %d / %d (%d)\n", step_index, length(gradient_steps), gradient_step)
     semi_analytical_gradient = zeros(num_bandwidths_to_perturb,1);
-    parfor entry = 1:num_bandwidths_to_perturb
+    for entry = 1:num_bandwidths_to_perturb
         fprintf("Entry %d/%d\n", entry, num_bandwidths_to_perturb)
         perturbation = zeros(size(bandwidths_and_memories));
         perturbation(k_ix(entry), n1_ix(entry), n2_ix(entry)) = gradient_step;
         try
-            [~, goalplus] = fun_b(bandwidths_and_memories+perturbation);
-            [~, goalminus] = fun_b(bandwidths_and_memories-perturbation);
+            [~, goalplus] = fun_b(max(bandwidths_and_memories+perturbation,0));
+            [~, goalminus] = fun_b(max(bandwidths_and_memories-perturbation,0));
             semi_analytical_gradient(entry) = (goalplus - goalminus)/(2*gradient_step);
         catch e
            semi_analytical_gradient(entry)= NaN;

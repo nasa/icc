@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Copyright 2019 by California Institute of Technology.  ALL RIGHTS RESERVED. %
+% Copyright 2020 by California Institute of Technology.  ALL RIGHTS RESERVED. %
 % United  States  Government  sponsorship  acknowledged.   Any commercial use %
 % must   be  negotiated  with  the  Office  of  Technology  Transfer  at  the %
 % California Institute of Technology.                                         %
@@ -18,14 +18,30 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [db_dx2] = diff_quadratic_comm_model_x2(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor)
-    if nargin<6
-        scaling_factor=bandwidth_parameters.reference_distance;
-    end
-    if nargin<5
-        occlusion_test = @(x1, x2) 0.;
-    end
-    [db_dx1, db_dx2] = diff_quadratic_comm_model(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor);
-        
-%     db_dx2 = - diff_quadratic_comm_model_x1(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor);
+function [wnd,dwnd_dv1, dwnd_dv2] = differentiable_window_of_norm_difference(varargin)
+%DIFFERENTIABLE_WINDOW_OF_NORM_DIFFERENCE returns a "window of norm difference"
+%   function and its derivative with respect to the input vectors
+%   The function returns a function that computes window(norm(v1-v2)), where
+%   "window" is the product of two logistic functions (as defined in
+%   "differentiable_window". It also returns the derivative of the function
+%   with respect to the vectors v1 and v2.
+%   This function takes four inputs:
+%   - lower_edge, the lower edge of the window
+%   - upper_edge, the upper edge of the window
+%   - lower_width, the "width" of the lower edge. By default, 1.
+%   - upper_width, the "width" of the upper edge. By default, equal to
+%      lower_width
+%   The return value is a trio of functions: the window-of-norm-diff function
+%   and its derivatives with respect to v1 and v2 respectively.
+
+% Get the window function
+[wf,dwf] = differentiable_window(varargin{:});
+
+% Get the norm function
+[normdiff,dnormdiff_dv1, dnormdiff_dv2] = differentiable_norm_of_difference();
+
+wnd = @(v1,v2) wf(normdiff(v1,v2));
+dwnd_dv1 = @(v1,v2) dwf(normdiff(v1,v2)).*dnormdiff_dv1(v1,v2);
+dwnd_dv2 = @(v1,v2) dwf(normdiff(v1,v2)).*dnormdiff_dv2(v1,v2);
+
 end

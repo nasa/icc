@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Copyright 2019 by California Institute of Technology.  ALL RIGHTS RESERVED. %
+% Copyright 2020 by California Institute of Technology.  ALL RIGHTS RESERVED. %
 % United  States  Government  sponsorship  acknowledged.   Any commercial use %
 % must   be  negotiated  with  the  Office  of  Technology  Transfer  at  the %
 % California Institute of Technology.                                         %
@@ -18,14 +18,16 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [db_dx2] = diff_quadratic_comm_model_x2(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor)
-    if nargin<6
-        scaling_factor=bandwidth_parameters.reference_distance;
-    end
-    if nargin<5
-        occlusion_test = @(x1, x2) 0.;
-    end
-    [db_dx1, db_dx2] = diff_quadratic_comm_model(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor);
-        
-%     db_dx2 = - diff_quadratic_comm_model_x1(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor);
+function [sf, dsf] = fast_differentiable_logistic_function(x, edge, width)
+%DIFFERENTIABLE_LOGISTIC_FUNCTION returns a logistic function and its derivative
+%   The function takes three inputs:
+%   - edge, the location of the sigmoid transition
+%   - width, the width of the transition
+%   The return value is a function.
+%   The function returned takes in a 1d input and returns
+%   (1/(1+exp(-(x-edge)/width)))
+
+sf = (1./(1+exp(-(x-edge)./width)));
+dsf = sf.*(1-sf)./width;
+
 end
