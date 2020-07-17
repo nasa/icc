@@ -259,7 +259,7 @@ figure()
 line_available_strokes = {'-', ':', '-.', '--'};
 line_available_marks = {'.', 'o', 'x', '+', '*', 's', 'd', 'v', '^', '<', '>', 'p', 'h'};
 
-for step_index = 2:length(gradient_steps)-1
+for step_index = 1:length(gradient_steps)
     stroke_idx = mod(step_index, length(line_available_strokes))+1;
     mark_idx = mod(step_index, length(line_available_marks))+1;
     semilogy(abs(num_gradient_bw{step_index}), strcat(line_available_strokes{stroke_idx},line_available_marks{mark_idx}));

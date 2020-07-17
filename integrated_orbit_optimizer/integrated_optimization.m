@@ -84,8 +84,7 @@ for sc =1:N
 end
 
 % One test call to the cost function
-%[goal, gradient] = integrated_optimization_cost_function(swarm,initial_conditions, optvar_scaling_factor, gravity_model, bandwidth_parameters);
-[goal] = integrated_optimization_cost_function(swarm,initial_conditions, optvar_scaling_factor, gravity_model, bandwidth_parameters);
+[goal, gradient] = integrated_optimization_cost_function(swarm,initial_conditions, optvar_scaling_factor, gravity_model, bandwidth_parameters);
 % if (isnan(goal) || any(isnan(gradient)))
 if (isnan(goal))
     error('ERROR: initial location is infeasible. fmincon will crash.')
@@ -95,8 +94,8 @@ end
 fun = @(params) integrated_optimization_cost_function(swarm, params, optvar_scaling_factor, gravity_model, bandwidth_parameters);
 
 % Try calling the "proper cost function"
-% [goal, gradient] = fun(initial_conditions);
-[goal] = fun(initial_conditions);
+[goal, gradient] = fun(initial_conditions);
+% [goal] = fun(initial_conditions);
 
 % num_gradient = numerical_gradient(fun, relay_initial_condition, 1e-4);
 
