@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Copyright 2019 by California Institute of Technology.  ALL RIGHTS RESERVED. %
+% Copyright 2020 by California Institute of Technology.  ALL RIGHTS RESERVED. %
 % United  States  Government  sponsorship  acknowledged.   Any commercial use %
 % must   be  negotiated  with  the  Office  of  Technology  Transfer  at  the %
 % California Institute of Technology.                                         %
@@ -18,14 +18,25 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [db_dx2] = diff_quadratic_comm_model_x2(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor)
-    if nargin<6
-        scaling_factor=bandwidth_parameters.reference_distance;
-    end
-    if nargin<5
-        occlusion_test = @(x1, x2) 0.;
-    end
-    [db_dx1, db_dx2] = diff_quadratic_comm_model(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor);
-        
-%     db_dx2 = - diff_quadratic_comm_model_x1(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor);
+function [a,da_dv1, da_dv2] = fast_differentiable_angle_between_vectors(v1, v2)
+%DIFFERENTIABLE_ANGLE_BETWEEN_VECTORS Returns a function computing the
+%angle between two vectors, and its derivative with respect to the
+%components of both vectors.
+%  The function returns
+%  - a(v1,v2) = arccos(1/(norm(v1)*norm(v2) *dot(v1,v2))
+%  - da_dv1(v1,v2), the derivative of a wrt v1
+%  - da_dv2(v1,v2), the derivative of a wrt v2
+%
+
+a = acos(1./(norm(v1).*norm(v2)) *dot(v1,v2));
+
+da_dv1 = -1/sqrt(1-(1/(norm(v1).*norm(v2)) *dot(v1,v2)).^2) * ...
+    ((-(v1/norm(v1))./norm(v1)^2 .* 1./norm(v2) .* dot(v1,v2)) + ...
+    (1./norm(v1).*1./norm(v2).*v2));
+
+da_dv2 = -1./sqrt(1-(1./(norm(v1).*norm(v2)) .*dot(v1,v2)).^2) * ...
+    ((1./norm(v1).*(-v2./norm(v2))./norm(v2).^2 .* dot(v1,v2)) + ...
+    (1./norm(v1).*1./norm(v2).*v1));
+
 end
+

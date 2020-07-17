@@ -23,6 +23,6 @@ parfor entry = 1:length(linearization_point)
        gradient(entry) = (fun_handle(linearization_point+perturbation) - fun_handle(linearization_point-perturbation))/(2*increment(entry));
     catch
        gradient(entry)= NaN;
-       warning("No gradient could be computed at point "+ sprintf(" %d", linearization_point+perturbation))
+       warning("\nNo gradient could be computed at point "+ sprintf(" %d", linearization_point+perturbation)+"\n")
     end
 end

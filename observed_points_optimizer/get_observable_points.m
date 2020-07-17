@@ -18,9 +18,13 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function observable_points = get_observable_points(AsteroidModel, Swarm, i_time, i_sc)
+function [observable_points, observable_points_values, observable_points_gradients, observable_points_gradients_next_sc] = get_observable_points(AsteroidModel, Swarm, i_time, i_sc, detection_threshold)
 %GET_OBSERVABLE_POINTS Returns a vector of the asteroid vertex indicies
 %which are feasible for observation by the spacecraft in the given position
+
+if nargin<5
+    detection_threshold=.25;
+end
 
 asteroid_vertices = AsteroidModel.BodyModel.shape.faceCenters; % faceCenters composing surface of asteroid
 asteroid_normals = AsteroidModel.BodyModel.shape.faceNormals; % Normals at faceCenters
@@ -40,7 +44,7 @@ flag_use_instruments = true; % if false, will use simplified function, not deriv
 get_angle =@(x,y) acos( dot(x(:), y(:)) / (norm(x(:)) * norm(y(:))) ); % Returns angle between two vectors using cos
 
 % Get information
-[sun_angle_ranges, sc_angle_ranges, distance_ranges] = get_instrument_constraints(sc_type);
+[sun_angle_ranges, sc_angle_ranges, distance_ranges, sc_angle_tolerances, distance_tolerances] = get_instrument_constraints(sc_type);
 Nv = size(asteroid_vertices,1);
 
 %% Get Observable Points
@@ -48,32 +52,46 @@ if flag_use_instruments==true
     %% Determine Points that meet instrument constraints 
     if ismember(0,sc_type) % For carrier, nothing is observed
         observable_points = [];
+        observable_points_values = [];
+        observable_points_gradients = [];
+        observable_points_gradients_next_sc = [];
 %     elseif ismember(4,sc_type) || ismember(6,sc_type) % for Altimeter or Magnetometer just retun nadir
 %         observable_points = get_nadir_point(AsteroidModel, Swarm, i_time, i_sc);
     else
         vertex_observability_status = zeros(1,Nv); % 1 if observable, zero otherwise
+        observable_points_gradients_curr = zeros(Nv, 3);
+        observable_points_gradients_next= zeros(Nv, 3);
         
         for i_v = 1:Nv
             
             r_vertices = asteroid_vertices(i_v, :);
             r_normal = asteroid_normals(i_v, :);
-            
-            % Check altitude range
-            sc_altitude = norm(sc_position - r_vertices); % height of spacecraft above point i_v
-            next_sc_altitude = norm(next_sc_position - r_vertices); % height of spacecraft above point i_v
-            if (is_in_range_dist(sc_altitude, distance_ranges)) && (is_in_range_dist(next_sc_altitude, distance_ranges)) % Altitude check
+
+            % Check sun angle range
+            sun_angle = get_angle(r_normal, sun_position-r_vertices);
+            if is_in_range_angle(sun_angle, sun_angle_ranges)
                 
-                % Check sc angle range
-                sc_angle = get_angle(r_normal, sc_position-r_vertices);
-                next_sc_angle = get_angle(r_normal, next_sc_position-r_vertices);
-                if (is_in_range_angle(sc_angle, sc_angle_ranges)) && (is_in_range_angle(next_sc_angle, sc_angle_ranges))
-                    
-                    % Check sun angle range
-                    sun_angle = get_angle(r_normal, sun_position-r_vertices);
-                    if is_in_range_angle(sun_angle, sun_angle_ranges)
+                % Check altitude range
+    %             sc_altitude = norm(sc_position - r_vertices); % height of spacecraft above point i_v
+    %             next_sc_altitude = norm(next_sc_position - r_vertices); % height of spacecraft above point i_v
+    %             if (is_in_range_dist(sc_altitude, distance_ranges)) && (is_in_range_dist(next_sc_altitude, distance_ranges)) % Altitude check
+                [range_margin, drange_margin] = range_check(sc_position, r_vertices, distance_ranges, distance_tolerances);
+                [range_margin_next, drange_margin_next] = range_check(next_sc_position, r_vertices, distance_ranges, distance_tolerances);
+                if (range_margin>detection_threshold) && (range_margin_next>detection_threshold)
+
+                    % Check sc angle range
+    %                 sc_angle = get_angle(r_normal, sc_position-r_vertices);
+    %                 next_sc_angle = get_angle(r_normal, next_sc_position-r_vertices);
+    %                 if (is_in_range_angle(sc_angle, sc_angle_ranges)) && (is_in_range_angle(next_sc_angle, sc_angle_ranges))
+                    [angle_margin, dangle_margin] = angle_check(sc_position-r_vertices, r_normal, sc_angle_ranges, sc_angle_tolerances);
+                    [angle_margin_next, dangle_margin_next] = angle_check(sc_position-r_vertices, r_normal, sc_angle_ranges, sc_angle_tolerances);
+                    if (angle_margin>detection_threshold) && (angle_margin_next>detection_threshold)
 %                         disp("SC in sun angle range, vertex OK")
                         % Vertex has passed tests, it must be observable
-                        vertex_observability_status(i_v) = 1;
+%                         vertex_observability_status(i_v) = 1.;
+                        vertex_observability_status(i_v) = angle_margin*range_margin; %*angle_margin_next*range_margin_next;
+                        observable_points_gradients_curr(i_v, :) = (drange_margin.*angle_margin + range_margin.*dangle_margin); %.*angle_margin_next.*range_margin_next;
+                        observable_points_gradients_next(i_v, :) = 0; %(drange_margin_next.*angle_margin_next + range_margin_next.*dangle_margin_next).*range_margin.*angle_margin;
 %                     else
 %                         fprintf("SC not in sun angle range (sun angle %f, bounds (%f to %f))\n",sun_angle, sun_angle_ranges{1}(1), sun_angle_ranges{1}(2))
                     end
@@ -85,7 +103,17 @@ if flag_use_instruments==true
             end
         end
         
-        observable_points = find(vertex_observability_status==1);
+        observable_points = find(vertex_observability_status>0);
+        observable_points_values =  zeros(size(observable_points));
+        observable_points_gradients = zeros(length(observable_points),3);
+        observable_points_gradients_next_sc = zeros(length(observable_points),3);
+        for i=1:length(observable_points)
+            pt_id = observable_points(i);
+            observable_points_values(i) = vertex_observability_status(pt_id);
+            observable_points_gradients(i,:) = observable_points_gradients_curr(pt_id, :);
+            observable_points_gradients_next_sc(i,:) = observable_points_gradients_next(pt_id, :);
+        end
+%         fprintf("Found %d observable points", length(observable_points));
         if isempty(observable_points)
             observable_points = []; 
         end
@@ -101,6 +129,9 @@ else
         off_nadir_angle(i_v) = get_angle(r_v, r_vs); %  atan2(norm(cross(r_v, r_vs)), dot(r_v,r_vs));
     end
     observable_points = find(off_nadir_angle<rad_threshold);
+    observable_points_values = ones(size(observable_points));
+    observable_points_gradients = zeros(length(observable_points,3));
+    observable_points_gradients_next_sc = zeros(length(observable_points,3));
 end
 
 end

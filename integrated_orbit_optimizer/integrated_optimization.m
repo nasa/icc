@@ -34,7 +34,7 @@ function [swarm] = integrated_optimization(swarm, gravity_model, bandwidth_param
 %  - gravity_model, a GravityField object as used by SpacecraftSwarm
 %  - bandwidth_parameters, a struct with three parameters:
 %    - reference_bandwidth, the bandwidth at a given reference distance
-%    - reference_distance, the reference distanc3e
+%    - reference_distance, the reference distance
 %    - max_bandwidth, the maximum available bandwidth at close range
 %     The model assumes a quadratic bandwidth model
 %  - max_optimization_time, the maximum time allocated to fmincon.
@@ -83,8 +83,7 @@ for sc =1:N
 end
 
 % One test call to the cost function
-%[goal, gradient] = integrated_optimization_cost_function(swarm,initial_conditions, optvar_scaling_factor, gravity_model, bandwidth_parameters);
-[goal] = integrated_optimization_cost_function(swarm,initial_conditions, optvar_scaling_factor, gravity_model, bandwidth_parameters);
+[goal, gradient] = integrated_optimization_cost_function(swarm,initial_conditions, optvar_scaling_factor, gravity_model, bandwidth_parameters);
 % if (isnan(goal) || any(isnan(gradient)))
 if (isnan(goal))
     error('ERROR: initial location is infeasible. fmincon will crash.')
@@ -94,8 +93,8 @@ end
 fun = @(params) integrated_optimization_cost_function(swarm, params, optvar_scaling_factor, gravity_model, bandwidth_parameters);
 
 % Try calling the "proper cost function"
-% [goal, gradient] = fun(initial_conditions);
-[goal] = fun(initial_conditions);
+[goal, gradient] = fun(initial_conditions);
+% [goal] = fun(initial_conditions);
 
 % num_gradient = numerical_gradient(fun, relay_initial_condition, 1e-4);
 
@@ -142,6 +141,8 @@ start_time=tic;
 stop_fun = @(x,optimValues,state) stop_function(x,optimValues,state, start_time, max_optimization_time);
 options.OutputFcn = stop_fun;
 
+% Optimize!
+
 problem = createOptimProblem('fmincon', 'objective', fun, ...
     'x0', initial_conditions, 'Aineq', A, 'bineq', b, ...
     'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, ...
@@ -159,13 +160,15 @@ problem = createOptimProblem('fmincon', 'objective', fun, ...
 % [x, fval, exitflag, output] = run(ms,problem,50);
 
 %% Pattern Search
-disp("Pattern search")
-psoptions = optimoptions('fmincon',... %     'SpecifyObjectiveGradient',true,...
-    'Display', 'Iter',...
-    'CheckGradients', true, ...
-    'UseParallel', true);
-    % Missing OutputFcn for now
-[x, fval, exitflag, output] = patternsearch(fun,initial_conditions,A,b,Aeq,beq,lb,ub,psoptions);
+%disp("Pattern search")
+%psoptions = optimoptions('fmincon',... %     'SpecifyObjectiveGradient',true,...
+%    'Display', 'Iter',...
+%    'CheckGradients', true, ...
+%    'UseParallel', true);
+%    % Missing OutputFcn for now
+%[x, fval, exitflag, output] = patternsearch(fun,initial_conditions,A,b,Aeq,beq,lb,ub,psoptions);
+% %% Pattern Search
+% % [x, fval, exitflag, output] = patternsearch(problem);
 
 %% Genetic Algorithn - does not quite work, need to refine UBs and LBs?
 % disp("Genetic algorithm")
@@ -176,6 +179,8 @@ psoptions = optimoptions('fmincon',... %     'SpecifyObjectiveGradient',true,...
 %     % Missing OutputFcn for now
 % disp(length(initial_conditions))
 % [x, fval, exitflag, output] = ga(fun,length(initial_conditions),A,b,Aeq,beq,lb,ub,gaoptions);
+% %% Genetic Algorithn
+% [x, fval, exitflag, output] = patternsearch(fun,len(initial_conditions),A,b,Aeq,beq,lb,ub,nonlcon,options);
 
 %% Particle Swarm - does not support nonlinear constraint
 % disp("Particle Swarm")
@@ -194,11 +199,12 @@ psoptions = optimoptions('fmincon',... %     'SpecifyObjectiveGradient',true,...
 % disp("Simulated annealing")
 % [x, fval, exitflag, output] = simulannealbnd(fun, initial_conditions, lb, ub);
 
-%% Vanilla fmincon
-% disp("Local fmincon")
-% [x,fval,exitflag,output] = fmincon(problem);
+% Vanilla fmincon
+disp("Local fmincon")
+[x,fval,exitflag,output] = fmincon(problem);
 
 %% Add the inputs to the swarm
+
 for sc =1:N
     offset = 6*(sc-1);
     assert(all(size(x(1+offset:6+offset)) == size(optvar_scaling_factor)), "ERROR - now you miss Numpy's pure vectors, don't you?")

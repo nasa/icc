@@ -47,6 +47,7 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             obj.Observation.observable_points = cell(N,K); % obvservable_points(
             obj.Observation.flow = zeros(N, K); % [bits/s]; Observation.flow(i,k) contains the data taken in by spacecraft i at time k
             obj.Observation.priority = zeros(N, K); % [reward/(bit/s)]; priority(i,k) is the value of one bit of science produced by spacecraft i at time k.
+            obj.Observation.sensitivity = zeros(K, N, 3); % sensitivity(i,k,v,l) is the sensitivity (derivative) of the reward of vertex v with respect to the l-th coordinate of spacecraft i's position at time k.
             
             obj.Communication.flow = zeros(K, N, N); % [bits/s]; Communication.flow(k,i,j) contains the data flow from s/c i to s/c j at time k
             obj.Communication.effective_source_flow = zeros(N, K); % [bits/s]; Contains the portion of obj.Observation.flow that actually reaches the carrier
@@ -165,7 +166,7 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             elseif (length(obj.Parameters.types)~=obj.get_num_spacecraft()) || ~iscell(obj.Parameters.types)
                 warning('object.Parameters.types should be [1 x N] cell array!')
                 valid = false;
-            elseif length(fieldnames(obj.Observation))~=4
+            elseif length(fieldnames(obj.Observation))~=5
                 warning('Extra fields added to object.Observation!')
                 valid = false;
             elseif length(fieldnames(obj.Communication))~=4
@@ -183,6 +184,9 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             elseif ~iscell(obj.Observation.observable_points) || (size(obj.Observation.observable_points,1)~=N) || (size(obj.Observation.observable_points,2)~=K)
                 warning('object.Observation.observable_points should be [N x K] cell!')
                 valid = false;
+            elseif ~isnumeric(obj.Observation.sensitivity) || (size(obj.Observation.sensitivity,1)~=K) || (size(obj.Observation.sensitivity,2)~=N) || (size(obj.Observation.sensitivity,3)~=3)
+                warning('object.Observation.sensitivity should be [K x N x 3] double!')
+                valid=false;
             elseif ~isnumeric(obj.Communication.flow) || (size(obj.Communication.flow,1)~=K) || (size(obj.Communication.flow,2)~=N) || (size(obj.Communication.flow,3)~=N)
                 warning('object.Communication.flow should be [K x N x N] double!')
                 valid = false;
@@ -241,6 +245,14 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             
         end
         
+        function [] = test_only_reset_absolute_trajectory(obj, absolute_trajectory)
+            warning("Only use this function in tests!")
+            obj.abs_trajectory_array = absolute_trajectory;
+        end
+        function [] = test_only_reset_relative_trajectory(obj, relative_trajectory)
+            warning("Only use this function in tests!")
+            obj.rel_trajectory_array = relative_trajectory;
+        end
 
     end
     
