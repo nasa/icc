@@ -149,9 +149,9 @@ problem = createOptimProblem('fmincon', 'objective', fun, ...
 % [x,fval,exitflag,output] = fmincon(fun,initial_conditions,A,b,Aeq,beq,lb,ub,nonlcon,options);
 
 %% Global Search
-disp("Global search")
-gs = GlobalSearch('Display','iter');
-[x, fval, exitflag, output] = run(gs,problem);
+% disp("Global search")
+% gs = GlobalSearch('Display','iter');
+% [x, fval, exitflag, output] = run(gs,problem);
 
 %% Multistart with 50 starting points
 % disp("Multistart")
@@ -159,13 +159,13 @@ gs = GlobalSearch('Display','iter');
 % [x, fval, exitflag, output] = run(ms,problem,50);
 
 %% Pattern Search
-% disp("Pattern search")
-% psoptions = optimoptions('fmincon',... %     'SpecifyObjectiveGradient',true,...
-%     'Display', 'Iter',...
-%     'CheckGradients', true, ...
-%     'UseParallel', true);
-%     % Missing OutputFcn for now
-% [x, fval, exitflag, output] = patternsearch(fun,initial_conditions,A,b,Aeq,beq,lb,ub,psoptions);
+disp("Pattern search")
+psoptions = optimoptions('fmincon',... %     'SpecifyObjectiveGradient',true,...
+    'Display', 'Iter',...
+    'CheckGradients', true, ...
+    'UseParallel', true);
+    % Missing OutputFcn for now
+[x, fval, exitflag, output] = patternsearch(fun,initial_conditions,A,b,Aeq,beq,lb,ub,psoptions);
 
 %% Genetic Algorithn - does not quite work, need to refine UBs and LBs?
 % disp("Genetic algorithm")
