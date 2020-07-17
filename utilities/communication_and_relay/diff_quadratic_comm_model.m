@@ -48,11 +48,19 @@ function [db_dx1, db_dx2] = diff_quadratic_comm_model(x1, x2, dir, bandwidth_par
          db_dx1_noocclusion = db_dx1_noocclusion./scaling_factor;
          db_dx2_noocclusion = -db_dx1_noocclusion;
     end
-    [occluded, doccluded_dx1, doccluded_dx2] = occlusion_test(x1, x2);    
-    % Bandwidth is bw_nooc*(1-occluded). So if we have the derivative of the
-    % occluded param, the derivative is
-    % dbw_dx1_full = dbw_dx1_nooc*(1-occluded) - bw_nooc*doccluded_dx1
-    db_dx1 = db_dx1_noocclusion*(1-occluded) - current_bandwidth*doccluded_dx1(dir);
-    db_dx2 = db_dx2_noocclusion*(1-occluded) - current_bandwidth*doccluded_dx2(dir);
+    occluded = occlusion_test(x1, x2);
+    if occluded==0
+        db_dx1 = db_dx1_noocclusion;
+        db_dx2 = db_dx2_noocclusion; % Strong assumption+discontinuity, but allows us to use lamdbda occlusion test
+    else
+        [occluded, doccluded_dx1, doccluded_dx2] = occlusion_test(x1, x2);    
+        % Bandwidth is bw_nooc*(1-occluded). So if we have the derivative of the
+        % occluded param, the derivative is
+        % dbw_dx1_full = dbw_dx1_nooc*(1-occluded) - bw_nooc*doccluded_dx1
+        % Recall that current bandwidth is already multiplied by
+        % (1-occluded), so we need to take that out in the rhs
+        db_dx1 = db_dx1_noocclusion*(1-occluded) - current_bandwidth/(1-occluded)*doccluded_dx1(dir);
+        db_dx2 = db_dx2_noocclusion*(1-occluded) - current_bandwidth/(1-occluded)*doccluded_dx2(dir);
+    end
 
 end
