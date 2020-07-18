@@ -176,7 +176,7 @@ randix = 0;
 for k=1:K
     for n1=1:N
         for n2=1:N
-            if swarmb.Communication.dual_bandwidths_and_memories(k, n1, n2)>100*eps
+            if abs(swarmb.Communication.dual_bandwidths_and_memories(k, n1, n2))>100*eps
                 randix = randix+1;
                 k_ix(randix) = k;
                 n1_ix(randix) = n1;
@@ -1252,7 +1252,7 @@ for k=1:K
     for n=1:N
         for l=1:3
             dk_dloc_ix = K*N*(l-1) + K*( n-1) + k;
-            if dk_dlocation_obs(dk_dloc_ix) >100*eps
+            if abs(dk_dlocation_obs(dk_dloc_ix)) >100*eps
                 dk_dlocation_obs(dk_dloc_ix);
                 randix = randix+1;
                 k_ix(randix) = k;
@@ -1279,17 +1279,13 @@ if randix<num_locations_to_perturb
     n_ix(randix+1:num_locations_to_perturb)   = randi(N, num_locations_to_perturb-randix,1);
 end
 
-
-
 numerical_gradient = zeros(num_locations_to_perturb, length(gradient_steps));
 gradient_reward_wrt_pos = cell(num_locations_to_perturb, length(gradient_steps)+1);
 legend_labels = cell(length(gradient_steps)+1,1);
 
-
 % Perturb locations
 rel_trajectory_array = swarmd.rel_trajectory_array;
 sample_times = swarmd.sample_times;
-
 
 for delta_pose_ix = 1:length(gradient_steps)
     fprintf("Delta pose %d/%d\n", delta_pose_ix, length(gradient_steps))
@@ -1303,14 +1299,14 @@ for delta_pose_ix = 1:length(gradient_steps)
         rel_trajectory_array_plus(k_ix(loc), dir_ix(loc), n_ix(loc))  = rel_trajectory_array(k_ix(loc), dir_ix(loc), n_ix(loc)) + delta_pos; 
         rel_trajectory_array_minus(k_ix(loc), dir_ix(loc), n_ix(loc)) = rel_trajectory_array(k_ix(loc), dir_ix(loc), n_ix(loc)) - delta_pos; 
 
-        % Compute perturbed bandwidths 
+        % Compute unperturbed bandwidths 
         bandwidths_and_memories = zeros(K,N,N);
 
         for k=1:K-1
             for i=1:N
                 for j=1:N
                     if j~=i
-                        bandwidths_and_memories(k,i,j)= bandwidth_model(rel_trajectory_array(k,1:3,i),       rel_trajectory_array(k,1:3,j))* (sample_times(k+1)-sample_times(k));
+                        bandwidths_and_memories(k,i,j)= bandwidth_model(rel_trajectory_array(k,1:3,i), rel_trajectory_array(k,1:3,j))* (sample_times(k+1)-sample_times(k));
                     elseif ~isnan(swarm.Parameters.available_memory(i)) && ~isinf(swarm.Parameters.available_memory(i))
                         bandwidths_and_memories(k,i,j)= swarm.Parameters.available_memory(i);
                     else
@@ -1320,7 +1316,7 @@ for delta_pose_ix = 1:length(gradient_steps)
             end
         end
 
-        % Compute the perturbed bw numerically
+        % Compute the perturbed reward numerically
         try
             localswarm_plus = copy(swarmd);
             localswarm_plus.test_only_reset_relative_trajectory(rel_trajectory_array_plus);

@@ -26,7 +26,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [swarm, goal, problem_solve_time] = observation_and_communication_optimizer(asteroid_model, swarm, bandwidth_model, data_scaling_factor)
+function [swarm, goal, problem_solve_time] = observation_and_communication_optimizer(asteroid_model, swarm, bandwidth_model, data_scaling_factor, verbose)
 
 % How to best collect observations and route data from a number of science
 % spacecraft to a carrier s/c, given an observation model and a network
@@ -47,6 +47,9 @@ function [swarm, goal, problem_solve_time] = observation_and_communication_optim
 % swarm, the updated Swarm object
 % goal, the optimal goal
 prelim_tic = tic;
+if nargin<5
+    verbose=0;
+end
 
 if nargin<4
     data_scaling_factor = NaN; % Just a placeholder, will fix once we have instrument data rates
@@ -67,8 +70,9 @@ N = swarm.get_num_spacecraft();
 % observable_points is a N by K cell matrix. observable_points(i,k) is the
 % list of points that spacecraft i can observe at time k
 
-
-disp("Get observability and reward")
+if verbose
+    disp("Get observability and reward")
+end
 op_tic = tic;
 observable_points = swarm.Observation.observable_points; % Get an empty container of the right size from the constructor
 
@@ -142,7 +146,9 @@ n_observed_vertices = length(observable_vertices);
 observable_points_time = toc(observabletic);
 
 %% Compute bandwidths
-disp("Compute bandwidths")
+if verbose
+    disp("Compute bandwidths")
+end
 % We will never need more than this memory
 max_memory = sum(sum(swarm.Observation.flow));
 
@@ -190,9 +196,11 @@ if num_carriers>1
     disp("There is more than one carrier spacecraft. Is this intended?")
 end
 
-problem_prelim_time = toc(prelim_tic)
+problem_prelim_time = toc(prelim_tic);
 %% Pose the problem
-disp("Pose the problem")
+if verbose
+    disp("Pose the problem");
+end
 setup_tic = tic;
 
 % The code below merges relay optimization code from
@@ -314,7 +322,9 @@ eq_entry_ix = 1;
 ineq_constraint_ix = 1;
 ineq_entry_ix = 1;
 
-disp("Constraints")
+if verbose
+    disp("Constraints");
+end
 
 % Inequality constraint 1: Observe every point at most once
 %     sum(sum(observations(v,:,:))) <=1
@@ -423,21 +433,22 @@ for i=1:1:N
 end
   
 %% Build the equality matrix
-
-disp("Build matrices")
+if verbose
+    disp("Build matrices")
+end
 % First, sanity checks
 if eq_constraint_ix-1 ~= num_equality_constraints
-    fprintf("ERROR: number of equality constraints is unexpected (expected %d, actual %d)\n", num_equality_constraints, eq_constraint_ix-1);
+    error("ERROR: number of equality constraints is unexpected (expected %d, actual %d)\n", num_equality_constraints, eq_constraint_ix-1);
 end
 if eq_entry_ix-1 ~= num_equality_entries
-    fprintf("ERROR: number of equality entries is unexpected (expected %d, actual %d)\n", num_equality_entries, eq_entry_ix-1);
+    error("ERROR: number of equality entries is unexpected (expected %d, actual %d)\n", num_equality_entries, eq_entry_ix-1);
 end
 
 if ineq_constraint_ix-1 ~= num_inequality_constraints
-    fprintf("ERROR: number of inequality constraints is unexpected (expected %d, actual %d)\n", num_inequality_constraints, ineq_constraint_ix-1);
+    error("ERROR: number of inequality constraints is unexpected (expected %d, actual %d)\n", num_inequality_constraints, ineq_constraint_ix-1);
 end
 if ineq_entry_ix-1 ~= num_inequality_entries
-    fprintf("ERROR: number of inequality entries is unexpected (expected %d, actual %d)\n", num_inequality_entries, ineq_entry_ix-1);
+    error("ERROR: number of inequality entries is unexpected (expected %d, actual %d)\n", num_inequality_entries, ineq_entry_ix-1);
 end
 
 A_eq = sparse(A_eq_sparse(:,1), A_eq_sparse(:,2), A_eq_sparse(:,3), num_equality_constraints, num_variables);
@@ -446,13 +457,17 @@ A_ineq = sparse(A_ineq_sparse(:,1), A_ineq_sparse(:,2), A_ineq_sparse(:,3), num_
 
 problem_setup_time = toc(setup_tic);
 %% Solve the problem
-disp("Solve the problem")
+if verbose
+    disp("Solve the problem")
+end
 solve_tic = tic;
 [X, goal, exitflag, output, lambdas] = linprog(f, A_ineq, b_ineq, A_eq, b_eq, lb, ub);
 % can also use linprog (esp. the MOSEK version) with identical syntax
 problem_solve_time = toc(solve_tic);
 %% Unpack the variables
-disp("Unpack the variables")
+if verbose
+    disp("Unpack the variables")
+end
 unpack_tic = tic;
 observations_flat = X(1:M);
 
@@ -474,8 +489,9 @@ end
 
 
 %% Set the output
-disp("Set the output")
-
+if verbose
+    disp("Set the output")
+end
 % Observations
 
 swarm.Observation.observed_points = zeros(N,K); % Points observed
@@ -485,7 +501,6 @@ swarm.Observation.priority = zeros(N,K);  % Reward
 
 swarm.Observation.flow = zeros(N,K);
 swarm.Observation.priority = zeros(N,K);
-warning("CHECK SENSITIVITY!");
 swarm.Observation.sensitivity = zeros(size(swarm.Observation.sensitivity));
 
 t_fill_out = tic;
@@ -495,7 +510,7 @@ for obs_index = 1:M
     j = p_s(obs_index); % Observing spacecraft
     reward = w(obs_index); % Reward
     if observations_flat(obs_index)>observation_threshold
-        if swarm.Observation.observed_points(j,k) ~= 0
+        if swarm.Observation.observed_points(j,k) ~= 0 && verbose
             fprintf("SC %d, time %d: more than one point observed! (old: %d w. total flow %f, new: %d with flow %f))\n",j,k,swarm.Observation.observed_points(j,k),swarm.Observation.flow(j,k),v,observations_flat(obs_index)*(data_rates(j,k)*data_scaling_factor))
         end
         swarm.Observation.observed_points(j,k) = v;
@@ -549,17 +564,16 @@ swarm.Communication.dual_bandwidths_and_memories = dual_bandwidth_and_memory/dat
 
 problem_unpack_time = toc(unpack_tic);
 
-warning("If you flip the goal, shouldn't you flip the gradients?!")
+% warning("If you flip the goal, shouldn't you flip the gradients?!")
+% warning("NOT REALLY, the line above this warn should be removed");
+
+
 goal = -goal;
 
-% % Blueprint for recovering science_delivered. 
-% flows_to_carrier = flows(:,:,end);
-% flows_from_carrier = squeeze(flows(:,end,:));
-% delivered_science_recovered = zeros(K,1);
-% delivered_science_recovered(2:end) = sum(flows_to_carrier(1:end-1,:),2)-sum(flows_from_carrier(2:end,:),2)+effective_science(end,1:end-1)';
-% 
-%assert(norm(delivered_science_recovered-delivered_science)<1e-3)
-
-% TODO BUGFIX: What are the units for the data rates? Definitely not bits
-% per second!! I don;t think we will be collecting GBPS. More like
-% GBPobservation, so maybe we do not need to multiply by time.
+% If you are here, you may be wondering why we flip the sign of the goal
+% but not the sign of the observations. It works, I promise. See the tests
+% in test_integrated_gradient, and try to flip either
+% swarm.Communication.dual_bandwidths_and_memories
+% or
+% swarm.Observation.sensitivity
+% to see that it works as is. -F

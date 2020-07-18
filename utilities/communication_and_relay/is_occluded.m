@@ -32,7 +32,6 @@ function [occluded, doccluded_dx1, doccluded_dx2] = is_occluded(x1, x2, spherica
         doccluded_dx2 = zeros(3,1);
     elseif distance < spherical_asteroid_parameters.min_radius
 %         disp("Fully occluded")
-        spherical_asteroid_parameters.min_radius
         occluded = 1;
         doccluded_dx1 = zeros(3,1);
         doccluded_dx2 = zeros(3,1);
@@ -44,10 +43,10 @@ function [occluded, doccluded_dx1, doccluded_dx2] = is_occluded(x1, x2, spherica
     else
         disp("Potentially occluded")
         occluded = (distance-spherical_asteroid_parameters.min_radius)/(spherical_asteroid_parameters.max_radius-spherical_asteroid_parameters.min_radius);
-        if occluded<1 && occluded>0
-            disp(" Occluded")
-            occluded
-        end
+%         if occluded<1 && occluded>0
+%             disp(" Occluded")
+%             occluded
+%         end
         doccluded_dx1 = ddistance_dx1/(spherical_asteroid_parameters.max_radius-spherical_asteroid_parameters.min_radius);
         doccluded_dx2 = ddistance_dx2/(spherical_asteroid_parameters.max_radius-spherical_asteroid_parameters.min_radius);
     end
