@@ -80,15 +80,28 @@ observable_points_values = observable_points;
 observable_points_gradients = observable_points;
 observable_points_gradients_next = observable_points;
 
+tocvec = 0;
+tocscalar = 0;
 for i_sc = swarm.which_trajectories_set()
     parfor i_time = 1:K
+        ticvec = tic;
         [observable_points{i_sc, i_time}, ...
             observable_points_values{i_sc, i_time}, ...
             observable_points_gradients{i_sc, i_time}, ...
             observable_points_gradients_next{i_sc, i_time}] ...
-            = get_observable_points(asteroid_model, swarm, i_time, i_sc) ;
+            = get_observable_points_vectorized(asteroid_model, swarm, i_time, i_sc) ;
+        tocvec = tocvec+toc(ticvec);
+%         ticscalar = tic;
+%         [observable_points{i_sc, i_time}, ...
+%             observable_points_values{i_sc, i_time}, ...
+%             observable_points_gradients{i_sc, i_time}, ...
+%             observable_points_gradients_next{i_sc, i_time}] ...
+%             = get_observable_points(asteroid_model, swarm, i_time, i_sc) ;
+%         tocscalar = tocscalar+ toc(ticscalar);
+%         assert(all(size(observable_pointsv{i_sc, i_time}) == size(observable_points{i_sc, i_time})), "Observable points do not match (time %d, sc %d)!", i_sc, i_time)
     end
 end
+
 swarm.Observation.observable_points = observable_points;
 
 observable_points;
@@ -255,7 +268,6 @@ for k = 1:K-1
     end
 end
 
-dobservations_dspacecraft;
 % assert(p==M, "ERROR: mismatch in length of observation variables")
 
 % In the interest of speed, we also build an index for the variables
@@ -520,20 +532,26 @@ for obs_index = 1:M
     swarm.Observation.priority(j,k) = swarm.Observation.priority(j,k)+ observations_flat(obs_index)*reward;
     % There should be only one nonzero entry per (sc, time), due to TUM
     
-    % sensitivity: value of v times dobservations_dspacecraft. sensitivity = zeros(N,K,1,3);
-    
-    if X(obs_index) ~= 0
-        if nnz(dobservations_dspacecraft(:, :, obs_index,:)) > 0
-            for k=1:K
-                if nnz(dobservations_dspacecraft(:, k, obs_index,:)) > 0 
-                    for i=1:N
-                        swarm.Observation.sensitivity(k, i, :) = swarm.Observation.sensitivity(k, i,:) + observations_flat(obs_index)*reshape(dobservations_dspacecraft(i, k, obs_index,:), [1,1,3]);
-                    end
-                end
-            end
-        end
+%     if X(obs_index) ~= 0
+%         if nnz(dobservations_dspacecraft(:, :, obs_index,:)) > 0
+%             for k=1:K
+%                 if nnz(dobservations_dspacecraft(:, k, obs_index,:)) > 0 
+%                     for i=1:N
+%                         swarm.Observation.sensitivity(k, i, :) = swarm.Observation.sensitivity(k, i,:) + observations_flat(obs_index)*reshape(dobservations_dspacecraft(i, k, obs_index,:), [1,1,3]);
+%                     end
+%                 end
+%             end
+%         end
+%     end
+end
+% sensitivity: value of v times dobservations_dspacecraft. sensitivity = zeros(N,K,1,3);
+
+for k=1:K
+    for i=1:N
+        swarm.Observation.sensitivity(k, i, :) = swarm.Observation.sensitivity(k, i, :) + reshape(observations_flat'*reshape(dobservations_dspacecraft(i, k, :,:), [M, 3]), [1,1,3]);
     end
 end
+
 toc_fill_out = toc(t_fill_out);
 
 % if X(obs_index) ~= 0

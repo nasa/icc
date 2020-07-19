@@ -51,7 +51,7 @@ end
 [wa,dwf] = fast_differentiable_window(a,lower_edge, upper_edge, lower_width, upper_width);
 
 % TODO vectorize
-dwa_dv1 = dwf.*da_dv1;
-dwa_dv2 = dwf.*da_dv2;
+dwa_dv1 = repmat(dwf, 1,3).*da_dv1;
+dwa_dv2 = repmat(dwf, 1,3).*da_dv2;
 
 end

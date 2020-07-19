@@ -13,6 +13,7 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
         state_transition_matrix % [6 x 6 x N_TIMESTEPS x N_SPACECRAFT] Array containing the state transition matrix of the spacecraft
         state_transition_matrix_frame % {N_SPACECRAFT} Cell array containing the frame in which the STM was computed
         sun_state_array % [6 X N_TIMESTEPS] Array containing the trajectory of the Sun in IAU_EROS frame
+        all_trajectories_set % true | false; indicates whether trajectories have been computed
     end
     
     properties(SetAccess=public, GetAccess=public)
@@ -22,7 +23,6 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
     end
     
     properties(SetAccess=private, GetAccess=private)
-        all_trajectories_set % true | false; indicates whether trajectories have been computed
         unset_trajectories % indicies of trajectories that have not been set 
     end
     
@@ -74,14 +74,16 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             end
         end
 
-        function obj = parallel_integrate_trajectories(obj, ErosGravity, sc_initial_state, abs_or_rel)
+        function obj = parallel_integrate_trajectories(obj, ErosGravity, sc_initial_state, abs_or_rel, stop_if_inside_reference_radius)
             for i_sc = 1:size(sc_initial_state,1)
                 obj.unset_trajectories(obj.unset_trajectories==i_sc)=[]; % remove this trajectory from
             end
             if isempty(obj.unset_trajectories())
                 obj.all_trajectories_set = true;
             end
-
+           if nargin<5
+                stop_if_inside_reference_radius = false;
+            end
             if nargin<4
                 abs_or_rel = 'absolute'; % which frame to conduct the integration in
             end
@@ -91,6 +93,9 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             stms = cell(size(sc_initial_state,1),1);
             clear_of_radius = zeros(size(sc_initial_state,1),1);
             parfor i_sc = 1:size(sc_initial_state,1)
+                if stop_if_inside_reference_radius
+                    warning('error', 'SBDT:harmonic_gravity:inside_radius');
+                end
                 try
                     [~, abs_trajs{i_sc}, rel_trajs{i_sc}, modes{i_sc}, stms{i_sc}] = ErosGravity.integrate(obj.sample_times, transpose(sc_initial_state(i_sc,:)), abs_or_rel );
                     clear_of_radius(i_sc) = 1;
@@ -204,7 +209,7 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             N = obj.get_num_spacecraft(); 
             K = obj.get_num_timesteps(); 
             
-            if length(fieldnames(obj))~=9
+            if length(fieldnames(obj))~=10
                 warning('Extra fields added to object!')
                 valid = false; 
             elseif length(obj.Parameters.available_memory)~=obj.get_num_spacecraft()

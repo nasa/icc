@@ -63,6 +63,10 @@ if flag_use_instruments==true
         observable_points_gradients_curr = zeros(Nv, 3);
         observable_points_gradients_next= zeros(Nv, 3);
         
+        sun_angle_valid = 0;
+        range_valid = 0;
+        sc_angle_valid = 0;
+        
         for i_v = 1:Nv
             
             r_vertices = asteroid_vertices(i_v, :);
@@ -71,6 +75,7 @@ if flag_use_instruments==true
             % Check sun angle range
             sun_angle = get_angle(r_normal, sun_position-r_vertices);
             if is_in_range_angle(sun_angle, sun_angle_ranges)
+                sun_angle_valid = sun_angle_valid+1;
                 
                 % Check altitude range
     %             sc_altitude = norm(sc_position - r_vertices); % height of spacecraft above point i_v
@@ -79,7 +84,7 @@ if flag_use_instruments==true
                 [range_margin, drange_margin] = range_check(sc_position, r_vertices, distance_ranges, distance_tolerances);
                 [range_margin_next, drange_margin_next] = range_check(next_sc_position, r_vertices, distance_ranges, distance_tolerances);
                 if (range_margin>detection_threshold) && (range_margin_next>detection_threshold)
-
+                    range_valid = range_valid+1;
                     % Check sc angle range
     %                 sc_angle = get_angle(r_normal, sc_position-r_vertices);
     %                 next_sc_angle = get_angle(r_normal, next_sc_position-r_vertices);
@@ -87,7 +92,8 @@ if flag_use_instruments==true
                     [angle_margin, dangle_margin] = angle_check(sc_position-r_vertices, r_normal, sc_angle_ranges, sc_angle_tolerances);
                     [angle_margin_next, dangle_margin_next] = angle_check(sc_position-r_vertices, r_normal, sc_angle_ranges, sc_angle_tolerances);
                     if (angle_margin>detection_threshold) && (angle_margin_next>detection_threshold)
-%                         disp("SC in sun angle range, vertex OK")
+                        sc_angle_valid = sc_angle_valid+1;
+                        %                         disp("SC in sun angle range, vertex OK")
                         % Vertex has passed tests, it must be observable
 %                         vertex_observability_status(i_v) = 1.;
                         vertex_observability_status(i_v) = angle_margin*range_margin; %*angle_margin_next*range_margin_next;
@@ -115,6 +121,7 @@ if flag_use_instruments==true
             observable_points_gradients_next_sc(i,:) = observable_points_gradients_next(pt_id, :);
         end
 %         fprintf("Found %d observable points", length(observable_points));
+%         fprintf("Sun angle valid %d, range valid %d, sc angle valid %d\n", sun_angle_valid, range_valid, sc_angle_valid);
         if isempty(observable_points)
             observable_points = []; 
         end

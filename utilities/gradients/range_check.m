@@ -27,16 +27,17 @@ function [range_valid, drange_valid] = range_check(sc_position, r_vertices, rang
 % the min allowable valies.
 % Range tolerances is a vector of cells, each containing an entry for the
 % tolerance (applied both to max and min)
-    range_valid = -inf;
-    drange_valid = zeros(3,1);
+    assert(size(sc_position,2) == 3, "first entry should be 1 by 3 or Nv by 3")
+    assert(size(r_vertices,2) == 3, "second entry should be Nv by 3")
+    Nv = size(r_vertices,1);
+    range_valid = -inf*ones(Nv,1);
+    drange_valid = zeros(Nv,3);
     for i = 1:length(range_cell)
 %         disp("range")
 %         i
         % TODO vectorize
         [new_range_valid,new_drange_valid, ~] = fast_differentiable_window_of_norm_difference(sc_position, r_vertices, range_cell{i}(1),range_cell{i}(2), range_tolerances{i});
-        if new_range_valid >=range_valid
-            range_valid = new_range_valid;
-            drange_valid = new_drange_valid;
-        end
+        drange_valid(new_range_valid>range_valid,:) = new_drange_valid(new_range_valid>range_valid,:);
+        range_valid = max(range_valid, new_range_valid);
     end
 end
