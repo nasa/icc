@@ -126,7 +126,7 @@ data_scaling_factor = 1e6;
 
 % Swarm = observed_points_optimizer_main(ErosModel, Swarm, bandwidth_model);
 tic
-[Swarm, goal, problem_solve_time] = observation_and_communication_optimizer(ErosGravity, Swarm, bandwidth_model, data_scaling_factor);
+[Swarm, goal, problem_solve_time] = observation_and_communication_optimizer(ErosGravity, Swarm, bandwidth_model, data_scaling_factor, true);
 toc
 problem_solve_time
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

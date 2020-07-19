@@ -29,14 +29,19 @@ function [normdiff,dnormdiff_dv1, dnormdiff_dv2] = fast_differentiable_norm_of_d
 %   dnormdiff_dv2(v1,v2) is a vector of the same length as
 %   v1, containing d(norm(v1-v2))/d(v2)
 
-assert(all(size(v1)==[1,3]), "ERROR: v1 should be a row vector of length 3");
-assert(size(v2,2)==3, "ERROR: v2 should be a matrix with three columns and one row per vector of interest");
+assert(all(size(v1,2)==3), "ERROR: v1 should be a matrix with three rows and one column per vector of interest");
+assert(size(v2,2)==3, "ERROR: v2 should be a matrix with three rows and one column per vector of interest");
+if size(v1,1) == 1
+    v1 = repmat(v1, size(v2,1),1);
+end
+assert(all(size(v1)==size(v2)), "v1 and v2 should have the same size, OR v1 should be a 1x3 vector");
 
 
 % TODO vectorize (this should be norm(v1(i,:)-v2(j,:));
-%normdiff = sqrt(v1'*v2); % This is a row vector of the same length as
+difference = v1-v2;
+normdiff = vecnorm(difference,2,2); % This is a row vector of the same length as
 %size(v2,2). normdiff(i) is the norm of v1-v2(:,i)
-normdiff = norm(v1-v2,2);
+% normdiff = norm(v1-v2,2);
 
 % vectorized
 % v1-v2 is of the same size as v2. Each column is v1-v2(:,i)
