@@ -70,7 +70,7 @@ time_vector = 0:delta_t:total_t; % sample times
 
 
 % Maximum time for the trust region integrated orbit optimizer, in seconds
-max_optimization_time = 1800;
+max_optimization_time = Inf;
 
 sc_max_memory = 8*20*1e9.*ones(1,n_spacecraft); % 20 GB max memory for instrument spacecraft
 sc_max_memory(1,carrier_index) = 8*10000*1e9; % Memory limit for carrier spacecraft
@@ -109,13 +109,27 @@ end
 if length(carrier_index)<1
     error("No carrier! This will not work")
 end
-carrier_initial_conditions = initialize_carrier_orbit(ErosModel);
-Swarm.integrate_trajectory(carrier_index, ErosModel, carrier_initial_conditions);
 
-% Initalize non-carrier trajectories
 trial_initial_states = initialize_random_orbits(n_spacecraft, ErosModel);
-for i_sc = setdiff(1:n_spacecraft, Swarm.get_indicies_of_type(0))
-    Swarm.integrate_trajectory(i_sc, ErosModel, trial_initial_states(i_sc, :));
+carrier_initial_conditions = initialize_carrier_orbit(ErosModel);
+trial_initial_states(carrier_index,:) = carrier_initial_conditions;
+% 
+% Swarm.integrate_trajectory(carrier_index, ErosModel, carrier_initial_conditions);
+% 
+% % Initalize non-carrier trajectories
+% for i_sc = setdiff(1:n_spacecraft, Swarm.get_indicies_of_type(0))
+%     Swarm.integrate_trajectory(i_sc, ErosModel, trial_initial_states(i_sc, :));
+% end
+
+try
+    Swarm.parallel_integrate_trajectories(ErosModel, trial_initial_states, 'absolute');
+catch ME
+    if (strcmp(ME.identifier, 'SBDT:harmonic_gravity:inside_radius'))
+        %warning("ERROR: something went wrong with integrating the trajectory. Inspect the warnings above.")
+        warning("ERROR: Trajectory dipped inside reference radius. Returning inf.");
+    else
+        rethrow(ME);
+    end
 end
 
 
@@ -133,7 +147,7 @@ warning('error', 'SBDT:harmonic_gravity:inside_radius')
 %                     Integrated Orbit Optimization                       %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
-[Swarm] = integrated_optimization(Swarm, ErosModel, bandwidth_parameters, max_optimization_time);
+[Swarm] = integrated_optimization(Swarm, ErosModel, bandwidth_parameters, max_optimization_time, false);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                           Show Combined Results                         %

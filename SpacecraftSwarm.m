@@ -73,6 +73,36 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
                 obj.integrate_trajectory(i_sc, ErosGravity, sc_initial_state, abs_or_rel);
             end
         end
+
+        function obj = parallel_integrate_trajectories(obj, ErosGravity, sc_initial_state, abs_or_rel)
+            for i_sc = 1:size(sc_initial_state,1)
+                obj.unset_trajectories(obj.unset_trajectories==i_sc)=[]; % remove this trajectory from
+            end
+            if isempty(obj.unset_trajectories())
+                obj.all_trajectories_set = true;
+            end
+
+            if nargin<4
+                abs_or_rel = 'absolute'; % which frame to conduct the integration in
+            end
+            abs_trajs = cell(size(sc_initial_state,1),1);
+            rel_trajs = cell(size(sc_initial_state,1),1);
+            modes = cell(size(sc_initial_state,1),1);
+            stms = cell(size(sc_initial_state,1),1);
+            parfor i_sc = 1:size(sc_initial_state,1)
+                [~, abs_trajs{i_sc}, rel_trajs{i_sc}, modes{i_sc}, stms{i_sc}] = ErosGravity.integrate(obj.sample_times, transpose(sc_initial_state(i_sc,:)), abs_or_rel );
+            end
+            for i_sc = 1:size(sc_initial_state,1)
+                obj.abs_trajectory_array(:,:,i_sc) = abs_trajs{i_sc};
+                obj.rel_trajectory_array(:,:,i_sc) = rel_trajs{i_sc};
+                obj.state_transition_matrix(:,:,:,i_sc) = stms{i_sc};
+                obj.state_transition_matrix_frame{i_sc} = modes{i_sc};
+                obj.unset_trajectories(obj.unset_trajectories==i_sc)=[]; % remove this trajectory from
+            end
+            if isempty(obj.unset_trajectories())
+                obj.all_trajectories_set = true;
+            end
+        end
         
         %%%%%%%%%%%%%%%%%% Integrate a single trajectory %%%%%%%%%%%%%%%%%%
         function obj = integrate_trajectory( obj, i_sc, ErosGravity, sc_initial_state, abs_or_rel)

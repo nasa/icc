@@ -27,7 +27,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [goal, gradient, dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dk_dlocation, dlocation_dic] = integrated_optimization_cost_function(swarm, sc_initial_condition_vector, initial_condition_scaling_factor, gravity_model, bandwidth_parameters)
+function [goal, gradient, dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dk_dlocation, dlocation_dic] = integrated_optimization_cost_function(swarm, sc_initial_condition_vector, initial_condition_scaling_factor, gravity_model, bandwidth_parameters, verbose)
 % function [goal] = integrated_optimization_cost_function(swarm, sc_initial_condition_vector, initial_condition_scaling_factor, gravity_model, bandwidth_parameters)
 
 % Cost function for GBO.
@@ -47,6 +47,10 @@ function [goal, gradient, dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dk_dlo
 %    relevant variables
 
 %% Default bandwidth model
+if nargin<6
+    verbose=false;
+end
+
 if nargin<5
     bandwidth_parameters.reference_bandwidth = 250000;
     bandwidth_parameters.reference_distance = 100000;
@@ -71,21 +75,36 @@ for sc = 1:N
 end
 
 %% Integrate traejctories
-for i_sc = 1:N
-    try
-        swarm.integrate_trajectory(i_sc, gravity_model, sc_initial_condition(:, i_sc)', 'absolute');
-    catch ME
-        if (strcmp(ME.identifier, 'SBDT:harmonic_gravity:inside_radius'))
-            %warning("ERROR: something went wrong with integrating the trajectory. Inspect the warnings above.")
-            goal = inf;
-            gradient = nan;
-            return
-        else
-            rethrow(ME);
-        end
+try
+    if verbose
+        disp(" CF: integrating trajectories")
+    end
+    swarm.parallel_integrate_trajectories(gravity_model, sc_initial_condition', 'absolute');
+catch ME
+    if (strcmp(ME.identifier, 'SBDT:harmonic_gravity:inside_radius'))
+        %warning("ERROR: something went wrong with integrating the trajectory. Inspect the warnings above.")
+        warning("ERROR: Trajectory dipped inside reference radius. Returning inf.");
+        goal = inf;
+        gradient = nan;
+        return
+    else
+        rethrow(ME);
     end
 end
-
+% for i_sc = 1:N
+%     try
+%         swarm.integrate_trajectory(i_sc, gravity_model, sc_initial_condition(:, i_sc)', 'absolute');
+%     catch ME
+%         if (strcmp(ME.identifier, 'SBDT:harmonic_gravity:inside_radius'))
+%             warning("ERROR: Trajectory %d dipped inside reference radius. Returning inf.", i_sc);
+%             goal = inf;
+%             gradient = nan;
+%     return
+%         else
+%             rethrow(ME);
+%         end
+%     end
+% end
 
 %% build bandwidth model
 %bandwidth_model = @(x1,x2) min(bandwidth_parameters.reference_bandwidth * (bandwidth_parameters.reference_distance/norm(x2-x1,2))^2, bandwidth_parameters.max_bandwidth*1e6); 
@@ -106,8 +125,13 @@ bandwidth_model = @(x1, x2) quadratic_comm_model(x1, x2, bandwidth_parameters,oc
 % taking the mean data rate, excluding zeros. We use the mean, as opposed
 % to the median, because we do _not_ want to throw out outlier instruments
 % generating a disproportionate amount of data.
-
-[swarm, goal] = observation_and_communication_optimizer(gravity_model, swarm, bandwidth_model);
+if verbose
+    disp(" CF: call optimizer")
+end
+[swarm, goal] = observation_and_communication_optimizer(gravity_model, swarm, bandwidth_model, NaN, verbose);
+if verbose
+    disp(" CF: gradient")
+end
 
 if nargout>1  % compute gradient
     [dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dk_dlocation, dlocation_dic] = compute_integrated_gradient(swarm, bandwidth_parameters,spherical_asteroid_parameters);
@@ -123,5 +147,7 @@ end
 
 % Minimize
 goal = -goal;
-
+if verbose
+    disp(" CF: done")
+end
 end

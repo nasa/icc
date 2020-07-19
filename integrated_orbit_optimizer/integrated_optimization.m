@@ -24,7 +24,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [swarm] = integrated_optimization(swarm, gravity_model, bandwidth_parameters, max_optimization_time)
+function [swarm, output] = integrated_optimization(swarm, gravity_model, bandwidth_parameters, max_optimization_time, verbose)
 % Optimizes all orbits by using a gradient-based trust region algorithm (fmincon).
 % For a given set of orbits, observations and relays are optimized by
 % calling observation_and_communication_optimizer
@@ -41,11 +41,14 @@ function [swarm] = integrated_optimization(swarm, gravity_model, bandwidth_param
 % Output:
 %  - swarm, a SpacecraftSwarm object with updated orbits.
 
-if nargin<3
+if nargin<5
+    verbose=false;
+end
+if nargin<4
     max_optimization_time = inf;
 end
 
-if nargin<2
+if nargin<3
     bandwidth_parameters.reference_bandwidth = 250000;
     bandwidth_parameters.reference_distance = 100000;
     bandwidth_parameters.max_bandwidth = 100*1e6;
@@ -55,9 +58,10 @@ addpath(genpath('../utilities/'))
 initialize_SBDT();
 
 % Empty inputs to the optimizer
-options = optimoptions('fmincon',... %     'SpecifyObjectiveGradient',true,...
+options = optimoptions('fmincon', ...
+    'SpecifyObjectiveGradient',true,...
     'Display', 'Iter',...
-    'CheckGradients', true, ...
+    'CheckGradients', false, ...
     'UseParallel', true, ...
     'PlotFcn', []);
 %     'PlotFcn', 'optimplotstepsize');
@@ -73,8 +77,6 @@ optvar_scaling_factor = [1e-4; 1e-4; 1e-4; 1; 1; 1];
 N = swarm.get_num_spacecraft();
 % Create initial conditions from Swarm fobject
 
-
-
 initial_conditions = zeros(6*N,1);
 for sc =1:N
     offset = 6*(sc-1);
@@ -82,22 +84,25 @@ for sc =1:N
     initial_conditions(1+offset:6+offset) = swarm.abs_trajectory_array(1,:,sc)'.*optvar_scaling_factor;
 end
 
-% One test call to the cost function
-[goal, gradient] = integrated_optimization_cost_function(swarm,initial_conditions, optvar_scaling_factor, gravity_model, bandwidth_parameters);
-% if (isnan(goal) || any(isnan(gradient)))
-if (isnan(goal))
-    error('ERROR: initial location is infeasible. fmincon will crash.')
-end
+% % One test call to the cost function
+% [goal, gradient] = integrated_optimization_cost_function(swarm,initial_conditions, optvar_scaling_factor, gravity_model, bandwidth_parameters);
+% % if (isnan(goal) || any(isnan(gradient)))
+
 
 % Proper cost function
-fun = @(params) integrated_optimization_cost_function(swarm, params, optvar_scaling_factor, gravity_model, bandwidth_parameters);
+if verbose
+    disp("Testing initial guess")
+end
+fun = @(params) integrated_optimization_cost_function(swarm, params, optvar_scaling_factor, gravity_model, bandwidth_parameters, verbose);
 
 % Try calling the "proper cost function"
 [goal, gradient] = fun(initial_conditions);
+if (isnan(goal))
+    error('ERROR: initial location is infeasible. fmincon will crash.')
+end
 % [goal] = fun(initial_conditions);
 
 % num_gradient = numerical_gradient(fun, relay_initial_condition, 1e-4);
-
 
 % Nonlinear constraint. We no longer integrate a second time - rather, we
 % check the ICs, and we throw an exception if the integrator ends up inside
@@ -114,6 +119,9 @@ min_distance_km = 10;
 % consistent with a circular orbit at min distance, never go closer than
 % min_distance, min speed is speed of an elliptical orbit with apocenter at
 % max_distance and pericenter at min_distance, at the apocenter.
+if verbose
+    disp("Setting up UB and LB")
+end
 ub = [];
 lb = [];
 max_speed_circ = sqrt(gravity_model.BodyModel.gravity.gm/min_distance_km)*1e3; % [m/s]
@@ -149,15 +157,15 @@ problem = createOptimProblem('fmincon', 'objective', fun, ...
     'options', options);
 % [x,fval,exitflag,output] = fmincon(fun,initial_conditions,A,b,Aeq,beq,lb,ub,nonlcon,options);
 
-%% Global Search
+% %% Global Search
 % disp("Global search")
 % gs = GlobalSearch('Display','iter');
 % [x, fval, exitflag, output] = run(gs,problem);
 
 %% Multistart with 50 starting points
-% disp("Multistart")
-% ms = MultiStart;
-% [x, fval, exitflag, output] = run(ms,problem,50);
+disp("Multistart")
+ms = MultiStart;
+[x, fval, exitflag, output] = run(ms,problem,100);
 
 %% Pattern Search
 %disp("Pattern search")
@@ -199,9 +207,14 @@ problem = createOptimProblem('fmincon', 'objective', fun, ...
 % disp("Simulated annealing")
 % [x, fval, exitflag, output] = simulannealbnd(fun, initial_conditions, lb, ub);
 
-% Vanilla fmincon
-disp("Local fmincon")
-[x,fval,exitflag,output] = fmincon(problem);
+%% Vanilla fmincon
+% disp("Local fmincon")
+% [x,fval,exitflag,output] = fmincon(problem);
+
+%%
+if verbose
+    disp(output);
+end
 
 %% Add the inputs to the swarm
 
