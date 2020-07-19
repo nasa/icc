@@ -33,7 +33,8 @@ clear, clc, close all, run ../startup.m  % refresh
 
 % Do you want to record video?
 record_video = true;
-videoname = ['ICC_integrated_',datestr(now,'yyyymmdd_HHMMSS'),'.mp4'];
+time_str = datestr(now,'yyyymmdd_HHMMSS');
+videoname = ['ICC_integrated_',time_str,'.mp4'];
 
 % Do you want to save the output of the optimization in 42 format?
 save_42_inputs = false;
@@ -76,9 +77,13 @@ sc_max_memory = 8*20*1e9.*ones(1,n_spacecraft); % 20 GB max memory for instrumen
 sc_max_memory(1,carrier_index) = 8*10000*1e9; % Memory limit for carrier spacecraft
 
 % Parameters for bandwidth model
-bandwidth_parameters.reference_bandwidth = 250000;
+bandwidth_parameters.reference_bandwidth = 10000;
 bandwidth_parameters.reference_distance = 100000;
 bandwidth_parameters.max_bandwidth = 100*1e6;
+
+% Parameters for trajectory bounds
+trajectory_bounds.max_distance_m = 120000;
+trajectory_bounds.min_distance_m = 15000;
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                       Initialize Eros Model                             %
@@ -147,8 +152,9 @@ warning('error', 'SBDT:harmonic_gravity:inside_radius')
 %                     Integrated Orbit Optimization                       %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
-[Swarm] = integrated_optimization(Swarm, ErosModel, bandwidth_parameters, max_optimization_time, true);
-
+[Swarm] = integrated_optimization(Swarm, ErosModel, bandwidth_parameters, max_optimization_time, trajectory_bounds, true);
+filename = "MultiStart_results_"+time_str;
+save(filename);
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                           Show Combined Results                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -27,8 +27,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [goal, gradient, dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dk_dlocation, dlocation_dic] = integrated_optimization_cost_function(swarm, sc_initial_condition_vector, initial_condition_scaling_factor, gravity_model, bandwidth_parameters, verbose)
-% function [goal] = integrated_optimization_cost_function(swarm, sc_initial_condition_vector, initial_condition_scaling_factor, gravity_model, bandwidth_parameters)
+function [goal, gradient, dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dk_dlocation, dlocation_dic] = integrated_optimization_cost_function(swarm, sc_initial_condition_vector, initial_condition_scaling_factor, gravity_model, bandwidth_parameters, trajectory_bounds, verbose)
 
 % Cost function for GBO.
 % Inputs
@@ -47,8 +46,13 @@ function [goal, gradient, dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dk_dlo
 %    relevant variables
 
 %% Default bandwidth model
-if nargin<6
+if nargin<7
     verbose=false;
+end
+
+if nargin<6
+    trajectory_bounds.max_distance_m = 120000;
+    trajectory_bounds.min_distance_m = 15000;
 end
 
 if nargin<5
@@ -74,7 +78,7 @@ for sc = 1:N
     sc_initial_condition(:,sc) = sc_initial_condition(:,sc)./initial_condition_scaling_factor;
 end
 
-%% Integrate traejctories
+%% Integrate traejctories, check for collisions, and for flying too far
 if verbose
     fprintf(" CF: integrating trajectories ")
 end
@@ -106,12 +110,25 @@ for i_sc = 1:N
     end
     try
         swarm.integrate_trajectory(i_sc, gravity_model, sc_initial_condition(:, i_sc)', 'absolute');
+        distances = vecnorm(swarm.abs_trajectory_array(:,1:3,i_sc),2,2);
+        if max(distances)> trajectory_bounds.max_distance_m
+            warning("ERROR: Trajectory %d went too far from asteroid (max distance %f m, bound %f m). Returning inf.", i_sc, max(distances), trajectory_bounds.max_distance_m);
+            goal = inf;
+            gradient = nan;
+            return
+        end
+        if min(distances) < trajectory_bounds.min_distance_m
+            warning("ERROR: Trajectory %d went too close to asteroid (min distance %f m, bound %f m). Returning inf.", i_sc, min(distances), trajectory_bounds.min_distance_m);
+            goal = inf;
+            gradient = nan;
+            return
+        end
     catch ME
         if (strcmp(ME.identifier, 'SBDT:harmonic_gravity:inside_radius'))
             warning("ERROR: Trajectory %d dipped inside reference radius. Returning inf.", i_sc);
             goal = inf;
             gradient = nan;
-    return
+            return
         else
             rethrow(ME);
         end

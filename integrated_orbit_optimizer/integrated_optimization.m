@@ -24,7 +24,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [swarm, output] = integrated_optimization(swarm, gravity_model, bandwidth_parameters, max_optimization_time, verbose)
+function [swarm, output] = integrated_optimization(swarm, gravity_model, bandwidth_parameters, max_optimization_time, trajectory_bounds, verbose)
 % Optimizes all orbits by using a gradient-based trust region algorithm (fmincon).
 % For a given set of orbits, observations and relays are optimized by
 % calling observation_and_communication_optimizer
@@ -41,8 +41,12 @@ function [swarm, output] = integrated_optimization(swarm, gravity_model, bandwid
 % Output:
 %  - swarm, a SpacecraftSwarm object with updated orbits.
 
-if nargin<5
+if nargin<6
     verbose=false;
+end
+if nargin<5
+    trajectory_bounds.max_distance_m = 120000;
+    trajectory_bounds.min_distance_m = 15000;
 end
 if nargin<4
     max_optimization_time = inf;
@@ -84,16 +88,11 @@ for sc =1:N
     initial_conditions(1+offset:6+offset) = swarm.abs_trajectory_array(1,:,sc)'.*optvar_scaling_factor;
 end
 
-% % One test call to the cost function
-% [goal, gradient] = integrated_optimization_cost_function(swarm,initial_conditions, optvar_scaling_factor, gravity_model, bandwidth_parameters);
-% % if (isnan(goal) || any(isnan(gradient)))
-
-
 % Proper cost function
 if verbose
     disp("Testing initial guess")
 end
-fun = @(params) integrated_optimization_cost_function(swarm, params, optvar_scaling_factor, gravity_model, bandwidth_parameters, verbose);
+fun = @(params) integrated_optimization_cost_function(swarm, params, optvar_scaling_factor, gravity_model, bandwidth_parameters, trajectory_bounds, verbose);
 
 % Try calling the "proper cost function"
 [goal, gradient] = fun(initial_conditions);
@@ -108,8 +107,8 @@ end
 % check the ICs, and we throw an exception if the integrator ends up inside
 % the reference ellipse.
 % TODO de-hardcode. These are in KM
-max_distance_km = 120;
-min_distance_km = 10;
+max_distance_km = trajectory_bounds.max_distance_m/1e3;
+min_distance_km = trajectory_bounds.min_distance_m/1e3;
 % nonlcon = @(params) communication_constraints(spacecraft,params, gravity_model,ctime,GM, max_distance, min_distance, optvar_scaling_factor);
 % relay_orbit_indices = 1:1:N;
 % nonlcon = @(params) communication_constraints(swarm,relay_orbit_indices, params, optvar_scaling_factor, gravity_model, max_distance, min_distance);
