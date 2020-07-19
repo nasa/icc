@@ -75,42 +75,51 @@ for sc = 1:N
 end
 
 %% Integrate traejctories
-try
-    if verbose
-        disp(" CF: integrating trajectories")
-    end
-    swarm.parallel_integrate_trajectories(gravity_model, sc_initial_condition', 'absolute');
-catch ME
-    if (strcmp(ME.identifier, 'SBDT:harmonic_gravity:inside_radius'))
-        %warning("ERROR: something went wrong with integrating the trajectory. Inspect the warnings above.")
-        warning("ERROR: Trajectory dipped inside reference radius. Returning inf.");
-        goal = inf;
-        gradient = nan;
-        return
-    else
-        rethrow(ME);
-    end
+if verbose
+    fprintf(" CF: integrating trajectories ")
 end
-if ~swarm.all_trajectories_set
-        warning("ERROR: Trajectory dipped inside reference radius. Returning inf.");
-        goal = inf;
-        gradient = nan;
-        return
-end
-% for i_sc = 1:N
-%     try
-%         swarm.integrate_trajectory(i_sc, gravity_model, sc_initial_condition(:, i_sc)', 'absolute');
-%     catch ME
-%         if (strcmp(ME.identifier, 'SBDT:harmonic_gravity:inside_radius'))
-%             warning("ERROR: Trajectory %d dipped inside reference radius. Returning inf.", i_sc);
-%             goal = inf;
-%             gradient = nan;
-%     return
-%         else
-%             rethrow(ME);
-%         end
+% try
+
+%     swarm.parallel_integrate_trajectories(gravity_model, sc_initial_condition', 'absolute');
+% catch ME
+%     if (strcmp(ME.identifier, 'SBDT:harmonic_gravity:inside_radius'))
+%         %warning("ERROR: something went wrong with integrating the trajectory. Inspect the warnings above.")
+%         warning("ERROR: Trajectory dipped inside reference radius. Returning inf.");
+%         goal = inf;
+%         gradient = nan;
+%         return
+%     else
+%         rethrow(ME);
 %     end
 % end
+% if ~swarm.all_trajectories_set || swarm.collision_with_asteroid(gravity_model)
+%     warning("ERROR: Trajectory dipped inside reference radius or crashed. Returning inf.");
+%     goal = inf;
+%     gradient = nan;
+%     return
+% else
+%     warning("All trajectories outside reference radius, continuing.");
+% end
+for i_sc = 1:N
+    if verbose
+        fprintf(" %d, ", i_sc);
+    end
+    try
+        swarm.integrate_trajectory(i_sc, gravity_model, sc_initial_condition(:, i_sc)', 'absolute');
+    catch ME
+        if (strcmp(ME.identifier, 'SBDT:harmonic_gravity:inside_radius'))
+            warning("ERROR: Trajectory %d dipped inside reference radius. Returning inf.", i_sc);
+            goal = inf;
+            gradient = nan;
+    return
+        else
+            rethrow(ME);
+        end
+    end
+end
+if verbose
+    fprintf("\n");
+end
 
 %% build bandwidth model
 %bandwidth_model = @(x1,x2) min(bandwidth_parameters.reference_bandwidth * (bandwidth_parameters.reference_distance/norm(x2-x1,2))^2, bandwidth_parameters.max_bandwidth*1e6); 

@@ -159,7 +159,10 @@ classdef SphericalHarmonicsGravityIntegrator_SBDT
                 Rot2BP_wPartials( time_horizon, start_state_relative, [], obj.constants, ...
                                    {sun;obj.BodyModel}, [], partials, simControls );
             if length(time_horizon)>2
-                assert(length(time_horizon)==length(time), "ERROR: Rot2BP_wPartials does not honor time")
+                if length(time_horizon)~=length(time)
+                    warning("WARNING: Rot2BP_wPartials does not honor time")
+                    warning("Requested time: %d to %d. Integrated time: %d to %d",time_horizon(1), time_horizon(end), time(1), time(end));
+                end
             end
             relative_traj = relative_traj'*1e3;
             state_transition_matrix = partials.dxf_dp{1};
