@@ -41,6 +41,7 @@ flag_use_instruments = true; % if false, will use simplified function, not deriv
 
 % Define useful function
 % get_angle =@(x,y) atan2(norm(cross(x(:), y(:))), dot(x(:), y(:))); % Returns angle between two vectors using tan
+% TODO vectorize
 get_angle =@(x,y) acos( dot(x(:), y(:)) / (norm(x(:)) * norm(y(:))) ); % Returns angle between two vectors using cos
 
 % Get information

@@ -20,17 +20,27 @@
 function [normdiff,dnormdiff_dv1, dnormdiff_dv2] = fast_differentiable_norm_of_difference(v1, v2)
 %DIFFERENTIABLE_NORM_OF_DIFFERENCE Returns functions to compute the norm of
 % the difference between two vectors, and its derivative.
-%   The function returns three functions:
+%   v1 is a 3x1 vector.
+%   v2 is a 3xNv vector.
+%   The function returns three values:
 %   Normdiff(v1,v2) is simply norm(v1-v2,2);
-%   dnormdiff_dv1(v1,v2) is a function that returns a vector of the same length as
+%   dnormdiff_dv1(v1,v2) is a vector of the same length as
 %   v1, containing d(norm(v1-v2))/d(v1)
-%   dnormdiff_dv2(v1,v2) is a function that returns a vector of the same length as
+%   dnormdiff_dv2(v1,v2) is a vector of the same length as
 %   v1, containing d(norm(v1-v2))/d(v2)
 
+assert(all(size(v1)==[3,1]), "ERROR: v1 should be a column vector of length 3");
+assert(size(v2,1)==3), "ERROR: v2 should be a matrix with three rows and one column per vector of interest");
 
+
+% TODO vectorize (this should be norm(v1(i,:)-v2(j,:));
+%normdiff = sqrt(v1'*v2); % This is a row vector of the same length as
+%size(v2,2). normdiff(i) is the norm of v1-v2(:,i)
 normdiff = norm(v1-v2,2);
 
-
+% vectorized
+% v1-v2 is of the same size as v2. Each column is v1-v2(:,i)
+% We want dnormdiff_dv1 = 1/normdiff(i)*(v1-v2(:,i));
 dnormdiff_dv1 = 1./normdiff.* (v1-v2);
 dnormdiff_dv2 = -1./normdiff.* (v1-v2);
 

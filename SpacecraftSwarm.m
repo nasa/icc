@@ -89,21 +89,38 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             rel_trajs = cell(size(sc_initial_state,1),1);
             modes = cell(size(sc_initial_state,1),1);
             stms = cell(size(sc_initial_state,1),1);
+            clear_of_radius = zeros(size(sc_initial_state,1),1);
             parfor i_sc = 1:size(sc_initial_state,1)
-                [~, abs_trajs{i_sc}, rel_trajs{i_sc}, modes{i_sc}, stms{i_sc}] = ErosGravity.integrate(obj.sample_times, transpose(sc_initial_state(i_sc,:)), abs_or_rel );
+                try
+                    [~, abs_trajs{i_sc}, rel_trajs{i_sc}, modes{i_sc}, stms{i_sc}] = ErosGravity.integrate(obj.sample_times, transpose(sc_initial_state(i_sc,:)), abs_or_rel );
+                    clear_of_radius(i_sc) = 1;
+                catch ME
+                    % Note that this will only be triggered if the
+                    % inside_radius warning is triggered _and_ if it has
+                    % been set as an error outside.
+                    if (strcmp(ME.identifier, 'SBDT:harmonic_gravity:inside_radius'))
+                        %warning("ERROR: something went wrong with integrating the trajectory. Inspect the warnings above.")
+                        warning("ERROR: Trajectory dipped inside reference radius.");
+                        clear_of_radius(i_sc) = 0;
+                    else
+                        rethrow(ME);
+                    end
+                end
             end
             for i_sc = 1:size(sc_initial_state,1)
-                obj.abs_trajectory_array(:,:,i_sc) = abs_trajs{i_sc};
-                obj.rel_trajectory_array(:,:,i_sc) = rel_trajs{i_sc};
-                obj.state_transition_matrix(:,:,:,i_sc) = stms{i_sc};
-                obj.state_transition_matrix_frame{i_sc} = modes{i_sc};
-                obj.unset_trajectories(obj.unset_trajectories==i_sc)=[]; % remove this trajectory from
+                if clear_of_radius(i_sc)
+                    obj.abs_trajectory_array(:,:,i_sc) = abs_trajs{i_sc};
+                    obj.rel_trajectory_array(:,:,i_sc) = rel_trajs{i_sc};
+                    obj.state_transition_matrix(:,:,:,i_sc) = stms{i_sc};
+                    obj.state_transition_matrix_frame{i_sc} = modes{i_sc};
+                    obj.unset_trajectories(obj.unset_trajectories==i_sc)=[]; % remove this trajectory from
+                end
+
             end
             if isempty(obj.unset_trajectories())
                 obj.all_trajectories_set = true;
             end
         end
-        
         %%%%%%%%%%%%%%%%%% Integrate a single trajectory %%%%%%%%%%%%%%%%%%
         function obj = integrate_trajectory( obj, i_sc, ErosGravity, sc_initial_state, abs_or_rel)
             obj.unset_trajectories(obj.unset_trajectories==i_sc)=[]; % remove this trajectory from

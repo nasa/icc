@@ -21,12 +21,18 @@
 
 function [range_valid, drange_valid] = range_check(sc_position, r_vertices, range_cell, range_tolerances)
 % RANGE_CHECK Checks if the norm of the difference between two vectors is inside a given window. 
+% sc_position is a 3x1 vector.
+% r_vertices is a 3xNv vector
+% Range cell is a vector of cells, each containing two entries for the max and
+% the min allowable valies.
+% Range tolerances is a vector of cells, each containing an entry for the
+% tolerance (applied both to max and min)
     range_valid = -inf;
     drange_valid = zeros(3,1);
     for i = 1:length(range_cell)
 %         disp("range")
 %         i
-        % 200m window
+        % TODO vectorize
         [new_range_valid,new_drange_valid, ~] = fast_differentiable_window_of_norm_difference(sc_position, r_vertices, range_cell{i}(1),range_cell{i}(2), range_tolerances{i});
         if new_range_valid >=range_valid
             range_valid = new_range_valid;

@@ -779,8 +779,9 @@ for loc =1:num_locations_to_perturb
     v2 = v2/norm(v2)*vl;
     
     [bandwidth] = quadratic_comm_model(v1, v2, bbandwidth_parameters);
-    analytical_gradient_v1(loc) = diff_quadratic_comm_model_x1(v1, v2, perturbation_direction, bbandwidth_parameters)*perturbation_sign;
-    analytical_gradient_v2(loc) = diff_quadratic_comm_model_x2(v1, v2, perturbation_direction, bbandwidth_parameters)*perturbation_sign;
+    [ag_v1, ag_v2] = diff_quadratic_comm_model(v1, v2, perturbation_direction, bbandwidth_parameters);
+    analytical_gradient_v1(loc) = ag_v1*perturbation_sign;
+    analytical_gradient_v2(loc) = ag_v2*perturbation_sign;
 
     for delta_pose_ix = 1:length(gradient_steps)
         delta_pos = gradient_steps(delta_pose_ix);
@@ -872,8 +873,9 @@ for loc =1:num_locations_to_perturb
     v2 = v2/norm(v2)*vl;
     
     [bandwidth] = quadratic_comm_model(v1, v2, bbandwidth_parameters, occlusion_test);
-    analytical_gradient_v1(loc) = diff_quadratic_comm_model_x1(v1, v2, perturbation_direction, bbandwidth_parameters, occlusion_test)*perturbation_sign;
-    analytical_gradient_v2(loc) = diff_quadratic_comm_model_x2(v1, v2, perturbation_direction, bbandwidth_parameters, occlusion_test)*perturbation_sign;
+    [ag_v1, ag_v2] = diff_quadratic_comm_model(v1, v2, perturbation_direction, bbandwidth_parameters, occlusion_test);
+    analytical_gradient_v1(loc) = ag_v1*perturbation_sign;
+    analytical_gradient_v2(loc) = ag_v2*perturbation_sign;
 
     for delta_pose_ix = 1:length(gradient_steps)
         delta_pos = gradient_steps(delta_pose_ix);

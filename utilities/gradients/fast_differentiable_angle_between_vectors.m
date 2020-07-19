@@ -28,6 +28,10 @@ function [a,da_dv1, da_dv2] = fast_differentiable_angle_between_vectors(v1, v2)
 %  - da_dv2(v1,v2), the derivative of a wrt v2
 %
 
+% TODO vectorize.
+% dot(v1, v2) = v1'*v2
+% norm(v1) is OK
+% norm(v2) = v2'
 a = acos(1./(norm(v1).*norm(v2)) *dot(v1,v2));
 
 da_dv1 = -1/sqrt(1-(1/(norm(v1).*norm(v2)) *dot(v1,v2)).^2) * ...

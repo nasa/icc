@@ -50,8 +50,9 @@ for k=1:K
             end
             % Derivatives wrt all three directions are vectorized
             for dir=1:3
-                dbandwidth_dlocation_full(k,i,j,k,i,dir) = diff_quadratic_comm_model_x1(x1, x2, dir, bandwidth_parameters, occlusion_test_fun)*temp_time_step;
-                dbandwidth_dlocation_full(k,i,j,k,j,dir) = diff_quadratic_comm_model_x2(x1, x2, dir, bandwidth_parameters, occlusion_test_fun)*temp_time_step;
+                [diff_v1, diff_v2] = diff_quadratic_comm_model(x1, x2, dir, bandwidth_parameters, occlusion_test_fun);
+                dbandwidth_dlocation_full(k,i,j,k,i,dir) = diff_v1*temp_time_step;
+                dbandwidth_dlocation_full(k,i,j,k,j,dir) = diff_v2*temp_time_step;
             end
         end
     end

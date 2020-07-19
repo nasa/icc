@@ -23,6 +23,7 @@ function [range_valid, drange_valid] = angle_check(sc_position, r_vertices, rang
     range_valid = -inf;
     drange_valid = zeros(3,1);
     for i = 1:length(range_cell)
+        % TODO vectorize
         [new_range_valid,new_drange_valid, ~] = fast_differentiable_window_of_angle(sc_position, r_vertices, range_cell{i}(1),range_cell{i}(2), angle_tolerances{i});
         if new_range_valid >=range_valid
             range_valid = new_range_valid;

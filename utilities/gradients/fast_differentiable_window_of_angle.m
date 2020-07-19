@@ -44,11 +44,13 @@ if nargin<6
 end
 
 % Get the angle function
+% TODO vectorize
 [a,da_dv1, da_dv2] = fast_differentiable_angle_between_vectors(v1, v2);
 
 % Get the window function
 [wa,dwf] = fast_differentiable_window(a,lower_edge, upper_edge, lower_width, upper_width);
 
+% TODO vectorize
 dwa_dv1 = dwf.*da_dv1;
 dwa_dv2 = dwf.*da_dv2;
 

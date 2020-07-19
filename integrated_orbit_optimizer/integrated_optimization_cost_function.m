@@ -91,6 +91,12 @@ catch ME
         rethrow(ME);
     end
 end
+if ~swarm.all_trajectories_set
+        warning("ERROR: Trajectory dipped inside reference radius. Returning inf.");
+        goal = inf;
+        gradient = nan;
+        return
+end
 % for i_sc = 1:N
 %     try
 %         swarm.integrate_trajectory(i_sc, gravity_model, sc_initial_condition(:, i_sc)', 'absolute');

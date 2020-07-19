@@ -25,6 +25,7 @@ function [wnd,dwnd_dv1, dwnd_dv2] = fast_differentiable_window_of_norm_differenc
 %   "window" is the product of two logistic functions (as defined in
 %   "differentiable_window". It also returns the derivative of the function
 %   with respect to the vectors v1 and v2.
+%   v1 must be 3x1. v2 must be 3xNv, where Nv can be 1.
 %   This function takes four inputs:
 %   - lower_edge, the lower edge of the window
 %   - upper_edge, the upper edge of the window
@@ -42,11 +43,13 @@ if nargin<6
 end
 
 % Get the norm function
+% TODO vectorize
 [normdiff,dnormdiff_dv1, dnormdiff_dv2] = fast_differentiable_norm_of_difference(v1,v2);
 
 % Get the window function
 [wnd,dwf] = fast_differentiable_window(normdiff, lower_edge,upper_edge, lower_width, upper_width);
 
+% TODO vectorize
 dwnd_dv1 = dwf.*dnormdiff_dv1;
 dwnd_dv2 = dwf.*dnormdiff_dv2;
 
