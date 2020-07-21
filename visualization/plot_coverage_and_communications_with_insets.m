@@ -116,7 +116,6 @@ for time_step = 1:Swarm.get_num_timesteps
 
     plot_handles = plot_coverage_and_communications_frame(Swarm, AsteroidModel, time_step, 'absolute', absolute,'color_array', color_array, 'title_font_size', title_font_size, 'standard_font_size', standard_font_size, ... 
     'font_name', font_name, 'min_line_thickness',min_line_thickness, 'max_line_thickness',max_line_thickness, 'max_memory_marker_size',max_memory_marker_size, 'link_color_steps',link_color_steps);
-    
     subplot(2,4,3)
     render_observed_points_2d(AsteroidModel, Swarm, 'above', 'time_limits', [1, time_step],'color_array', color_array, 'title_font_size', title_font_size, 'standard_font_size', standard_font_size, 'font_name', font_name) % Show which points have been observed above equator
     

@@ -38,6 +38,7 @@ markersize = 6;
 linewidth = 1; 
 showTrail = true;
 absolute= true;
+plot_names = true;
 color_array = ['r', 'b', 'g', 'c', 'm']; 
 
 if length(varargin) > 2
@@ -57,6 +58,10 @@ if length(varargin) > 2
         if strcmpi(varargin{i},'absolute') || strcmpi(varargin{i},'absolute_frame_flag')
             absolute = varargin{i+1};
         end
+
+        if strcmpi(varargin{i},'plot_names') || strcmpi(varargin{i},'names')
+            plot_names = varargin{i+1};
+        end
     end
 end
 
@@ -71,15 +76,20 @@ n_spacecraft = size(sc_position_array,3);
 
 %% Plot
 hold on
-h = gobjects(2*n_spacecraft,1);
+h = gobjects(3*n_spacecraft,1);
 for i_sc = 1:n_spacecraft
     if markersize>0
-        h(2*i_sc+2) = plot3( sc_position_array(end, 1, i_sc), sc_position_array(end, 2, i_sc), sc_position_array(end, 3, i_sc),...
+        h(3*(i_sc-1)+2) = plot3( sc_position_array(end, 1, i_sc), sc_position_array(end, 2, i_sc), sc_position_array(end, 3, i_sc),...
             'o','MarkerFaceColor',color_array(:,mod(Swarm.Parameters.types{i_sc},size(color_array,2))+1)', ...
             'MarkerEdgeColor',color_array(:,mod(Swarm.Parameters.types{i_sc},size(color_array,2))+1)','MarkerSize',markersize);
     end
+    if plot_names
+%         h(3*(i_sc-1)+3) = text( sc_position_array(end, 1, i_sc), sc_position_array(end, 2, i_sc), sc_position_array(end, 3, i_sc),string(Swarm.Parameters.types{i_sc}));
+        h(3*(i_sc-1)+3) = text( sc_position_array(end, 1, i_sc), sc_position_array(end, 2, i_sc), sc_position_array(end, 3, i_sc),string(i_sc));
+
+    end
     if showTrail == true % shows the entire orbital path
-        h(2*i_sc+1) = plot3( sc_position_array(:, 1, i_sc), sc_position_array(:, 2, i_sc), sc_position_array(:, 3, i_sc),...
+        h(3*(i_sc-1)+1) = plot3( sc_position_array(:, 1, i_sc), sc_position_array(:, 2, i_sc), sc_position_array(:, 3, i_sc),...
             '-','Color',color_array(:,mod(Swarm.Parameters.types{i_sc},size(color_array,2))+1)','linewidth',linewidth);
     end
 end

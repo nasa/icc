@@ -14,6 +14,7 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
         state_transition_matrix_frame % {N_SPACECRAFT} Cell array containing the frame in which the STM was computed
         sun_state_array % [6 X N_TIMESTEPS] Array containing the trajectory of the Sun in IAU_EROS frame
         all_trajectories_set % true | false; indicates whether trajectories have been computed
+        unset_trajectories % indicies of trajectories that have not been set 
     end
     
     properties(SetAccess=public, GetAccess=public)
@@ -22,9 +23,9 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
         
     end
     
-    properties(SetAccess=private, GetAccess=private)
-        unset_trajectories % indicies of trajectories that have not been set 
-    end
+%     properties(SetAccess=private, GetAccess=private)
+%         
+%     end
     
     %% Methods
     methods
@@ -209,7 +210,7 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             N = obj.get_num_spacecraft(); 
             K = obj.get_num_timesteps(); 
             
-            if length(fieldnames(obj))~=10
+            if length(fieldnames(obj))~=11
                 warning('Extra fields added to object!')
                 valid = false; 
             elseif length(obj.Parameters.available_memory)~=obj.get_num_spacecraft()

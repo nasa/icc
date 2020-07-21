@@ -360,8 +360,10 @@ for j=1:N
     for k=1:K
 %         sum(observations(:,j,k)) <=1
         for obs = sc_time_observation_opportunities{j,k}
-            A_ineq_sparse(ineq_entry_ix, :) = [ineq_constraint_ix, obs, 1];
-            ineq_entry_ix = ineq_entry_ix + 1;
+            if ~isempty(obs)
+                A_ineq_sparse(ineq_entry_ix, :) = [ineq_constraint_ix, obs, 1];
+                ineq_entry_ix = ineq_entry_ix + 1;
+            end
         end
         b_ineq(ineq_constraint_ix) = 1;
         ineq_constraint_ix = ineq_constraint_ix+1;
@@ -374,21 +376,31 @@ for k=1:K-1
         % sum(flows(k,:,j)) + sum(observations(:,j,k))*data_rates(j,k) == sum(flows(k+1,j,:))
         % sum(flows(k,:,j)) + sum(observations(:,j,k))*data_rates(j,k) == sum(flows(k+1,j,:))+delivered_science(k+1, carrier_id(j));
         % Flows in and out
+        % The formulation below is arguably more correct, but not what we
+        % present in the paper. Revisit
+%         for i=1:N
+%             A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, flows_finder(k,i,j), 1];
+%             eq_entry_ix = eq_entry_ix +1;
+%             if i==j  % Memory
+%                 A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, flows_finder(k+1,j,i), -1];
+%             else  % Radio
+%                 A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, flows_finder(k,j,i), -1];
+%             end
+%             eq_entry_ix = eq_entry_ix +1;
+%         end
         for i=1:N
             A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, flows_finder(k,i,j), 1];
             eq_entry_ix = eq_entry_ix +1;
-            if i==j  % Memory
-                A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, flows_finder(k+1,j,i), -1];
-            else  % Radio
-                A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, flows_finder(k,j,i), -1];
-            end
+            A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, flows_finder(k+1,j,i), -1];
             eq_entry_ix = eq_entry_ix +1;
         end
         
         % Add the observations at this time
         for obs = sc_time_observation_opportunities{j,k}
-            A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, obs, data_rates(j,k)];
-            eq_entry_ix = eq_entry_ix +1;
+            if ~isempty(obs)
+                A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, obs, data_rates(j,k)];
+                eq_entry_ix = eq_entry_ix +1;
+            end
         end        
         
         % Sink at the carrier

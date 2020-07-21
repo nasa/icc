@@ -88,8 +88,8 @@ switch sc_type
         sun_angle_ranges{1} = [-2*pi, 2*pi];
         sc_angle_ranges{1}  = [-2*pi, 2*pi]; % [rad]
         distance_ranges{1}  = [0, 40].*1000; % [m]
-        sc_angle_tolerances{1} = .00001; %[rad]
-        distance_tolerances{1} = .00001; % [m]
+        sc_angle_tolerances{1} = .0000; %[rad]
+        distance_tolerances{1} = .0000; % [m]
         
     case -2 % A non-permissive instrument used for testing purposes
         sun_angle_ranges{1} = [0, 0];

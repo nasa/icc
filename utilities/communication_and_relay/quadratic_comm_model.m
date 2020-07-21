@@ -38,5 +38,7 @@ function [bandwidth] = quadratic_comm_model(x1, x2, bandwidth_parameters, occlus
     reference_bandwidth=bandwidth_parameters.reference_bandwidth;
     bandwidth = min(max_bandwidth, reference_bandwidth*(scaled_reference_distance/norm(scaled_x2-scaled_x1,2))^2);
     occluded = occlusion_test(x1, x2);
+    assert(occluded>=0);
+    assert(occluded<=1);
     bandwidth = bandwidth*(1-occluded);
 end

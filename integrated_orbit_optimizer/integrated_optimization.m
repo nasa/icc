@@ -24,7 +24,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [swarm, output] = integrated_optimization(swarm, gravity_model, bandwidth_parameters, max_optimization_time, trajectory_bounds, verbose)
+function [swarm, output] = integrated_optimization(swarm, gravity_model, bandwidth_parameters, max_optimization_time, trajectory_bounds, optimize_carrier, verbose)
 % Optimizes all orbits by using a gradient-based trust region algorithm (fmincon).
 % For a given set of orbits, observations and relays are optimized by
 % calling observation_and_communication_optimizer
@@ -41,8 +41,11 @@ function [swarm, output] = integrated_optimization(swarm, gravity_model, bandwid
 % Output:
 %  - swarm, a SpacecraftSwarm object with updated orbits.
 
-if nargin<6
+if nargin<7
     verbose=false;
+end
+if nargin<6
+    optimize_carrier=false;
 end
 if nargin<5
     trajectory_bounds.max_distance_m = 120000;
@@ -88,13 +91,21 @@ for sc =1:N
     initial_conditions(1+offset:6+offset) = swarm.abs_trajectory_array(1,:,sc)'.*optvar_scaling_factor;
 end
 
+carrier_index = swarm.get_indicies_of_type(0);
+if length(carrier_index)>1
+    error("More than one carrier - this will not work")
+end
+if length(carrier_index)<1
+    error("No carrier! This will not work")
+end
+
 % Proper cost function
+fun = @(params) integrated_optimization_cost_function(swarm, params, optvar_scaling_factor, gravity_model, bandwidth_parameters, trajectory_bounds, optimize_carrier, verbose);
+
+% Try calling the "proper cost function"
 if verbose
     disp("Testing initial guess")
 end
-fun = @(params) integrated_optimization_cost_function(swarm, params, optvar_scaling_factor, gravity_model, bandwidth_parameters, trajectory_bounds, verbose);
-
-% Try calling the "proper cost function"
 [goal, gradient] = fun(initial_conditions);
 if (isnan(goal))
     error('ERROR: initial location is infeasible. fmincon will crash.')
@@ -161,10 +172,40 @@ problem = createOptimProblem('fmincon', 'objective', fun, ...
 % gs = GlobalSearch('Display','iter');
 % [x, fval, exitflag, output] = run(gs,problem);
 
-%% Multistart with 50 starting points
-disp("Multistart")
-ms = MultiStart;
-[x, fval, exitflag, output] = run(ms,problem,100);
+% %% Multistart with 50 starting points
+% disp("Multistart")
+% ms = MultiStart;
+% [x, fval, exitflag, output] = run(ms,problem,100);
+
+%% Poor man's multistart
+num_trials = 25;
+initial_conditions_vec = cell(num_trials,1);
+x_vec = cell(num_trials,1);
+fval_vec = zeros(num_trials,1);
+exitflag_vec = cell(num_trials,1);
+output_vec = cell(num_trials,1);
+for trial_ix = 1:num_trials
+    trial_initial_states = initialize_random_orbits(N, gravity_model);
+    carrier_initial_conditions = initialize_carrier_orbit(gravity_model);
+    trial_initial_states(carrier_index,:) = carrier_initial_conditions;
+    
+    tmp_initial_conditions = zeros(6*N,1);
+    for sc =1:N
+        offset = 6*(sc-1);
+        assert(all(size(trial_initial_states(sc,:)') == size(optvar_scaling_factor)));
+        tmp_initial_conditions(1+offset:6+offset) = trial_initial_states(sc,:)'.*optvar_scaling_factor;
+    end
+    initial_conditions_vec{trial_ix} = tmp_initial_conditions;
+    
+    parproblem = createOptimProblem('fmincon', 'objective', fun, ...
+        'x0', tmp_initial_conditions, 'Aineq', A, 'bineq', b, ...
+        'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, ...
+        'options', options);
+    [x_vec{trial_ix}, fval_vec(trial_ix), exitflag_vec{trial_ix}, output_vec{trial_ix}] = fmincon(parproblem);
+end
+[best_swarm_cost, best_swarm_index] = min(fval_vec);
+x = x_vec{best_swarm_index};
+output = output_vec{best_swarm_index};
 
 %% Pattern Search
 %disp("Pattern search")
@@ -218,10 +259,12 @@ end
 %% Add the inputs to the swarm
 
 for sc =1:N
-    offset = 6*(sc-1);
-    assert(all(size(x(1+offset:6+offset)) == size(optvar_scaling_factor)), "ERROR - now you miss Numpy's pure vectors, don't you?")
-    sc_initial_condition = (x(1+offset:6+offset)./optvar_scaling_factor)';
-    swarm.integrate_trajectory(sc, gravity_model, sc_initial_condition, 'absolute');
+    if optimize_carrier || sc ~= carrier_index
+        offset = 6*(sc-1);
+        assert(all(size(x(1+offset:6+offset)) == size(optvar_scaling_factor)), "ERROR - now you miss Numpy's pure vectors, don't you?")
+        sc_initial_condition = (x(1+offset:6+offset)./optvar_scaling_factor)';
+        swarm.integrate_trajectory(sc, gravity_model, sc_initial_condition, 'absolute');
+    end
 end
 end
 

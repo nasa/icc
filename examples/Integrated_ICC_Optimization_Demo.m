@@ -33,13 +33,21 @@ clear, clc, close all, run ../startup.m  % refresh
 
 % Do you want to record video?
 record_video = true;
-time_str = datestr(now,'yyyymmdd_HHMMSS');
-videoname = ['ICC_integrated_',time_str,'.mp4'];
+% Should the carrier trajectory be subject to optimization
+optimize_carrier = false;
+% Should the optimizer be (very) verbose?
+verbose = false;
 
 % Do you want to save the output of the optimization in 42 format?
 save_42_inputs = false;
 
+% Maximum time for the trust region integrated orbit optimizer, in seconds
+max_optimization_time = 3600;
+
 rng default % Pseudo-random but repeatable scenario
+
+time_str = datestr(now,'yyyymmdd_HHMMSS');
+videoname = ['ICC_integrated_',time_str,'.mp4'];
 
 % Add Required Packages to PATH
 addpath(genpath(strcat(ROOT_PATH,'/small_body_dynamics/EROS 433')))
@@ -58,26 +66,25 @@ addpath(strcat(ROOT_PATH,'/integrated_orbit_optimizer'))
 n_spacecraft = 7;  % Number of Spacecraft, counting the carrier
 
 sc_types = cell(1,n_spacecraft);
-for i_sc = 1:n_spacecraft
-    sc_types{i_sc}  = randi([1,4]); % Indicies for instruments on board
-end
+% for i_sc = 1:n_spacecraft
+%     sc_types{i_sc}  = randi([1,4]); % Indicies for instruments on board
+% end
+sc_types = {1, 2, 3, 4, 3, 1, 4};  
 carrier_index = n_spacecraft;
 sc_types{carrier_index} = 0; % Mark the carrier so it will not be used in the Monte Carlo optimization
-                            
                             
 delta_t = 10*60; % [s]; simulation time step
 total_t = 1*24*60*60; % [s]; 1 day, total time of simulation
 time_vector = 0:delta_t:total_t; % sample times
 
 
-% Maximum time for the trust region integrated orbit optimizer, in seconds
-max_optimization_time = Inf;
+
 
 sc_max_memory = 8*20*1e9.*ones(1,n_spacecraft); % 20 GB max memory for instrument spacecraft
 sc_max_memory(1,carrier_index) = 8*10000*1e9; % Memory limit for carrier spacecraft
 
 % Parameters for bandwidth model
-bandwidth_parameters.reference_bandwidth = 10000;
+bandwidth_parameters.reference_bandwidth = 250000;
 bandwidth_parameters.reference_distance = 100000;
 bandwidth_parameters.max_bandwidth = 100*1e6;
 
@@ -152,7 +159,8 @@ warning('error', 'SBDT:harmonic_gravity:inside_radius')
 %                     Integrated Orbit Optimization                       %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
-[Swarm] = integrated_optimization(Swarm, ErosModel, bandwidth_parameters, max_optimization_time, trajectory_bounds, true);
+
+[Swarm] = integrated_optimization(Swarm, ErosModel, bandwidth_parameters, max_optimization_time, trajectory_bounds, optimize_carrier, verbose);
 filename = "MultiStart_results_"+time_str;
 save(filename);
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

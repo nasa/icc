@@ -39,7 +39,7 @@ addpath(genpath("../utilities/"));
 constants = initialize_SBDT();
 
 % Tolerance accepted in solver output
-assert_tol = 1e-9;
+assert_tol = 1e-6;
 close_enough = @(x,y) (abs(x-y)<=assert_tol);
 
 % Numerical inaccuracies
@@ -168,7 +168,7 @@ sc_initial_state_array = zeros(sc_number, 6);
 rotmat_x = @(angle) [1, 0, 0; 0, cos(angle), -sin(angle); 0, sin(angle), cos(angle)];
 for sc = 1:sc_number
     sc_initial_state_array(sc, 1:3) = [orbit_radius; 0; 0];
-    sc_orbital_vel = 2.*sqrt(GM/orbit_radius);    
+    sc_orbital_vel = 2.5*sqrt(GM/orbit_radius);    
     sc_initial_state_array(sc, 4:6) = rotmat_x((sc-1)/sc_number*pi)*[0; sc_orbital_vel; 0;];
 end
 swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
@@ -202,8 +202,8 @@ swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
 sc_initial_state_array = zeros(sc_number, 6);
 rotmat_x = @(angle) [1, 0, 0; 0, cos(angle), -sin(angle); 0, sin(angle), cos(angle)];
 for sc = 1:sc_number
-    sc_initial_state_array(sc, 1:3) = [orbit_radius; 0; 0];
-    sc_orbital_vel = 2.5*sqrt(GM/orbit_radius);    
+    sc_initial_state_array(sc, 1:3) = [orbit_radius-.0315*(sc-1); 0; 0];
+    sc_orbital_vel = 11*sqrt(GM/orbit_radius)+12*(sc-1);    
     sc_initial_state_array(sc, 4:6) = rotmat_x((sc-1)/sc_number*pi)*[0; sc_orbital_vel; 0;];
 end
 swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
@@ -237,9 +237,14 @@ swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
 % Create orbits
 sc_initial_state_array = zeros(sc_number, 6);
 rotmat_x = @(angle) [1, 0, 0; 0, cos(angle), -sin(angle); 0, sin(angle), cos(angle)];
+% for sc = 1:sc_number
+%     sc_initial_state_array(sc, 1:3) = [orbit_radius; 0; 0];
+%     sc_orbital_vel = 2.5*sqrt(GM/orbit_radius);    
+%     sc_initial_state_array(sc, 4:6) = rotmat_x((sc-1)/sc_number*pi)*[0; sc_orbital_vel; 0;];
+% end
 for sc = 1:sc_number
-    sc_initial_state_array(sc, 1:3) = [orbit_radius; 0; 0];
-    sc_orbital_vel = 2.5*sqrt(GM/orbit_radius);    
+    sc_initial_state_array(sc, 1:3) = [orbit_radius-.0315*(sc-1); 0; 0];
+    sc_orbital_vel = 11*sqrt(GM/orbit_radius)+12*(sc-1);    
     sc_initial_state_array(sc, 4:6) = rotmat_x((sc-1)/sc_number*pi)*[0; sc_orbital_vel; 0;];
 end
 swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);

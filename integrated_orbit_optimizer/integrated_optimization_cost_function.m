@@ -27,7 +27,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [goal, gradient, dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dk_dlocation, dlocation_dic] = integrated_optimization_cost_function(swarm, sc_initial_condition_vector, initial_condition_scaling_factor, gravity_model, bandwidth_parameters, trajectory_bounds, verbose)
+function [goal, gradient, dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dk_dlocation, dlocation_dic] = integrated_optimization_cost_function(swarm, sc_initial_condition_vector, initial_condition_scaling_factor, gravity_model, bandwidth_parameters, trajectory_bounds, optimize_carrier, verbose)
 
 % Cost function for GBO.
 % Inputs
@@ -46,8 +46,11 @@ function [goal, gradient, dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dk_dlo
 %    relevant variables
 
 %% Default bandwidth model
-if nargin<7
+if nargin<8
     verbose=false;
+end
+if nargin<7
+    optimize_carrier=false;
 end
 
 if nargin<6
@@ -104,34 +107,49 @@ end
 % else
 %     warning("All trajectories outside reference radius, continuing.");
 % end
+carrier_index = swarm.get_indicies_of_type(0);
+if ~optimize_carrier
+    assert(length(carrier_index)==1, "Multiple carriers! This will not work");
+end
 for i_sc = 1:N
-    if verbose
-        fprintf(" %d, ", i_sc);
-    end
-    try
-        swarm.integrate_trajectory(i_sc, gravity_model, sc_initial_condition(:, i_sc)', 'absolute');
-        distances = vecnorm(swarm.abs_trajectory_array(:,1:3,i_sc),2,2);
-        if max(distances)> trajectory_bounds.max_distance_m
-            warning("ERROR: Trajectory %d went too far from asteroid (max distance %f m, bound %f m). Returning inf.", i_sc, max(distances), trajectory_bounds.max_distance_m);
-            goal = inf;
-            gradient = nan;
-            return
+    % If optimize_carrier is off and this is the carrier, do not touch the
+    % carrier orbit. Count on it having been populated outside.
+    if optimize_carrier || i_sc ~= carrier_index
+        if verbose
+            fprintf(" %d, ", i_sc);
         end
-        if min(distances) < trajectory_bounds.min_distance_m
-            warning("ERROR: Trajectory %d went too close to asteroid (min distance %f m, bound %f m). Returning inf.", i_sc, min(distances), trajectory_bounds.min_distance_m);
-            goal = inf;
-            gradient = nan;
-            return
+        try
+            swarm.integrate_trajectory(i_sc, gravity_model, sc_initial_condition(:, i_sc)', 'absolute');
+            distances = vecnorm(swarm.abs_trajectory_array(:,1:3,i_sc),2,2);
+            if max(distances)> trajectory_bounds.max_distance_m
+                warning("ERROR: Trajectory %d went too far from asteroid (max distance %f m, bound %f m). Returning inf.", i_sc, max(distances), trajectory_bounds.max_distance_m);
+                goal = inf;
+                gradient = nan;
+                return
+            end
+            if min(distances) < trajectory_bounds.min_distance_m
+                warning("ERROR: Trajectory %d went too close to asteroid (min distance %f m, bound %f m). Returning inf.", i_sc, min(distances), trajectory_bounds.min_distance_m);
+                goal = inf;
+                gradient = nan;
+                return
+            end
+        catch ME
+            if (strcmp(ME.identifier, 'SBDT:harmonic_gravity:inside_radius'))
+                warning("ERROR: Trajectory %d dipped inside reference radius. Returning inf.", i_sc);
+                goal = inf;
+                gradient = nan;
+                return
+            else
+                disp(ME.message);
+                warning("Weird error while integrating, returning inf and moving on");
+                goal = inf;
+                gradient = nan;
+                return
+                %rethrow(ME);
+            end
         end
-    catch ME
-        if (strcmp(ME.identifier, 'SBDT:harmonic_gravity:inside_radius'))
-            warning("ERROR: Trajectory %d dipped inside reference radius. Returning inf.", i_sc);
-            goal = inf;
-            gradient = nan;
-            return
-        else
-            rethrow(ME);
-        end
+    else
+        assert(~ismember(carrier_index, swarm.unset_trajectories), "ERROR: carrier trajectory is not optimized, it should be set outside");
     end
 end
 if verbose
@@ -169,9 +187,13 @@ if nargout>1  % compute gradient
     [dgoal_dic, dk_dbandwidth, dbandwidth_dlocation, dk_dlocation, dlocation_dic] = compute_integrated_gradient(swarm, bandwidth_parameters,spherical_asteroid_parameters);
     gradient = zeros(size(sc_initial_condition_vector));
     for sc = 1:N
-        offset = 6*(sc-1);
-        assert(all(size(dgoal_dic{sc}) == size(initial_condition_scaling_factor')), "ERROR: scaling factor shape is wrong")
-        gradient(1+offset:6+offset) = dgoal_dic{sc}./initial_condition_scaling_factor';
+        if optimize_carrier || sc ~= carrier_index
+            % If we do not optimize the carrier, the gradient of the goal
+            % wrt the carrier is zero.
+            offset = 6*(sc-1);
+            assert(all(size(dgoal_dic{sc}) == size(initial_condition_scaling_factor')), "ERROR: scaling factor shape is wrong")
+            gradient(1+offset:6+offset) = dgoal_dic{sc}./initial_condition_scaling_factor';
+        end
     end
         % Minimize
     gradient = -gradient;

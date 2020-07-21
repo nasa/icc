@@ -54,7 +54,7 @@ for i_sc = sc_optimized
 
     elseif flag_map==1
         %% Random Map
-        reward_map{i_sc} = randi(10,Nv,K);
+        reward_map{i_sc} = 9.5+rand(Nv,K);
         
     elseif flag_map==2
         %% Value points closer to center of gravity
@@ -83,6 +83,14 @@ end
 
 function [reward] = instrument_reward(sc_type)
     switch sc_type
+        case 1  % Imaging Spectrometer
+            reward = 3;
+        case 2  % X Ray Spectrometer
+            reward = 2;
+        case 3  % Camera    
+            reward = 1;
+        case 4
+            reward = .5;
         case -1
             reward = 1;
         case -2
