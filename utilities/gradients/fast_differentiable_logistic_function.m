@@ -26,6 +26,16 @@ function [sf, dsf] = fast_differentiable_logistic_function(x, edge, width)
 %   The return value is a function.
 %   The function returned takes in a 1d input and returns
 %   (1/(1+exp(-(x-edge)/width)))
+if width==0
+    if x == edge
+        sf = 0.5*ones(size(x));
+        dsf = NaN*ones(size(x));
+    else
+        sf = (x>edge);
+        dsf = 0*ones(size(x));
+    end
+    return
+end
 
 sf = (1./(1+exp(-(x-edge)./width)));
 dsf = sf.*(1-sf)./width;

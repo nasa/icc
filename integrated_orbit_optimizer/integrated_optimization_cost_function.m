@@ -111,6 +111,8 @@ carrier_index = swarm.get_indicies_of_type(0);
 if ~optimize_carrier
     assert(length(carrier_index)==1, "Multiple carriers! This will not work");
 end
+out_of_bounds = false;
+out_of_bounds_penalty = 1e2;
 for i_sc = 1:N
     % If optimize_carrier is off and this is the carrier, do not touch the
     % carrier orbit. Count on it having been populated outside.
@@ -122,13 +124,15 @@ for i_sc = 1:N
             swarm.integrate_trajectory(i_sc, gravity_model, sc_initial_condition(:, i_sc)', 'absolute');
             distances = vecnorm(swarm.abs_trajectory_array(:,1:3,i_sc),2,2);
             if max(distances)> trajectory_bounds.max_distance_m
-                warning("ERROR: Trajectory %d went too far from asteroid (max distance %f m, bound %f m). Returning inf.", i_sc, max(distances), trajectory_bounds.max_distance_m);
+                warning("ERROR: Trajectory %d went too far from asteroid (max distance %f m, bound %f m). Returning inf", i_sc, max(distances), trajectory_bounds.max_distance_m);
+                out_of_bounds = true;
                 goal = inf;
                 gradient = nan;
                 return
             end
             if min(distances) < trajectory_bounds.min_distance_m
-                warning("ERROR: Trajectory %d went too close to asteroid (min distance %f m, bound %f m). Returning inf.", i_sc, min(distances), trajectory_bounds.min_distance_m);
+                warning("ERROR: Trajectory %d went too close to asteroid (min distance %f m, bound %f m). Returning inf", i_sc, min(distances), trajectory_bounds.min_distance_m);
+                out_of_bounds = true;
                 goal = inf;
                 gradient = nan;
                 return
@@ -155,6 +159,39 @@ end
 if verbose
     fprintf("\n");
 end
+
+% If we end here, we do have
+% swarm.state_transition_matrix(new_state, initial_state, t, sc)
+% populated. We could do the following:
+% Compute the goal as the sum of a windowed distance with
+% distance, ddistance_dx = sum(fast_differentiable_window_of_norm_difference(v1,
+% zeros(size(v1)), 0, trajectory_bounds.max_distance_m, 0, 10000))
+% Then the gradient wrt the initial conditions is the sum
+%        [1x3]                         [3x6]
+% of ddistance_dx(t, sc) * swarm.state_transition_matrix(:, :, t, sc);
+% if out_of_bounds
+%     goal = 0;
+%     gradient = zeros(6*N,1);
+%     for i_sc=1:N
+%         v1 = reshape(swarm.abs_trajectory_array(:,1:3,i_sc), [size(swarm.abs_trajectory_array,1),3]);   
+%         distances = vecnorm(v1,2,2);
+%         [in_range, d_in_range_dv1]= fast_differentiable_window_of_norm_difference(v1, zeros(size(v1)), trajectory_bounds.min_distance_m, trajectory_bounds.max_distance_m, 3000, 10000);
+%         % distances is Kx1. ddistances is Kx3.
+%         [min_in_range, min_in_range_index] = min(in_range);
+%         if min_in_range< .8
+%             warning("ERROR: Trajectory %d went too close or too far from asteroid (extremal distance %f m, bounds %f to %f m). Returning without solving.", i_sc, distances(min_in_range_index), trajectory_bounds.min_distance_m, trajectory_bounds.max_distance_m);
+%             goal = goal+out_of_bounds_penalty*sum(in_range-1);
+%             grad= zeros(1,6);
+%             for k=1:swarm.get_num_timesteps()
+%                 grad = grad+out_of_bounds_penalty*d_in_range_dv1(k,:)*swarm.state_transition_matrix(1:3, :, k, i_sc);
+%             end
+% 
+%             gradient(6*(i_sc-1)+1: 6*(i_sc-1)+6) = grad;
+%         end
+%     end
+%     disp("Returning without solving");
+%     return
+% end
 
 %% build bandwidth model
 %bandwidth_model = @(x1,x2) min(bandwidth_parameters.reference_bandwidth * (bandwidth_parameters.reference_distance/norm(x2-x1,2))^2, bandwidth_parameters.max_bandwidth*1e6); 

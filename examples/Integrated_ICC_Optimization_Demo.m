@@ -89,8 +89,8 @@ bandwidth_parameters.reference_distance = 100000;
 bandwidth_parameters.max_bandwidth = 100*1e6;
 
 % Parameters for trajectory bounds
-trajectory_bounds.max_distance_m = 120000;
-trajectory_bounds.min_distance_m = 15000;
+trajectory_bounds.max_distance_m = 140000;
+trajectory_bounds.min_distance_m = 12000;
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                       Initialize Eros Model                             %
@@ -158,7 +158,6 @@ warning('error', 'SBDT:harmonic_gravity:inside_radius')
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                     Integrated Orbit Optimization                       %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-
 
 [Swarm] = integrated_optimization(Swarm, ErosModel, bandwidth_parameters, max_optimization_time, trajectory_bounds, optimize_carrier, verbose);
 filename = "MultiStart_results_"+time_str;
