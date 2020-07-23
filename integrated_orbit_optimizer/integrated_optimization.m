@@ -184,6 +184,8 @@ x_vec = cell(num_trials,1);
 fval_vec = zeros(num_trials,1);
 exitflag_vec = cell(num_trials,1);
 output_vec = cell(num_trials,1);
+time_str = datestr(now,'yyyymmdd_HHMMSS');
+
 for trial_ix = 1:num_trials
     trial_initial_states = initialize_random_orbits(N, gravity_model);
     carrier_initial_conditions = initialize_carrier_orbit(gravity_model);
@@ -196,12 +198,17 @@ for trial_ix = 1:num_trials
         tmp_initial_conditions(1+offset:6+offset) = trial_initial_states(sc,:)'.*optvar_scaling_factor;
     end
     initial_conditions_vec{trial_ix} = tmp_initial_conditions;
-    
+    par_start_time=tic;
+    par_stop_fun = @(x,optimValues,state) stop_function(x,optimValues,state, par_start_time, max_optimization_time);
+    par_options = options;
+    par_options.OutputFcn = par_stop_fun;
     parproblem = createOptimProblem('fmincon', 'objective', fun, ...
         'x0', tmp_initial_conditions, 'Aineq', A, 'bineq', b, ...
         'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, ...
-        'options', options);
+        'options', par_options);
     [x_vec{trial_ix}, fval_vec(trial_ix), exitflag_vec{trial_ix}, output_vec{trial_ix}] = fmincon(parproblem);
+    tmp_filename = "MultiStart_intermediate_"+string(trial_ix)+"_"+time_str;
+    save(tmp_filename);
 end
 [best_swarm_cost, best_swarm_index] = min(fval_vec);
 x = x_vec{best_swarm_index};

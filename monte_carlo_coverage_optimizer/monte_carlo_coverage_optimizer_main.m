@@ -44,15 +44,18 @@ trial_initial_states = initialize_random_orbits(n_trial_orbits, AsteroidModel); 
 best_orbits_set = []; % indices of best orbits from trial_initial_states
 
 max_iter = length(setdiff(1:N, Swarm.get_indicies_of_type(0)));
-h = waitbar(0/max_iter,'Finding orbits...');
+% h = waitbar(0/max_iter,'Finding orbits...');
 
 for i_sc = setdiff(1:N, Swarm.get_indicies_of_type(0))
+    fprintf("\nOrbit %d/%d\n",i_sc,max_iter);
     reset_reward = true;
     sc_same_type = intersect(1:i_sc, Swarm.get_indicies_of_type(Swarm.Parameters.types{i_sc})); % all SC <= i_sc of same type
     orbits_to_test = setdiff(1:n_trial_orbits,best_orbits_set);
     best_reward = 0;
-    
+    fprintf("%d:", length(orbits_to_test));
+    %par
     parfor i_parfor = 1:length(orbits_to_test)
+        fprintf("%d ",i_parfor);
         i_orbit = orbits_to_test(i_parfor);
         trial_swarm{i_parfor} = Swarm.copy(); % copy Swarm, which includes the best trajectories for spacecraft 1:(i_sc-1)
         trial_swarm{i_parfor}.integrate_trajectory(i_sc, AsteroidModel, trial_initial_states(i_orbit,:), 'absolute'); % add in one of the trial orbits
@@ -69,12 +72,12 @@ for i_sc = setdiff(1:N, Swarm.get_indicies_of_type(0))
         end
     end
     
-    waitbar(i_sc/max_iter,h,'Finding orbits...');
+    %waitbar(i_sc/max_iter,h,'Finding orbits...');
     best_orbits_set = [best_orbits_set, best_orbit]; %#ok<AGROW>
     %     Swarm = best_swarm.copy(); % Swarm now contains the best trajectories for spacecraft 1:i_sc
     Swarm = trial_swarm{best_i_parfor}.copy();
 end
 
-close(h)
+%close(h)
 end
 

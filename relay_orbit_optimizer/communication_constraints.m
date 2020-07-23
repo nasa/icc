@@ -57,8 +57,8 @@
 
 function [C, Ceq] = communication_constraints(swarm,relay_orbit_index, sc_initial_condition_vector, initial_condition_scaling_factor, gravity_model, max_distance, min_distance)
 
-disp("IC size (constraint)")
-disp(size(sc_initial_condition_vector))
+% disp("IC size (constraint)")
+% disp(size(sc_initial_condition_vector))
 
 Ceq = 0;
 if nargin<7
