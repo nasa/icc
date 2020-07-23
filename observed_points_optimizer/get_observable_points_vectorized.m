@@ -158,6 +158,9 @@ if flag_use_instruments==true
 %         fprintf("Sun angle valid %d, range valid %d, sc angle valid %d\n", sum(sun_angles_in_range), sum(range_mask), sum(angle_mask));
         if isempty(observable_points)
             observable_points = []; 
+            observable_points_values =  zeros(size(observable_points));
+            observable_points_gradients = zeros(length(observable_points),3);
+            observable_points_gradients_next_sc = zeros(length(observable_points),3);
         end
     end
 else

@@ -1,4 +1,4 @@
-function [observed_points, priority] = swarm_points_optimizer(observable_points_map, reward_map, sc_optimized)
+function [observed_points, priority] = swarm_points_optimizer(observable_points_map, reward_map, sc_optimized, verbose)
 %SWARM_POINTS_OPTIMIZER Optimizes the observed points of the agents in
 %sc_optimized
 
@@ -7,6 +7,10 @@ function [observed_points, priority] = swarm_points_optimizer(observable_points_
 % the number of vertices and K is the number of timesteps.
 % observable_points_map{i}(v,t) is 1 iff point v is observable by agent i
 % at time t.
+
+if nargin<4
+    verbose=false;
+end
 
 %% Setup 
 tic
@@ -135,7 +139,9 @@ b = ones(n_constraints, 1);
 % Set bounds
 UB = ones(M,1);
 LB = zeros(M,1);
-fprintf('Total time to setup observation points problem: %0.2f\n',toc)
+if verbose
+    fprintf('Total time to setup observation points problem: %0.2f\n',toc)
+end
 
 %% Solve 
 % Define problem
@@ -143,8 +149,9 @@ tic
 % Mosek has some undesirable text input due to an uncommented "options".
 % We suppress it by wrapping it in evalc.
 [~,X] = evalc("intlinprog(-w, 1:M, A, b, [], [], LB, UB);");
-fprintf('Total time to solve observation points problem: %0.2f\n',toc)
-
+if verbose
+    fprintf('Total time to solve observation points problem: %0.2f\n',toc)
+end
 % Fill out observed points and reward vectors
 observations = find(X==1);
 observed_points = zeros(N,K);

@@ -89,8 +89,17 @@ bandwidth_parameters.reference_distance = 100000;
 bandwidth_parameters.max_bandwidth = 100*1e6;
 
 % Parameters for trajectory bounds
-trajectory_bounds.max_distance_m = 140000;
-trajectory_bounds.min_distance_m = 12000;
+trajectory_bounds.max_distance_m = 120000;
+trajectory_bounds.min_distance_m = 15000;
+
+% Number of orbits to consider in the Monte Carlo science orbit optimizer
+n_trial_orbits = 7;
+
+% Maximum time for the trust region relay orbit optimizer, in seconds
+max_relay_optimization_time = 300;
+% Which spacecraft should be optimized as relays?
+relay_orbit_indices = [3, 4];
+assert(max(relay_orbit_indices)<=(n_spacecraft-1), "ERROR: relay orbit indices exceed number of spacecraft");
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                       Initialize Eros Model                             %
@@ -156,12 +165,23 @@ end
 warning('error', 'SBDT:harmonic_gravity:inside_radius')
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                     Integrated Orbit Optimization                       %
+%                    Sciencecraft Orbit Optimization                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                        Relay Orbit Optimization                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
-[Swarm] = integrated_optimization(Swarm, ErosModel, bandwidth_parameters, max_optimization_time, trajectory_bounds, optimize_carrier, verbose);
-filename = "MultiStart_results_"+time_str;
-save(filename);
+[Swarm] = relay_optimization(Swarm, ErosModel, bandwidth_parameters, relay_orbit_indices, max_relay_optimization_time);
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                 Science and Network Flow Optimization                   %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Swarm = observed_points_network_flow_optimizer(Swarm, ErosModel, bandwidth_parameters);
+
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                           Show Combined Results                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -169,7 +189,7 @@ save(filename);
 % Do you want the 3d plot to be in an absolute or relative frame?
 absolute = true;
 
-plot_coverage_and_communications_with_insets(Swarm, ErosModel,'absolute', absolute, 'record_video', record_video, 'video_name', videoname)
+plot_coverage_and_communications_with_insets(Swarm, ErosModel,'absolute', absolute, 'record_video', record_video)
 
 % Create 42 representation of the orbits
 if save_42_inputs

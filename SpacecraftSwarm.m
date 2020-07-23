@@ -46,6 +46,7 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             
             obj.Observation.observed_points = zeros(N, K); % observed_points(i,k) = index of vertex on asteroid observed by spacecraft i at time k
             obj.Observation.observable_points = cell(N,K); % obvservable_points(
+            obj.Observation.observable_point_values = cell(N,K); % obvservable_points(
             obj.Observation.flow = zeros(N, K); % [bits/s]; Observation.flow(i,k) contains the data taken in by spacecraft i at time k
             obj.Observation.priority = zeros(N, K); % [reward/(bit/s)]; priority(i,k) is the value of one bit of science produced by spacecraft i at time k.
             obj.Observation.sensitivity = zeros(K, N, 3); % sensitivity(i,k,v,l) is the sensitivity (derivative) of the reward of vertex v with respect to the l-th coordinate of spacecraft i's position at time k.
@@ -219,7 +220,7 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             elseif (length(obj.Parameters.types)~=obj.get_num_spacecraft()) || ~iscell(obj.Parameters.types)
                 warning('object.Parameters.types should be [1 x N] cell array!')
                 valid = false;
-            elseif length(fieldnames(obj.Observation))~=5
+            elseif length(fieldnames(obj.Observation))~=6
                 warning('Extra fields added to object.Observation!')
                 valid = false;
             elseif length(fieldnames(obj.Communication))~=4
@@ -236,6 +237,9 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
                 valid = false;
             elseif ~iscell(obj.Observation.observable_points) || (size(obj.Observation.observable_points,1)~=N) || (size(obj.Observation.observable_points,2)~=K)
                 warning('object.Observation.observable_points should be [N x K] cell!')
+                valid = false;
+             elseif ~iscell(obj.Observation.observable_point_values) || (size(obj.Observation.observable_point_values,1)~=N) || (size(obj.Observation.observable_point_values,2)~=K)
+                warning('object.Observation.observable_point_values should be [N x K] cell!')
                 valid = false;
             elseif ~isnumeric(obj.Observation.sensitivity) || (size(obj.Observation.sensitivity,1)~=K) || (size(obj.Observation.sensitivity,2)~=N) || (size(obj.Observation.sensitivity,3)~=3)
                 warning('object.Observation.sensitivity should be [K x N x 3] double!')
