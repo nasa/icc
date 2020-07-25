@@ -84,7 +84,7 @@ sc_max_memory = 8*20*1e9.*ones(1,n_spacecraft); % 20 GB max memory for instrumen
 sc_max_memory(1,carrier_index) = 8*10000*1e9; % Memory limit for carrier spacecraft
 
 % Parameters for bandwidth model
-bandwidth_parameters.reference_bandwidth = 250000;
+bandwidth_parameters.reference_bandwidth = 10000;
 bandwidth_parameters.reference_distance = 100000;
 bandwidth_parameters.max_bandwidth = 100*1e6;
 
@@ -93,12 +93,12 @@ trajectory_bounds.max_distance_m = 120000;
 trajectory_bounds.min_distance_m = 15000;
 
 % Number of orbits to consider in the Monte Carlo science orbit optimizer
-n_trial_orbits = 7;
+n_trial_orbits = 250;
 
 % Maximum time for the trust region relay orbit optimizer, in seconds
-max_relay_optimization_time = 300;
+max_relay_optimization_time = 1800;
 % Which spacecraft should be optimized as relays?
-relay_orbit_indices = [3, 4];
+relay_orbit_indices = [4, 5, 6];
 assert(max(relay_orbit_indices)<=(n_spacecraft-1), "ERROR: relay orbit indices exceed number of spacecraft");
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
