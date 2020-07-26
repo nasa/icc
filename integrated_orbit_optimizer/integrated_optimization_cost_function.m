@@ -215,7 +215,11 @@ bandwidth_model = @(x1, x2) quadratic_comm_model(x1, x2, bandwidth_parameters,oc
 if verbose
     disp(" CF: call optimizer")
 end
-[swarm, goal] = observation_and_communication_optimizer(gravity_model, swarm, bandwidth_model, NaN, verbose);
+observation_and_communication_optimizer_options.verbose = verbose;
+observation_and_communication_optimizer_options.ilp = false;
+observation_and_communication_optimizer_options.truncate = false;
+
+[swarm, goal] = observation_and_communication_optimizer(gravity_model, swarm, bandwidth_model, NaN, observation_and_communication_optimizer_options);
 if verbose
     disp(" CF: gradient")
 end

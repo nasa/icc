@@ -26,7 +26,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [swarm, goal, problem_solve_time] = observation_and_communication_optimizer(asteroid_model, swarm, bandwidth_model, data_scaling_factor, verbose)
+function [swarm, goal, problem_solve_time] = observation_and_communication_optimizer(asteroid_model, swarm, bandwidth_model, data_scaling_factor, options)
 
 % How to best collect observations and route data from a number of science
 % spacecraft to a carrier s/c, given an observation model and a network
@@ -47,10 +47,22 @@ function [swarm, goal, problem_solve_time] = observation_and_communication_optim
 % swarm, the updated Swarm object
 % goal, the optimal goal
 prelim_tic = tic;
-if nargin<5
-    verbose=0;
-end
 
+if nargin<5
+    options.verbose = false;
+    options.ilp = false;
+    options.truncate = false;
+end
+if ~isfield(options,"verbose")
+    options.verbose = false;
+end
+if ~isfield(options,"ilp")
+    options.ilp = false;
+end
+if ~isfield(options,"truncate")
+    options.truncate = false;
+end
+    
 if nargin<4
     data_scaling_factor = NaN; % Just a placeholder, will fix once we have instrument data rates
 end
@@ -69,6 +81,8 @@ N = swarm.get_num_spacecraft();
 % First, let's find out what points are observable
 % observable_points is a N by K cell matrix. observable_points(i,k) is the
 % list of points that spacecraft i can observe at time k
+
+verbose = options.verbose;
 
 if verbose
     disp("Get observability and reward")
@@ -302,6 +316,7 @@ f(1:M) = -w;
 
 % Initialization of upper and lower bounds
 ub= Inf*ones(num_variables,1);
+ub(1:M) = 1.;
 lb= zeros(num_variables,1);
 
 % Number of constraints and entries:
@@ -485,7 +500,25 @@ if verbose
     disp("Solve the problem")
 end
 solve_tic = tic;
-[X, goal, exitflag, output, lambdas] = linprog(f, A_ineq, b_ineq, A_eq, b_eq, lb, ub);
+if options.ilp
+    integer_variables = 1:1:M;
+    variable_types = [repmat('B',[1,M]),repmat('C',[1,num_variables-M])];
+    cplex_options = cplexoptimset('timelimit',30);
+    try
+        intlinprog_options = mskoptimset('MSK_DPAR_MIO_MAX_TIME',30,'MSK_DPAR_MIO_REL_GAP_CONST',.01);
+        intlinprog_options.MaxTime = 300;
+        if options.verbose
+            intlinprog_options.Display = 'iter';
+        end
+    catch
+        intlinprog_options = optimoptions('intlinprog','MaxTime',300);
+    end
+    [X, goal, exitflag, output] = intlinprog(f, integer_variables, A_ineq, b_ineq, A_eq, b_eq, lb, ub, intlinprog_options);
+%     [X, goal, exitflag, output] = cplexmilp(f, A_ineq, b_ineq, A_eq, b_eq, [], [], [], lb, ub, variable_types, [], cplex_options);
+    lambdas = NaN;
+else
+    [X, goal, exitflag, output, lambdas] = linprog(f, A_ineq, b_ineq, A_eq, b_eq, lb, ub);
+end
 % can also use linprog (esp. the MOSEK version) with identical syntax
 problem_solve_time = toc(solve_tic);
 %% Unpack the variables
@@ -505,9 +538,13 @@ end
 
 % delivered_science = reshape(X(delivered_science_finder(1,1):delivered_science_finder(K,num_carriers)), [num_carriers, K])';
 dual_bandwidth_and_memory = zeros(K,N,N);
-for k=1:K
-    for i=1:N
-        dual_bandwidth_and_memory(k,i,1:N) = lambdas.upper(flows_finder(k,i,1):flows_finder(k,i,N));
+if options.ilp
+    dual_bandwidth_and_memory = nan(size(dual_bandwidth_and_memory));
+else
+    for k=1:K
+        for i=1:N
+            dual_bandwidth_and_memory(k,i,1:N) = lambdas.upper(flows_finder(k,i,1):flows_finder(k,i,N));
+        end
     end
 end
 
@@ -535,7 +572,7 @@ for obs_index = 1:M
     reward = w(obs_index); % Reward
     if observations_flat(obs_index)>observation_threshold
         if swarm.Observation.observed_points(j,k) ~= 0 && verbose
-            fprintf("SC %d, time %d: more than one point observed! (old: %d w. total flow %f, new: %d with flow %f))\n",j,k,swarm.Observation.observed_points(j,k),swarm.Observation.flow(j,k),v,observations_flat(obs_index)*(data_rates(j,k)*data_scaling_factor))
+            fprintf("SC %d, time %d: more than one point observed! (old: %d w. total flow %f, new: %d with flow %f at index %d))\n",j,k,swarm.Observation.observed_points(j,k),swarm.Observation.flow(j,k),v,observations_flat(obs_index)*(data_rates(j,k)*data_scaling_factor),obs_index)
         end
         swarm.Observation.observed_points(j,k) = v;
     end
@@ -555,6 +592,38 @@ for obs_index = 1:M
 %             end
 %         end
 %     end
+end
+
+
+if options.truncate
+    observations_flat_truncated = observations_flat;
+    for i=1:N
+        for k=1:K
+            tmp_observations_ik_mask = (p_k==k & p_s == i);
+            tmp_observations_ik_indices = find((observations_flat>observation_threshold)'.*tmp_observations_ik_mask);
+            if length(tmp_observations_ik_indices)>1
+                fprintf("SC %d, time %d: %d points observed! Zeroing out observations ",i,k,length(tmp_observations_ik_indices));
+                tmp_observation_rewards = w.*(observations_flat>observation_threshold)'.*tmp_observations_ik_mask;
+                [max_obs_reward, max_obs_reward_index] = max(tmp_observation_rewards);
+                for tmp_observation_index = tmp_observations_ik_indices
+                    if tmp_observation_index~=max_obs_reward_index
+                        observations_flat_truncated(tmp_observation_index) = 0.;
+                        fprintf(" %d ", tmp_observation_index)
+                    end
+                end
+                fprintf("\n");
+            end
+        end
+    end
+    X_mod = X;
+    X_untruncated = X;
+    X_mod(1:M) = observations_flat_truncated;
+    new_goal = dot(f,X_mod);
+    if new_goal ~= goal & verbose
+        fprintf("Truncation reduced goal from %d to %d\n",goal, new_goal);
+    end
+    goal = new_goal;
+    X = X_mod;
 end
 % sensitivity: value of v times dobservations_dspacecraft. sensitivity = zeros(N,K,1,3);
 
