@@ -84,7 +84,7 @@ sc_max_memory = 8*20*1e9.*ones(1,n_spacecraft); % 20 GB max memory for instrumen
 sc_max_memory(1,carrier_index) = 8*10000*1e9; % Memory limit for carrier spacecraft
 
 % Parameters for bandwidth model
-bandwidth_parameters.reference_bandwidth = 250000;
+bandwidth_parameters.reference_bandwidth = 10000;
 bandwidth_parameters.reference_distance = 100000;
 bandwidth_parameters.max_bandwidth = 100*1e6;
 
@@ -160,7 +160,7 @@ warning('error', 'SBDT:harmonic_gravity:inside_radius')
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
 [Swarm] = integrated_optimization(Swarm, ErosModel, bandwidth_parameters, max_optimization_time, trajectory_bounds, optimize_carrier, verbose);
-filename = "MultiStart_results_"+time_str;
+filename = "benchmarks/MultiStart_results_250k_"+time_str;
 save(filename);
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                           Show Combined Results                         %

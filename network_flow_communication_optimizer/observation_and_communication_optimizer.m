@@ -503,15 +503,16 @@ solve_tic = tic;
 if options.ilp
     integer_variables = 1:1:M;
     variable_types = [repmat('B',[1,M]),repmat('C',[1,num_variables-M])];
-    cplex_options = cplexoptimset('timelimit',30);
+    max_milp_time = 300;
+    cplex_options = cplexoptimset('timelimit',max_milp_time);
     try
-        intlinprog_options = mskoptimset('MSK_DPAR_MIO_MAX_TIME',30,'MSK_DPAR_MIO_REL_GAP_CONST',.01);
-        intlinprog_options.MaxTime = 300;
+        intlinprog_options = mskoptimset('MSK_DPAR_MIO_MAX_TIME',max_milp_time,'MSK_DPAR_MIO_REL_GAP_CONST',.01);
+        intlinprog_options.MaxTime = max_milp_time;
         if options.verbose
             intlinprog_options.Display = 'iter';
         end
     catch
-        intlinprog_options = optimoptions('intlinprog','MaxTime',300);
+        intlinprog_options = optimoptions('intlinprog','MaxTime',max_milp_time);
     end
     [X, goal, exitflag, output] = intlinprog(f, integer_variables, A_ineq, b_ineq, A_eq, b_eq, lb, ub, intlinprog_options);
 %     [X, goal, exitflag, output] = cplexmilp(f, A_ineq, b_ineq, A_eq, b_eq, [], [], [], lb, ub, variable_types, [], cplex_options);
