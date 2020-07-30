@@ -42,7 +42,7 @@ verbose = false;
 save_42_inputs = false;
 
 % Maximum time for the trust region integrated orbit optimizer, in seconds
-max_optimization_time = 3600;
+max_optimization_time = 1800;
 
 rng default % Pseudo-random but repeatable scenario
 
@@ -160,7 +160,7 @@ warning('error', 'SBDT:harmonic_gravity:inside_radius')
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
 [Swarm] = integrated_optimization(Swarm, ErosModel, bandwidth_parameters, max_optimization_time, trajectory_bounds, optimize_carrier, verbose);
-filename = "MultiStart_results_"+time_str;
+filename = "MultiStart_results_250k_"+time_str;
 save(filename);
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                           Show Combined Results                         %

@@ -184,9 +184,10 @@ x_vec = cell(num_trials,1);
 fval_vec = zeros(num_trials,1);
 exitflag_vec = cell(num_trials,1);
 output_vec = cell(num_trials,1);
+execution_time_vec = cell(num_trials,1);
 time_str = datestr(now,'yyyymmdd_HHMMSS');
 
-for trial_ix = 1:num_trials
+for trial_ix = 1:num_trials    
     trial_initial_states = initialize_random_orbits(N, gravity_model);
     carrier_initial_conditions = initialize_carrier_orbit(gravity_model);
     trial_initial_states(carrier_index,:) = carrier_initial_conditions;
@@ -198,6 +199,8 @@ for trial_ix = 1:num_trials
         tmp_initial_conditions(1+offset:6+offset) = trial_initial_states(sc,:)'.*optvar_scaling_factor;
     end
     initial_conditions_vec{trial_ix} = tmp_initial_conditions;
+    initial_fval_vec{trial_ix} = fun(tmp_initial_conditions);
+    trialtic = tic;
     par_start_time=tic;
     par_stop_fun = @(x,optimValues,state) stop_function(x,optimValues,state, par_start_time, max_optimization_time);
     par_options = options;
@@ -208,8 +211,8 @@ for trial_ix = 1:num_trials
 %         'options', par_options);
 %     [x_vec{trial_ix}, fval_vec(trial_ix), exitflag_vec{trial_ix}, output_vec{trial_ix}] = fmincon(parproblem);
     [x_vec{trial_ix}, fval_vec(trial_ix), exitflag_vec{trial_ix}, output_vec{trial_ix}] = fmincon(fun, tmp_initial_conditions, A, b, Aeq, beq, lb, ub, [], par_options);
-
-    tmp_filename = "MultiStart_intermediate_"+string(trial_ix)+"_"+time_str;
+    execution_time_vec{trial_ix} = toc(trialtic);
+    tmp_filename = "benchmarks/MultiStart_intermediate_"+string(trial_ix)+"_"+time_str;
     save(tmp_filename);
 end
 [best_swarm_cost, best_swarm_index] = min(fval_vec);
@@ -267,14 +270,23 @@ end
 
 %% Add the inputs to the swarm
 
-for sc =1:N
-    if optimize_carrier || sc ~= carrier_index
-        offset = 6*(sc-1);
-        assert(all(size(x(1+offset:6+offset)) == size(optvar_scaling_factor)), "ERROR - now you miss Numpy's pure vectors, don't you?")
-        sc_initial_condition = (x(1+offset:6+offset)./optvar_scaling_factor)';
-        swarm.integrate_trajectory(sc, gravity_model, sc_initial_condition, 'absolute');
-    end
+% for sc =1:N
+%     if optimize_carrier || sc ~= carrier_index
+%         offset = 6*(sc-1);
+%         assert(all(size(x(1+offset:6+offset)) == size(optvar_scaling_factor)), "ERROR - now you miss Numpy's pure vectors, don't you?")
+%         sc_initial_condition = (x(1+offset:6+offset)./optvar_scaling_factor)';
+%         swarm.integrate_trajectory(sc, gravity_model, sc_initial_condition, 'absolute');
+%     end
+% end
+
+% At this point the swarm has the right orbits, but the wrong everything
+% else. We need to call the inner-loop optimizer again.
+[newgoal, ~, ~, ~, ~, ~, ~, swarm] = fun(x);
+
+if newgoal~=best_swarm_cost
+    warning("WEIRD: best swarm cost does not match optimized cost for best conditions (old %d, new %d)", best_swarm_cost, newgoal);
 end
+
 end
 
 function [stop] = stop_function(x,optimValues,state, start_time, max_time)

@@ -37,7 +37,7 @@ max_memory_marker_size = 40;
 link_color_steps = 100;
 title_font_size = 30;
 standard_font_size = 25;
-font_name = 'Times New Roman';
+font_name = 'Helvetica';
 
 if length(varargin) > 2
     for i = 3:2:length(varargin)

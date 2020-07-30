@@ -35,7 +35,7 @@ if nargin<3
     sc_optimized = Swarm.which_trajectories_set();
 end
 
-flag_map = 3; % 0 for uniform reward
+flag_map = 1; % 0 for uniform reward
 
 N = Swarm.get_num_spacecraft();
 pos_points = AsteroidModel.BodyModel.shape.faceCenters;
@@ -81,23 +81,3 @@ end
 
 end
 
-function [reward] = instrument_reward(sc_type)
-    switch sc_type
-        case 1  % Imaging Spectrometer
-            reward = 3;
-        case 2  % X Ray Spectrometer
-            reward = 2;
-        case 3  % Camera    
-            reward = 1;
-        case 4
-            reward = .5;
-        case -1
-            reward = 1;
-        case -2
-            reward = 0;
-        case -3
-            reward = 0.9;
-        otherwise
-            reward = 1.;
-    end
-end
