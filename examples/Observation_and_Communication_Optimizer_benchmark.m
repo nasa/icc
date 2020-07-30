@@ -43,7 +43,7 @@ addpath(strcat(ROOT_PATH,'/network_flow_communication_optimizer'))
 %                   User Options: Flags and Parameters                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-scenarios_to_test = 10;
+scenarios_to_test = 500;
 
 rng(0); % Get a consistent seed
 
@@ -111,6 +111,41 @@ total_solve_times_milp = zeros(scenarios_to_test,1);
 goals_lp   = zeros(scenarios_to_test,1);
 goals_lpt  = zeros(scenarios_to_test,1);
 goals_milp = zeros(scenarios_to_test,1);
+
+% Warm up parfor by starting the parallel pool
+parfor i=1:20
+    i;
+end
+
+scenarios_to_retest = [12,
+34,
+40,
+83,
+137,
+145,
+149,
+165,
+174,
+181,
+183,
+193,
+197,
+199,
+241,
+248,
+274,
+290,
+303,
+337,
+340,
+361,
+389,
+397,
+465,
+477,
+478,
+497,
+500];
 
 for scenario_index = 1:scenarios_to_test
 

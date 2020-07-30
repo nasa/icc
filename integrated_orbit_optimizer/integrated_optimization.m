@@ -178,9 +178,10 @@ options.OutputFcn = stop_fun;
 % [x, fval, exitflag, output] = run(ms,problem,100);
 
 %% Poor man's multistart
-num_trials = 25;
+num_trials = 50;
 initial_conditions_vec = cell(num_trials,1);
 x_vec = cell(num_trials,1);
+initial_fval_vec = zeros(num_trials,1);
 fval_vec = zeros(num_trials,1);
 exitflag_vec = cell(num_trials,1);
 output_vec = cell(num_trials,1);
@@ -199,7 +200,8 @@ for trial_ix = 1:num_trials
         tmp_initial_conditions(1+offset:6+offset) = trial_initial_states(sc,:)'.*optvar_scaling_factor;
     end
     initial_conditions_vec{trial_ix} = tmp_initial_conditions;
-    initial_fval_vec{trial_ix} = fun(tmp_initial_conditions);
+
+    initial_fval_vec(trial_ix) = fun(tmp_initial_conditions);
     trialtic = tic;
     par_start_time=tic;
     par_stop_fun = @(x,optimValues,state) stop_function(x,optimValues,state, par_start_time, max_optimization_time);
