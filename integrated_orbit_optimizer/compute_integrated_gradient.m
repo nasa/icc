@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Copyright 2019 by California Institute of Technology.  ALL RIGHTS RESERVED. %
+% Copyright 2020 by California Institute of Technology.  ALL RIGHTS RESERVED. %
 % United  States  Government  sponsorship  acknowledged.   Any commercial use %
 % must   be  negotiated  with  the  Office  of  Technology  Transfer  at  the %
 % California Institute of Technology.                                         %
@@ -18,7 +18,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [dk_dic, dk_dbandwidth, dbandwidth_dlocation, dlocation_dic] = compute_gradient(swarm, bandwidth_parameters, asteroid_parameters)
+function [dk_dic, dk_dbandwidth, dbandwidth_dlocation, dk_dlocation_obs, dlocation_dic] = compute_integrated_gradient(swarm, bandwidth_parameters, asteroid_parameters)
 if ~swarm.is_valid()
     error("Swarm is not valid")
 end
@@ -31,11 +31,10 @@ end
 
 N=swarm.get_num_spacecraft();
 K = swarm.get_num_timesteps;
+
 % Derivative of goal function wrt bandwidth
 
 dk_dbandwidth = reshape(swarm.Communication.dual_bandwidths_and_memories,1,K*N*N);
-
-
 
 % Derivative of bandwidth wrt spacecraft location
 dbandwidth_dlocation_full = zeros(K,N,N,K,N,3);
@@ -51,9 +50,9 @@ for k=1:K
             end
             % Derivatives wrt all three directions are vectorized
             for dir=1:3
-                [diff_x1, diff_x2] = diff_quadratic_comm_model(x1, x2, dir, bandwidth_parameters, occlusion_test_fun);
-                dbandwidth_dlocation_full(k,i,j,k,i,dir) = diff_x1*temp_time_step;
-                dbandwidth_dlocation_full(k,i,j,k,j,dir) = diff_x2*temp_time_step;
+                [diff_v1, diff_v2] = diff_quadratic_comm_model(x1, x2, dir, bandwidth_parameters, occlusion_test_fun);
+                dbandwidth_dlocation_full(k,i,j,k,i,dir) = diff_v1*temp_time_step;
+                dbandwidth_dlocation_full(k,i,j,k,j,dir) = diff_v2*temp_time_step;
             end
         end
     end
@@ -77,9 +76,61 @@ for sc=1:N
     dlocation_dic{sc} = reshape(dlocation_dic_mat(:,sc,:),[K*N*3,6]);
 end
 
+% % Derivative of goal with respect to observation rewards is equal to the
+% % primal variable at the optimum, i.e. which vertices we observe.
+% dk_dobsreward_full = zeros(1,K,Nv,N);
+% for j=1:N
+%     for k=1:K
+%         % This is the observed vertex, if any
+%         v = swarm.Observation.observed_points(j,k); 
+%         if v ~= 0
+%             dk_dobsreward_full(1,k,v,j) = 1.;
+%         end
+%     end
+% end
+% 
+% dk_dobsreward = reshape(dk_dobsreward_full,[1,K*Nv*N]);
+% 
+% % Derivative of observation rewards with respect to spacecraft locations is
+% % computed by observations optimizer.
+% dobsreward_dlocation_full = zeros(K,Nv,N,K,N,3);
+% for i=1:N
+%     for k=1:K
+%         for v=1:Nv
+%             for l=1:3
+%                 % sensitivity(i,k,v,l) is the sensitivity (derivative) of the reward of
+%                 % vertex v with respect to the l-th coordinate of spacecraft i's position
+%                 % at time k.
+%                 dobsreward_dlocation_full(k,v,i,k,i,l) = obj.Observation.sensitivity(i,k,v,l);
+%             end
+%         end
+%     end
+% end
+% 
+% dobsreward_dlocation = reshape(dobsreward_dlocation_full,[K*Nv*N,K*N*3]);
+
+% Derivative of goal with respect to spacecraft locations (i.e., derivative
+% of goal with respect to point values, times derivative of point values
+% wrt sc positions) is computed by observations optimizer.
+% dk_dlocation_full = zeros(K,N,3);
+dk_dlocation_full = swarm.Observation.sensitivity;
+% for i=1:N
+%     for k=1:K
+%         for l=1:3
+%             % sensitivity(i,k,v,l) is the sensitivity (derivative) of the reward of
+%             % vertex v with respect to the l-th coordinate of spacecraft i's position
+%             % at time k.
+%             dk_dlocation_full(k,v,i,k,i,l) = obj.Observation.sensitivity(i,k,v,l);
+%         end        
+%     end
+% end
+
+dk_dlocation_obs = reshape(dk_dlocation_full,[1,K*N*3]);
+
+
 dk_dic = cell(N,1);
 for sc = 1:N
-    dk_dic{sc} = dk_dbandwidth*dbandwidth_dlocation*dlocation_dic{sc};
+    dk_dic{sc} = dk_dbandwidth*dbandwidth_dlocation*dlocation_dic{sc} + dk_dlocation_obs*dlocation_dic{sc};
 end
 end
 

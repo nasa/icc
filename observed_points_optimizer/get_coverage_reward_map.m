@@ -35,7 +35,7 @@ if nargin<3
     sc_optimized = Swarm.which_trajectories_set();
 end
 
-flag_map = 3; % 0 for uniform reward
+flag_map = 1; % 0 for uniform reward
 
 N = Swarm.get_num_spacecraft();
 pos_points = AsteroidModel.BodyModel.shape.faceCenters;
@@ -54,7 +54,7 @@ for i_sc = sc_optimized
 
     elseif flag_map==1
         %% Random Map
-        reward_map{i_sc} = randi(10,Nv,K);
+        reward_map{i_sc} = 9.5+rand(Nv,K);
         
     elseif flag_map==2
         %% Value points closer to center of gravity
@@ -81,15 +81,3 @@ end
 
 end
 
-function [reward] = instrument_reward(sc_type)
-    switch sc_type
-        case -1
-            reward = 1;
-        case -2
-            reward = 0;
-        case -3
-            reward = 0.9;
-        otherwise
-            reward = 1.;
-    end
-end

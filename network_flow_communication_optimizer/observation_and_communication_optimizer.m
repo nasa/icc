@@ -1,6 +1,6 @@
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                         %
-%     CVX implementation of a network flow-based communication optimizer. %
+%     LP  implementation of a network flow-based communication optimizer. %
 %     Based on the model developed by CSM's Sam Friedman and JPL's        %
 %     Federico Rossi.                                                     %
 %                                                                         %
@@ -26,7 +26,7 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [swarm, goal] = observation_and_communication_optimizer(asteroid_model, swarm, bandwidth_model, data_scaling_factor)
+function [swarm, goal, problem_solve_time] = observation_and_communication_optimizer(asteroid_model, swarm, bandwidth_model, data_scaling_factor, options)
 
 % How to best collect observations and route data from a number of science
 % spacecraft to a carrier s/c, given an observation model and a network
@@ -48,6 +48,21 @@ function [swarm, goal] = observation_and_communication_optimizer(asteroid_model,
 % goal, the optimal goal
 prelim_tic = tic;
 
+if nargin<5
+    options.verbose = false;
+    options.ilp = false;
+    options.truncate = false;
+end
+if ~isfield(options,"verbose")
+    options.verbose = false;
+end
+if ~isfield(options,"ilp")
+    options.ilp = false;
+end
+if ~isfield(options,"truncate")
+    options.truncate = false;
+end
+    
 if nargin<4
     data_scaling_factor = NaN; % Just a placeholder, will fix once we have instrument data rates
 end
@@ -67,15 +82,43 @@ N = swarm.get_num_spacecraft();
 % observable_points is a N by K cell matrix. observable_points(i,k) is the
 % list of points that spacecraft i can observe at time k
 
+verbose = options.verbose;
+
+if verbose
+    disp("Get observability and reward")
+end
 op_tic = tic;
 observable_points = swarm.Observation.observable_points; % Get an empty container of the right size from the constructor
 
+observable_points_values = observable_points;
+observable_points_gradients = observable_points;
+observable_points_gradients_next = observable_points;
+
+tocvec = 0;
+tocscalar = 0;
 for i_sc = swarm.which_trajectories_set()
-    for i_time = 1:K
-        observable_points{i_sc, i_time} = get_observable_points(asteroid_model, swarm, i_time, i_sc) ;
+    parfor i_time = 1:K
+        ticvec = tic;
+        [observable_points{i_sc, i_time}, ...
+            observable_points_values{i_sc, i_time}, ...
+            observable_points_gradients{i_sc, i_time}, ...
+            observable_points_gradients_next{i_sc, i_time}] ...
+            = get_observable_points_vectorized(asteroid_model, swarm, i_time, i_sc) ;
+        tocvec = tocvec+toc(ticvec);
+%         ticscalar = tic;
+%         [observable_points{i_sc, i_time}, ...
+%             observable_points_values{i_sc, i_time}, ...
+%             observable_points_gradients{i_sc, i_time}, ...
+%             observable_points_gradients_next{i_sc, i_time}] ...
+%             = get_observable_points(asteroid_model, swarm, i_time, i_sc) ;
+%         tocscalar = tocscalar+ toc(ticscalar);
+%         assert(all(size(observable_pointsv{i_sc, i_time}) == size(observable_points{i_sc, i_time})), "Observable points do not match (time %d, sc %d)!", i_sc, i_time)
     end
 end
+
 swarm.Observation.observable_points = observable_points;
+
+observable_points;
 
 observability_time = toc(op_tic);
  
@@ -130,7 +173,9 @@ n_observed_vertices = length(observable_vertices);
 observable_points_time = toc(observabletic);
 
 %% Compute bandwidths
-
+if verbose
+    disp("Compute bandwidths")
+end
 % We will never need more than this memory
 max_memory = sum(sum(swarm.Observation.flow));
 
@@ -180,6 +225,9 @@ end
 
 problem_prelim_time = toc(prelim_tic);
 %% Pose the problem
+if verbose
+    disp("Pose the problem");
+end
 setup_tic = tic;
 
 % The code below merges relay optimization code from
@@ -207,22 +255,29 @@ for i_time = 1:K-1
     end
 end
 
+
 % Create pointer vectors to keep track of the time, vertex, and agent
 % corresponding to the pth position in the decision variable
 p = 0; % This index will run over all possible observations
 p_k=zeros(1,M); % Decision variable m corresponds to time p_k(m)
 p_v=zeros(1,M); % Decision variable m corresponds to vertex p_v(m)
 p_s=zeros(1,M); % Decision variable m corresponds to spacecraft p_s(m)
-w=zeros(1,M);   % w(m) is the reward for decision variable m
+w = zeros(1,M); % w(m) is the reward for decision variable m
+
+
+dobservations_dspacecraft = zeros(N, K, M, 3);
 
 for k = 1:K-1
     for i_sc = swarm.which_trajectories_set()
-        for i_v = observable_points{i_sc, k}
+        for i_v_index = 1:length(observable_points{i_sc, k})
+            i_v = observable_points{i_sc, k}(i_v_index);
             p = p+1;
             p_k(p) = k;
             p_v(p) = i_v;
             p_s(p) = i_sc;
-            w(p) = reward_map{i_sc}(i_v,k); 
+            w(p) = reward_map{i_sc}(i_v,k) * observable_points_values{i_sc, k}(i_v_index);
+            dobservations_dspacecraft(i_sc, k, p, :) = reward_map{i_sc}(i_v,k) * observable_points_gradients{i_sc, k}(i_v_index, :);
+            dobservations_dspacecraft(i_sc, k+1, p, :) = reward_map{i_sc}(i_v,k) * observable_points_gradients_next{i_sc, k}(i_v_index, :);
         end
     end
 end
@@ -249,12 +304,19 @@ delivered_science_finder = @(k,c) M+ K*N*N + num_carriers*(k-1) + c;
 num_variables = M +K*N*N+num_carriers*K;
 
 % Objective - remember we MINIMIZE
-f = zeros(num_variables,1);
+% This encourages spacecraft to not send information needlessly on the
+% links. Careful! This is a penalty per bit. If it is too high, we will not
+% collect data _at all_.
+sparsification_penalty = 1/(max(max(data_rates(data_rates>0))));
+
+f = sparsification_penalty*ones(num_variables,1);
+% f = zeros(num_variables,1);
 f(1:M) = -w;
 % sum(sum(sum(reward_with_observability_matrix.*observations)))
 
 % Initialization of upper and lower bounds
 ub= Inf*ones(num_variables,1);
+ub(1:M) = 1.;
 lb= zeros(num_variables,1);
 
 % Number of constraints and entries:
@@ -287,6 +349,10 @@ eq_entry_ix = 1;
 ineq_constraint_ix = 1;
 ineq_entry_ix = 1;
 
+if verbose
+    disp("Constraints");
+end
+
 % Inequality constraint 1: Observe every point at most once
 %     sum(sum(observations(v,:,:))) <=1
 for v_ix = 1:length(observable_vertices)
@@ -309,8 +375,10 @@ for j=1:N
     for k=1:K
 %         sum(observations(:,j,k)) <=1
         for obs = sc_time_observation_opportunities{j,k}
-            A_ineq_sparse(ineq_entry_ix, :) = [ineq_constraint_ix, obs, 1];
-            ineq_entry_ix = ineq_entry_ix + 1;
+            if ~isempty(obs)
+                A_ineq_sparse(ineq_entry_ix, :) = [ineq_constraint_ix, obs, 1];
+                ineq_entry_ix = ineq_entry_ix + 1;
+            end
         end
         b_ineq(ineq_constraint_ix) = 1;
         ineq_constraint_ix = ineq_constraint_ix+1;
@@ -323,6 +391,18 @@ for k=1:K-1
         % sum(flows(k,:,j)) + sum(observations(:,j,k))*data_rates(j,k) == sum(flows(k+1,j,:))
         % sum(flows(k,:,j)) + sum(observations(:,j,k))*data_rates(j,k) == sum(flows(k+1,j,:))+delivered_science(k+1, carrier_id(j));
         % Flows in and out
+        % The formulation below is arguably more correct, but not what we
+        % present in the paper. Revisit
+%         for i=1:N
+%             A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, flows_finder(k,i,j), 1];
+%             eq_entry_ix = eq_entry_ix +1;
+%             if i==j  % Memory
+%                 A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, flows_finder(k+1,j,i), -1];
+%             else  % Radio
+%                 A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, flows_finder(k,j,i), -1];
+%             end
+%             eq_entry_ix = eq_entry_ix +1;
+%         end
         for i=1:N
             A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, flows_finder(k,i,j), 1];
             eq_entry_ix = eq_entry_ix +1;
@@ -332,8 +412,10 @@ for k=1:K-1
         
         % Add the observations at this time
         for obs = sc_time_observation_opportunities{j,k}
-            A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, obs, data_rates(j,k)];
-            eq_entry_ix = eq_entry_ix +1;
+            if ~isempty(obs)
+                A_eq_sparse(eq_entry_ix, :) = [eq_constraint_ix, obs, data_rates(j,k)];
+                eq_entry_ix = eq_entry_ix +1;
+            end
         end        
         
         % Sink at the carrier
@@ -363,10 +445,13 @@ end
 
 % Constraint 3: Initial flows are nil - don't make up information
 % flows(1,:,:) == 0;
+% for i=1:N
+% %     for j=1:N
+%         ub(flows_finder(1,i,1:N)) = 0;
+% %     end
+% end
 for i=1:N
-%     for j=1:N
-        ub(flows_finder(1,i,1:N)) = 0;
-%     end
+    ub(flows_finder(1,i,i)) = 0;
 end
 
 % Constraint 4: No need for carrier to memorize
@@ -387,19 +472,22 @@ for i=1:1:N
 end
   
 %% Build the equality matrix
+if verbose
+    disp("Build matrices")
+end
 % First, sanity checks
 if eq_constraint_ix-1 ~= num_equality_constraints
-    fprintf("ERROR: number of equality constraints is unexpected (expected %d, actual %d)\n", num_equality_constraints, eq_constraint_ix-1);
+    error("ERROR: number of equality constraints is unexpected (expected %d, actual %d)\n", num_equality_constraints, eq_constraint_ix-1);
 end
 if eq_entry_ix-1 ~= num_equality_entries
-    fprintf("ERROR: number of equality entries is unexpected (expected %d, actual %d)\n", num_equality_entries, eq_entry_ix-1);
+    error("ERROR: number of equality entries is unexpected (expected %d, actual %d)\n", num_equality_entries, eq_entry_ix-1);
 end
 
 if ineq_constraint_ix-1 ~= num_inequality_constraints
-    fprintf("ERROR: number of inequality constraints is unexpected (expected %d, actual %d)\n", num_inequality_constraints, ineq_constraint_ix-1);
+    error("ERROR: number of inequality constraints is unexpected (expected %d, actual %d)\n", num_inequality_constraints, ineq_constraint_ix-1);
 end
 if ineq_entry_ix-1 ~= num_inequality_entries
-    fprintf("ERROR: number of inequality entries is unexpected (expected %d, actual %d)\n", num_inequality_entries, ineq_entry_ix-1);
+    error("ERROR: number of inequality entries is unexpected (expected %d, actual %d)\n", num_inequality_entries, ineq_entry_ix-1);
 end
 
 A_eq = sparse(A_eq_sparse(:,1), A_eq_sparse(:,2), A_eq_sparse(:,3), num_equality_constraints, num_variables);
@@ -408,11 +496,36 @@ A_ineq = sparse(A_ineq_sparse(:,1), A_ineq_sparse(:,2), A_ineq_sparse(:,3), num_
 
 problem_setup_time = toc(setup_tic);
 %% Solve the problem
+if verbose
+    disp("Solve the problem")
+end
 solve_tic = tic;
-[X, goal, exitflag, output, lambdas] = cplexlp(f, A_ineq, b_ineq, A_eq, b_eq, lb, ub);
+if options.ilp
+    integer_variables = 1:1:M;
+    variable_types = [repmat('B',[1,M]),repmat('C',[1,num_variables-M])];
+    max_milp_time = 300;
+    cplex_options = cplexoptimset('timelimit',max_milp_time);
+    try
+        intlinprog_options = mskoptimset('MSK_DPAR_MIO_MAX_TIME',max_milp_time,'MSK_DPAR_MIO_REL_GAP_CONST',.01);
+        intlinprog_options.MaxTime = max_milp_time;
+        if options.verbose
+            intlinprog_options.Display = 'iter';
+        end
+    catch
+        intlinprog_options = optimoptions('intlinprog','MaxTime',max_milp_time);
+    end
+    [X, goal, exitflag, output] = intlinprog(f, integer_variables, A_ineq, b_ineq, A_eq, b_eq, lb, ub, intlinprog_options);
+%     [X, goal, exitflag, output] = cplexmilp(f, A_ineq, b_ineq, A_eq, b_eq, [], [], [], lb, ub, variable_types, [], cplex_options);
+    lambdas = NaN;
+else
+    [X, goal, exitflag, output, lambdas] = linprog(f, A_ineq, b_ineq, A_eq, b_eq, lb, ub);
+end
 % can also use linprog (esp. the MOSEK version) with identical syntax
 problem_solve_time = toc(solve_tic);
 %% Unpack the variables
+if verbose
+    disp("Unpack the variables")
+end
 unpack_tic = tic;
 observations_flat = X(1:M);
 
@@ -426,14 +539,21 @@ end
 
 % delivered_science = reshape(X(delivered_science_finder(1,1):delivered_science_finder(K,num_carriers)), [num_carriers, K])';
 dual_bandwidth_and_memory = zeros(K,N,N);
-for k=1:K
-    for i=1:N
-        dual_bandwidth_and_memory(k,i,1:N) = lambdas.upper(flows_finder(k,i,1):flows_finder(k,i,N));
+if options.ilp
+    dual_bandwidth_and_memory = nan(size(dual_bandwidth_and_memory));
+else
+    for k=1:K
+        for i=1:N
+            dual_bandwidth_and_memory(k,i,1:N) = lambdas.upper(flows_finder(k,i,1):flows_finder(k,i,N));
+        end
     end
 end
 
-%% Set the output
 
+%% Set the output
+if verbose
+    disp("Set the output")
+end
 % Observations
 
 swarm.Observation.observed_points = zeros(N,K); % Points observed
@@ -443,14 +563,17 @@ swarm.Observation.priority = zeros(N,K);  % Reward
 
 swarm.Observation.flow = zeros(N,K);
 swarm.Observation.priority = zeros(N,K);
+swarm.Observation.sensitivity = zeros(size(swarm.Observation.sensitivity));
+
+t_fill_out = tic;
 for obs_index = 1:M
     k = p_k(obs_index); % Observation time
     v = p_v(obs_index); % Observed point
     j = p_s(obs_index); % Observing spacecraft
     reward = w(obs_index); % Reward
     if observations_flat(obs_index)>observation_threshold
-        if swarm.Observation.observed_points(j,k) ~= 0
-            fprintf("SC %d, time %d: more than one point observed! (old: %d w. total flow %f, new: %d with flow %f))\n",j,k,swarm.Observation.observed_points(j,k),swarm.Observation.flow(j,k),v,observations_flat(obs_index)*(data_rates(j,k)*data_scaling_factor))
+        if swarm.Observation.observed_points(j,k) ~= 0 && verbose
+            fprintf("SC %d, time %d: more than one point observed! (old: %d w. total flow %f, new: %d with flow %f at index %d))\n",j,k,swarm.Observation.observed_points(j,k),swarm.Observation.flow(j,k),v,observations_flat(obs_index)*(data_rates(j,k)*data_scaling_factor),obs_index)
         end
         swarm.Observation.observed_points(j,k) = v;
     end
@@ -458,27 +581,99 @@ for obs_index = 1:M
     swarm.Observation.flow(j,k) = swarm.Observation.flow(j,k)+ observations_flat(obs_index)*(data_rates(j,k)*data_scaling_factor);
     swarm.Observation.priority(j,k) = swarm.Observation.priority(j,k)+ observations_flat(obs_index)*reward;
     % There should be only one nonzero entry per (sc, time), due to TUM
+    
+%     if X(obs_index) ~= 0
+%         if nnz(dobservations_dspacecraft(:, :, obs_index,:)) > 0
+%             for k=1:K
+%                 if nnz(dobservations_dspacecraft(:, k, obs_index,:)) > 0 
+%                     for i=1:N
+%                         swarm.Observation.sensitivity(k, i, :) = swarm.Observation.sensitivity(k, i,:) + observations_flat(obs_index)*reshape(dobservations_dspacecraft(i, k, obs_index,:), [1,1,3]);
+%                     end
+%                 end
+%             end
+%         end
+%     end
 end
+
+
+if options.truncate
+    observations_flat_truncated = observations_flat;
+    for i=1:N
+        for k=1:K
+            tmp_observations_ik_mask = (p_k==k & p_s == i);
+            tmp_observations_ik_indices = find((observations_flat>observation_threshold)'.*tmp_observations_ik_mask);
+            if length(tmp_observations_ik_indices)>1
+                fprintf("SC %d, time %d: %d points observed! Zeroing out observations ",i,k,length(tmp_observations_ik_indices));
+                tmp_observation_rewards = w.*(observations_flat>observation_threshold)'.*tmp_observations_ik_mask;
+                [max_obs_reward, max_obs_reward_index] = max(tmp_observation_rewards);
+                for tmp_observation_index = tmp_observations_ik_indices
+                    if tmp_observation_index~=max_obs_reward_index
+                        observations_flat_truncated(tmp_observation_index) = 0.;
+                        fprintf(" %d ", tmp_observation_index)
+                    end
+                end
+                fprintf("\n");
+            end
+        end
+    end
+    X_mod = X;
+    X_untruncated = X;
+    X_mod(1:M) = observations_flat_truncated;
+    new_goal = dot(f,X_mod);
+    if new_goal ~= goal & verbose
+        fprintf("Truncation reduced goal from %d to %d\n",goal, new_goal);
+    end
+    goal = new_goal;
+    X = X_mod;
+end
+% sensitivity: value of v times dobservations_dspacecraft. sensitivity = zeros(N,K,1,3);
+
+for k=1:K
+    for i=1:N
+        swarm.Observation.sensitivity(k, i, :) = swarm.Observation.sensitivity(k, i, :) + reshape(observations_flat'*reshape(dobservations_dspacecraft(i, k, :,:), [M, 3]), [1,1,3]);
+    end
+end
+
+toc_fill_out = toc(t_fill_out);
+
+% if X(obs_index) ~= 0
+%     swarm.Observation.sensitivity(j,k,1,:) = swarm.Observation.sensitivity(j,k,1,:) + X(obs_index)*observable_points_gradients{j,k}(obs_index, :);
+%     swarm.Observation.sensitivity(j,k+1,1,:) = swarm.Observation.sensitivity(j,k+1,1,:) + X(obs_index)*observable_points_gradients_next{j,k}(obs_index, :);
+% end
+% for k = 1:K-1
+%     for i_sc = swarm.which_trajectories_set()
+%         for i_v_index = 1:length(observable_points{i_sc, k})
+%             i_v = observable_points{i_sc, k}(i_v_index);
+%             p = p+1;
+%             p_k(p) = k;
+%             p_v(p) = i_v;
+%             p_s(p) = i_sc;
+%             w(p) = reward_map{i_sc}(i_v,k) * observable_points_values{i_sc, k}(i_v_index);
+%             dobservations_dspacecraft(i_sc, k, p, :) = observable_points_gradients{i_sc, k}(i_v_index, :);
+%             dobservations_dspacecraft(i_sc, k+1, p, :) = observable_points_gradients_next{i_sc, k}(i_v_index, :);
+%         end
+%     end
+% end
 
 % Flows
 
 swarm.Communication.flow = flows*data_scaling_factor;
 swarm.Communication.effective_source_flow = swarm.Observation.flow;
 swarm.Communication.bandwidths_and_memories = bandwidths_and_memories*data_scaling_factor;
-swarm.Communication.dual_bandwidths_and_memories = dual_bandwidth_and_memory;  % Effective_flow is reduced by data_scaling_factor, but so is the cost.
+swarm.Communication.dual_bandwidths_and_memories = dual_bandwidth_and_memory/data_scaling_factor;  % data_rates is divided by data_scaling_factor, cost is unaffected.
 
 problem_unpack_time = toc(unpack_tic);
 
+% warning("If you flip the goal, shouldn't you flip the gradients?!")
+% warning("NOT REALLY, the line above this warn should be removed");
+
+
 goal = -goal;
 
-% % Blueprint for recovering science_delivered. 
-% flows_to_carrier = flows(:,:,end);
-% flows_from_carrier = squeeze(flows(:,end,:));
-% delivered_science_recovered = zeros(K,1);
-% delivered_science_recovered(2:end) = sum(flows_to_carrier(1:end-1,:),2)-sum(flows_from_carrier(2:end,:),2)+effective_science(end,1:end-1)';
-% 
-%assert(norm(delivered_science_recovered-delivered_science)<1e-3)
-
-% TODO BUGFIX: What are the units for the data rates? Definitely not bits
-% per second!! I don;t think we will be collecting GBPS. More like
-% GBPobservation, so maybe we do not need to multiply by time.
+% If you are here, you may be wondering why we flip the sign of the goal
+% but not the sign of the observations. It works, I promise. See the tests
+% in test_integrated_gradient, and try to flip either
+% swarm.Communication.dual_bandwidths_and_memories
+% or
+% swarm.Observation.sensitivity
+% to see that it works as is. -F

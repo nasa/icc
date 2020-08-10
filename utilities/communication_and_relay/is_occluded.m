@@ -18,20 +18,38 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [occluded] = is_occluded(x1, x2, spherical_asteroid_parameters)
+function [occluded, doccluded_dx1, doccluded_dx2] = is_occluded(x1, x2, spherical_asteroid_parameters)
     % Compute minimum distance between segment going through x1, x2 and the
     % asteroid, assumed to be at (0,0,0)
     % Careful! You care about the minimum distance between the objects
     % between the first and the second point! That is, if the closest
     % approach point is not between x1 and x2, you do not especially care
-    distance = distance_segment_to_point(x1, x2, [0;0;0]);
+    [distance, ~, ddistance_dx1, ddistance_dx2] = distance_segment_to_point(x1, x2, [0;0;0]);
     if distance > spherical_asteroid_parameters.max_radius
+%         disp("Free")
         occluded = 0;
+        doccluded_dx1 = zeros(3,1);
+        doccluded_dx2 = zeros(3,1);
     elseif distance < spherical_asteroid_parameters.min_radius
+%         disp("Fully occluded")
         occluded = 1;
+        doccluded_dx1 = zeros(3,1);
+        doccluded_dx2 = zeros(3,1);
     elseif spherical_asteroid_parameters.max_radius == spherical_asteroid_parameters.min_radius
+%         disp("Maxr=minr")
         occluded = 0.5;
+        doccluded_dx1 = NaN(3,1);
+        doccluded_dx2 = NaN(3,1);
     else
-        occluded = (distance-spherical_asteroid_parameters.min_radius)/(spherical_asteroid_parameters.max_radius-spherical_asteroid_parameters.min_radius);
+        disp("Potentially occluded")
+        occluded = 1 - (distance-spherical_asteroid_parameters.min_radius)/(spherical_asteroid_parameters.max_radius-spherical_asteroid_parameters.min_radius);
+%         if occluded<1 && occluded>0
+%             disp(" Occluded")
+%             occluded
+%         end
+        assert(occluded>=0);
+        assert(occluded<=1);
+        doccluded_dx1 = -ddistance_dx1/(spherical_asteroid_parameters.max_radius-spherical_asteroid_parameters.min_radius);
+        doccluded_dx2 = -ddistance_dx2/(spherical_asteroid_parameters.max_radius-spherical_asteroid_parameters.min_radius);
     end
 end

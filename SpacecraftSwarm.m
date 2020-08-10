@@ -13,6 +13,8 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
         state_transition_matrix % [6 x 6 x N_TIMESTEPS x N_SPACECRAFT] Array containing the state transition matrix of the spacecraft
         state_transition_matrix_frame % {N_SPACECRAFT} Cell array containing the frame in which the STM was computed
         sun_state_array % [6 X N_TIMESTEPS] Array containing the trajectory of the Sun in IAU_EROS frame
+        all_trajectories_set % true | false; indicates whether trajectories have been computed
+        unset_trajectories % indicies of trajectories that have not been set 
     end
     
     properties(SetAccess=public, GetAccess=public)
@@ -21,10 +23,9 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
         
     end
     
-    properties(SetAccess=private, GetAccess=private)
-        all_trajectories_set % true | false; indicates whether trajectories have been computed
-        unset_trajectories % indicies of trajectories that have not been set 
-    end
+%     properties(SetAccess=private, GetAccess=private)
+%         
+%     end
     
     %% Methods
     methods
@@ -45,8 +46,10 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             
             obj.Observation.observed_points = zeros(N, K); % observed_points(i,k) = index of vertex on asteroid observed by spacecraft i at time k
             obj.Observation.observable_points = cell(N,K); % obvservable_points(
+            obj.Observation.observable_point_values = cell(N,K); % obvservable_points(
             obj.Observation.flow = zeros(N, K); % [bits/s]; Observation.flow(i,k) contains the data taken in by spacecraft i at time k
             obj.Observation.priority = zeros(N, K); % [reward/(bit/s)]; priority(i,k) is the value of one bit of science produced by spacecraft i at time k.
+            obj.Observation.sensitivity = zeros(K, N, 3); % sensitivity(i,k,v,l) is the sensitivity (derivative) of the reward of vertex v with respect to the l-th coordinate of spacecraft i's position at time k.
             
             obj.Communication.flow = zeros(K, N, N); % [bits/s]; Communication.flow(k,i,j) contains the data flow from s/c i to s/c j at time k
             obj.Communication.effective_source_flow = zeros(N, K); % [bits/s]; Contains the portion of obj.Observation.flow that actually reaches the carrier
@@ -72,7 +75,59 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
                 obj.integrate_trajectory(i_sc, ErosGravity, sc_initial_state, abs_or_rel);
             end
         end
-        
+
+        function obj = parallel_integrate_trajectories(obj, ErosGravity, sc_initial_state, abs_or_rel, stop_if_inside_reference_radius)
+            for i_sc = 1:size(sc_initial_state,1)
+                obj.unset_trajectories(obj.unset_trajectories==i_sc)=[]; % remove this trajectory from
+            end
+            if isempty(obj.unset_trajectories())
+                obj.all_trajectories_set = true;
+            end
+           if nargin<5
+                stop_if_inside_reference_radius = false;
+            end
+            if nargin<4
+                abs_or_rel = 'absolute'; % which frame to conduct the integration in
+            end
+            abs_trajs = cell(size(sc_initial_state,1),1);
+            rel_trajs = cell(size(sc_initial_state,1),1);
+            modes = cell(size(sc_initial_state,1),1);
+            stms = cell(size(sc_initial_state,1),1);
+            clear_of_radius = zeros(size(sc_initial_state,1),1);
+            parfor i_sc = 1:size(sc_initial_state,1)
+                if stop_if_inside_reference_radius
+                    warning('error', 'SBDT:harmonic_gravity:inside_radius');
+                end
+                try
+                    [~, abs_trajs{i_sc}, rel_trajs{i_sc}, modes{i_sc}, stms{i_sc}] = ErosGravity.integrate(obj.sample_times, transpose(sc_initial_state(i_sc,:)), abs_or_rel );
+                    clear_of_radius(i_sc) = 1;
+                catch ME
+                    % Note that this will only be triggered if the
+                    % inside_radius warning is triggered _and_ if it has
+                    % been set as an error outside.
+                    if (strcmp(ME.identifier, 'SBDT:harmonic_gravity:inside_radius'))
+                        %warning("ERROR: something went wrong with integrating the trajectory. Inspect the warnings above.")
+                        warning("ERROR: Trajectory dipped inside reference radius.");
+                        clear_of_radius(i_sc) = 0;
+                    else
+                        rethrow(ME);
+                    end
+                end
+            end
+            for i_sc = 1:size(sc_initial_state,1)
+                if clear_of_radius(i_sc)
+                    obj.abs_trajectory_array(:,:,i_sc) = abs_trajs{i_sc};
+                    obj.rel_trajectory_array(:,:,i_sc) = rel_trajs{i_sc};
+                    obj.state_transition_matrix(:,:,:,i_sc) = stms{i_sc};
+                    obj.state_transition_matrix_frame{i_sc} = modes{i_sc};
+                    obj.unset_trajectories(obj.unset_trajectories==i_sc)=[]; % remove this trajectory from
+                end
+
+            end
+            if isempty(obj.unset_trajectories())
+                obj.all_trajectories_set = true;
+            end
+        end
         %%%%%%%%%%%%%%%%%% Integrate a single trajectory %%%%%%%%%%%%%%%%%%
         function obj = integrate_trajectory( obj, i_sc, ErosGravity, sc_initial_state, abs_or_rel)
             obj.unset_trajectories(obj.unset_trajectories==i_sc)=[]; % remove this trajectory from
@@ -156,7 +211,7 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             N = obj.get_num_spacecraft(); 
             K = obj.get_num_timesteps(); 
             
-            if length(fieldnames(obj))~=9
+            if length(fieldnames(obj))~=11
                 warning('Extra fields added to object!')
                 valid = false; 
             elseif length(obj.Parameters.available_memory)~=obj.get_num_spacecraft()
@@ -165,7 +220,7 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             elseif (length(obj.Parameters.types)~=obj.get_num_spacecraft()) || ~iscell(obj.Parameters.types)
                 warning('object.Parameters.types should be [1 x N] cell array!')
                 valid = false;
-            elseif length(fieldnames(obj.Observation))~=4
+            elseif length(fieldnames(obj.Observation))~=6
                 warning('Extra fields added to object.Observation!')
                 valid = false;
             elseif length(fieldnames(obj.Communication))~=4
@@ -183,6 +238,12 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             elseif ~iscell(obj.Observation.observable_points) || (size(obj.Observation.observable_points,1)~=N) || (size(obj.Observation.observable_points,2)~=K)
                 warning('object.Observation.observable_points should be [N x K] cell!')
                 valid = false;
+             elseif ~iscell(obj.Observation.observable_point_values) || (size(obj.Observation.observable_point_values,1)~=N) || (size(obj.Observation.observable_point_values,2)~=K)
+                warning('object.Observation.observable_point_values should be [N x K] cell!')
+                valid = false;
+            elseif ~isnumeric(obj.Observation.sensitivity) || (size(obj.Observation.sensitivity,1)~=K) || (size(obj.Observation.sensitivity,2)~=N) || (size(obj.Observation.sensitivity,3)~=3)
+                warning('object.Observation.sensitivity should be [K x N x 3] double!')
+                valid=false;
             elseif ~isnumeric(obj.Communication.flow) || (size(obj.Communication.flow,1)~=K) || (size(obj.Communication.flow,2)~=N) || (size(obj.Communication.flow,3)~=N)
                 warning('object.Communication.flow should be [K x N x N] double!')
                 valid = false;
@@ -241,6 +302,14 @@ classdef SpacecraftSwarm < matlab.mixin.Copyable%  < handle
             
         end
         
+        function [] = test_only_reset_absolute_trajectory(obj, absolute_trajectory)
+            warning("Only use this function in tests!")
+            obj.abs_trajectory_array = absolute_trajectory;
+        end
+        function [] = test_only_reset_relative_trajectory(obj, relative_trajectory)
+            warning("Only use this function in tests!")
+            obj.rel_trajectory_array = relative_trajectory;
+        end
 
     end
     

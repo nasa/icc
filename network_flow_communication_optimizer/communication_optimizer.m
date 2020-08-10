@@ -249,7 +249,7 @@ A_eq = sparse(A_eq_sparse(:,1), A_eq_sparse(:,2), A_eq_sparse(:,3), num_equality
 
 %% Solve the problem
 
-[X, tgoal, exitflag, output, lambdas] = linprog(f, [], [], A_eq, b_eq, lb, ub);
+[X, tgoal, exitflag, output, lambdas] = cplexlp(f, [], [], A_eq, b_eq, lb, ub);
 
 %% Unpack the variables
 

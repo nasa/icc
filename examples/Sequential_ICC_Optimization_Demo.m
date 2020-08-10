@@ -42,7 +42,7 @@ verbose = false;
 save_42_inputs = false;
 
 % Maximum time for the trust region integrated orbit optimizer, in seconds
-max_optimization_time = 1800;
+max_optimization_time = 36000;
 
 rng default % Pseudo-random but repeatable scenario
 
@@ -83,14 +83,20 @@ time_vector = 0:delta_t:total_t; % sample times
 sc_max_memory = 8*20*1e9.*ones(1,n_spacecraft); % 20 GB max memory for instrument spacecraft
 sc_max_memory(1,carrier_index) = 8*10000*1e9; % Memory limit for carrier spacecraft
 
-% Parameters for bandwidth model
-bandwidth_parameters.reference_bandwidth = 10000;
-bandwidth_parameters.reference_distance = 100000;
-bandwidth_parameters.max_bandwidth = 100*1e6;
+
 
 % Parameters for trajectory bounds
 trajectory_bounds.max_distance_m = 140000;
 trajectory_bounds.min_distance_m = 12000;
+
+% Number of orbits to consider in the Monte Carlo science orbit optimizer
+n_trial_orbits = 250;
+
+% Maximum time for the trust region relay orbit optimizer, in seconds
+max_relay_optimization_time = 1800;
+% Which spacecraft should be optimized as relays?
+relay_orbit_indices = [4, 5, 6];
+assert(max(relay_orbit_indices)<=(n_spacecraft-1), "ERROR: relay orbit indices exceed number of spacecraft");
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                       Initialize Eros Model                             %
@@ -156,12 +162,58 @@ end
 warning('error', 'SBDT:harmonic_gravity:inside_radius')
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                     Integrated Orbit Optimization                       %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%                    Sciencecraft Orbit Optimization                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[Swarm] = integrated_optimization(Swarm, ErosModel, bandwidth_parameters, max_optimization_time, trajectory_bounds, optimize_carrier, verbose);
-filename = "benchmarks/MultiStart_results_250k_"+time_str;
-save(filename);
+Swarm = monte_carlo_coverage_optimizer_main(ErosModel, Swarm, n_trial_orbits);
+
+% %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %                        Relay Orbit Optimization                         %
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+% 
+% [Swarm] = relay_optimization(Swarm, ErosModel, bandwidth_parameters, relay_orbit_indices, max_relay_optimization_time);
+% 
+% %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %                 Science and Network Flow Optimization                   %
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+% Swarm = observed_points_network_flow_optimizer(Swarm, ErosModel, bandwidth_parameters);
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                 Science and Network Flow V2 Optimization                %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Parameters for bandwidth model
+bandwidth_parameters.reference_bandwidth = 250000;
+bandwidth_parameters.reference_distance = 100000;
+bandwidth_parameters.max_bandwidth = 100*1e6;
+
+spherical_asteroid_parameters.max_radius = ErosModel.BodyModel.shape.maxRadius*1e3;
+spherical_asteroid_parameters.min_radius = ErosModel.BodyModel.shape.maxRadius*1e3;
+
+occlusion_test =  @(x1, x2) is_occluded(x1, x2, spherical_asteroid_parameters);
+bandwidth_model = @(x1, x2) quadratic_comm_model(x1, x2, bandwidth_parameters,occlusion_test);
+
+[Swarm, goal, problem_solve_time] = observation_and_communication_optimizer(ErosModel, Swarm, bandwidth_model);
+
+save("Greedy_sequential_250k_randomuniform");
+
+% Parameters for bandwidth model
+bandwidth_parameters.reference_bandwidth = 10000;
+bandwidth_parameters.reference_distance = 100000;
+bandwidth_parameters.max_bandwidth = 100*1e6;
+
+spherical_asteroid_parameters.max_radius = ErosModel.BodyModel.shape.maxRadius*1e3;
+spherical_asteroid_parameters.min_radius = ErosModel.BodyModel.shape.maxRadius*1e3;
+
+occlusion_test =  @(x1, x2) is_occluded(x1, x2, spherical_asteroid_parameters);
+bandwidth_model = @(x1, x2) quadratic_comm_model(x1, x2, bandwidth_parameters,occlusion_test);
+
+[Swarm, goal, problem_solve_time] = observation_and_communication_optimizer(ErosModel, Swarm, bandwidth_model);
+
+save("Greedy_sequential_10k_randomuniform");
+
+
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                           Show Combined Results                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -169,7 +221,7 @@ save(filename);
 % Do you want the 3d plot to be in an absolute or relative frame?
 absolute = true;
 
-plot_coverage_and_communications_with_insets(Swarm, ErosModel,'absolute', absolute, 'record_video', record_video, 'video_name', videoname)
+plot_coverage_and_communications_with_insets(Swarm, ErosModel,'absolute', absolute, 'record_video', record_video, "video_name", "Greedy_sequential_10k")
 
 % Create 42 representation of the orbits
 if save_42_inputs

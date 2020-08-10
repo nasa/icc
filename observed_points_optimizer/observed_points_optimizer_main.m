@@ -69,17 +69,24 @@ Nv = size(AsteroidModel.BodyModel.shape.faceCenters,1); % number of faceCenters 
 
 %% Get Set of Feasible Observation Points at Each Timestep
 observable_points = Swarm.Observation.observable_points;
+observable_point_values = Swarm.Observation.observable_point_values;
 for i_time = 1:K
+    %fprintf("\nTime %d/%d\n",i_time,K)
     for i_sc = sc_find_observable_pts
         if ismember(0,sc_type{i_sc})
             observable_points{i_sc, i_time} = []; % carrier spacecraft does not observe anything
+            observable_point_values{i_sc, i_time} = [];
         else
             if flag_optimization_approach==0
                 observable_points{i_sc, i_time} = get_nadir_point(AsteroidModel, Swarm, i_time, i_sc) ;
+                observable_point_values{i_sc, i_time} = zeros(size(observable_points{i_sc, i_time}));
             else
-                observable_points{i_sc, i_time} = get_observable_points(AsteroidModel, Swarm, i_time, i_sc) ;
+                [observable_points{i_sc, i_time}, observable_point_values{i_sc, i_time}] = get_observable_points_vectorized(AsteroidModel, Swarm, i_time, i_sc, .2) ;
             end
         end
+        assert(all(size(observable_points{i_sc, i_time}) == size(observable_point_values{i_sc, i_time})), "ERROR : size mismatch");
+        Swarm.Observation.observable_points{i_sc, i_time} = observable_points{i_sc, i_time};
+        Swarm.Observation.observable_point_values{i_sc, i_time} = observable_point_values{i_sc, i_time};
     end
 end
 
@@ -94,7 +101,7 @@ if flag_optimization_approach~=0
     end
 end
 
-Swarm.Observation.observable_points = observable_points;
+%Swarm.Observation.observable_points = observable_points;
 
 %% Define Coverage Reward Map
 reward_map = cell(1,N);
@@ -104,6 +111,28 @@ if flag_optimization_approach==0
     end
 else
     reward_map = get_coverage_reward_map(AsteroidModel, Swarm, sc_optimized);
+    for i_sc = sc_optimized
+        for i_time=1:K
+            for obs_point_id = 1:length(Swarm.Observation.observable_points{i_sc, i_time})
+                obs_point = Swarm.Observation.observable_points{i_sc, i_time}(obs_point_id);
+                try
+                    assert(all(size(Swarm.Observation.observable_points{i_sc, i_time}) == size(Swarm.Observation.observable_point_values{i_sc, i_time})), "ERROR: op size mismatch");
+                    reward_map{i_sc}(obs_point, i_time) = reward_map{i_sc}(obs_point, i_time)*Swarm.Observation.observable_point_values{i_sc, i_time}(obs_point_id);
+                catch ME
+                    disp("Weird")
+                    ME
+                    size(reward_map{i_sc}(obs_point, i_time))
+                    size(Swarm.Observation.observable_points{i_sc, i_time})
+                    size(Swarm.Observation.observable_point_values{i_sc, i_time})
+                    i_sc
+                    i_time
+                    obs_point
+                    obs_point_id
+                    rethrow(ME);
+                end
+            end
+        end
+    end
 end
 
 %% Choose Observation Points

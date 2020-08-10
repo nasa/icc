@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Copyright 2019 by California Institute of Technology.  ALL RIGHTS RESERVED. %
+% Copyright 2020 by California Institute of Technology.  ALL RIGHTS RESERVED. %
 % United  States  Government  sponsorship  acknowledged.   Any commercial use %
 % must   be  negotiated  with  the  Office  of  Technology  Transfer  at  the %
 % California Institute of Technology.                                         %
@@ -17,15 +17,20 @@
 % are welcome and should be sent to the software's maintainer.                %
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [normdiff,dnormdiff_dv1, dnormdiff_dv2] = differentiable_norm_of_difference()
+%DIFFERENTIABLE_NORM_OF_DIFFERENCE Returns functions to compute the norm of
+% the difference between two vectors, and its derivative.
+%   The function returns three functions:
+%   Normdiff(v1,v2) is simply norm(v1-v2,2);
+%   dnormdiff_dv1(v1,v2) is a function that returns a vector of the same length as
+%   v1, containing d(norm(v1-v2))/d(v1)
+%   dnormdiff_dv2(v1,v2) is a function that returns a vector of the same length as
+%   v1, containing d(norm(v1-v2))/d(v2)
 
-function [db_dx2] = diff_quadratic_comm_model_x2(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor)
-    if nargin<6
-        scaling_factor=bandwidth_parameters.reference_distance;
-    end
-    if nargin<5
-        occlusion_test = @(x1, x2) 0.;
-    end
-    [db_dx1, db_dx2] = diff_quadratic_comm_model(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor);
-        
-%     db_dx2 = - diff_quadratic_comm_model_x1(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor);
+normdiff = @(v1,v2) norm(v1-v2,2);
+
+dnormdiff_dv1 = @(v1,v2) 1/norm(v1-v2,2).* (v1-v2);
+dnormdiff_dv2 = @(v1,v2) -1/norm(v1-v2,2).* (v1-v2);
+
 end
+

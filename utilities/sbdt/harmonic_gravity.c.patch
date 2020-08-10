@@ -1,0 +1,16 @@
+--- harmonic_gravity.c	2020-06-01 19:41:24.273991540 -0700
++++ harmonic_gravity_patched.c	2020-06-01 19:41:05.961705700 -0700
+@@ -227,8 +227,11 @@
+ 
+     /* Warn if inside the reference radius */
+     if ( r < refRad )    {
+-        mexWarnMsgTxt( "HARMONIC_GRAVITY.DLL - Computing gravity inside "
+-                       "the spherical harmonic reference radius" );
++        // mexWarnMsgTxt( "HARMONIC_GRAVITY.DLL - Computing gravity inside "
++        //                "the spherical harmonic reference radius" );
++        mexWarnMsgIdAndTxt("SBDT:harmonic_gravity:inside_radius",
++            "HARMONIC_GRAVITY.DLL - Computing gravity inside "
++            "the spherical harmonic reference radius" );
+         /*    U = 0;
+         delU[0] = delU[1] = delU[2] = 0;
+         for ( i = 0; i < 3; i++ )   {

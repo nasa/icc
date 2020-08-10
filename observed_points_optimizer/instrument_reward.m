@@ -18,14 +18,23 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [db_dx2] = diff_quadratic_comm_model_x2(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor)
-    if nargin<6
-        scaling_factor=bandwidth_parameters.reference_distance;
+function [reward] = instrument_reward(sc_type)
+    switch sc_type
+        case 1  % Imaging Spectrometer
+            reward = 3;
+        case 2  % X Ray Spectrometer
+            reward = 2;
+        case 3  % Camera    
+            reward = 1;
+        case 4  % Altimeter
+            reward = .5;
+        case -1  % A permissive instrument used for testing purposes
+            reward = 1;
+        case -2  % A non-permissive instrument used for testing purposes
+            reward = 0;
+        case -3  % Same as -1, but has lower reward/priority in get_coverage_reward_map
+            reward = 0.9;
+        otherwise
+            reward = 1.;
     end
-    if nargin<5
-        occlusion_test = @(x1, x2) 0.;
-    end
-    [db_dx1, db_dx2] = diff_quadratic_comm_model(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor);
-        
-%     db_dx2 = - diff_quadratic_comm_model_x1(x1, x2, dir, bandwidth_parameters, occlusion_test, scaling_factor);
 end

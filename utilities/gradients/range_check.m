@@ -18,39 +18,26 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [distance, closest_point] = distance_segment_to_point(line_pt_1, line_pt_2, ref_point)
-    % Compute distance between a segment defined by points line_pt_1 and
-    % line_pt_2, and a point ref_point.
-    % Ensure everything is a column vector
-    if size(line_pt_1,1) ==1
-        line_pt_1 = line_pt_1';
-    end
-    if size(line_pt_2,1) ==1
-        line_pt_2 = line_pt_2';
-    end
-    if size(ref_point,1) ==1
-        ref_point = ref_point';
-    end
-    
-    [distance, closest_point] = distance_line_to_point(line_pt_1, line_pt_2, ref_point);
-    % Now, is closest_point on the segment between line_pt_1 and line_pt_2?
-    pt_1_to_closest = closest_point-line_pt_1;
-    pt_2_to_closest = closest_point-line_pt_2;
-    line_unit_vector = (line_pt_2 - line_pt_1)/norm( line_pt_2 - line_pt_1);
-    % If closest_point is between pt1 and pt2, then pt1_to_closest and
-    % pt2_to_closest point in opposite directions
-    if sign(pt_1_to_closest'*line_unit_vector) ~= sign(pt_2_to_closest'*line_unit_vector)
-        % The closest point is indeed between pt1 and pt2
-        return
-    else
-        distance_1 = norm(line_pt_1-ref_point);
-        distance_2 = norm(line_pt_2-ref_point);
-        if distance_1<distance_2
-            distance = distance_1;
-            closest_point = line_pt_1;
-        else
-            distance = distance_2;
-            closest_point = line_pt_2;
-        end
+
+function [range_valid, drange_valid] = range_check(sc_position, r_vertices, range_cell, range_tolerances)
+% RANGE_CHECK Checks if the norm of the difference between two vectors is inside a given window. 
+% sc_position is a 3x1 vector.
+% r_vertices is a 3xNv vector
+% Range cell is a vector of cells, each containing two entries for the max and
+% the min allowable valies.
+% Range tolerances is a vector of cells, each containing an entry for the
+% tolerance (applied both to max and min)
+    assert(size(sc_position,2) == 3, "first entry should be 1 by 3 or Nv by 3")
+    assert(size(r_vertices,2) == 3, "second entry should be Nv by 3")
+    Nv = size(r_vertices,1);
+    range_valid = -inf*ones(Nv,1);
+    drange_valid = zeros(Nv,3);
+    for i = 1:length(range_cell)
+%         disp("range")
+%         i
+        % TODO vectorize
+        [new_range_valid,new_drange_valid, ~] = fast_differentiable_window_of_norm_difference(sc_position, r_vertices, range_cell{i}(1),range_cell{i}(2), range_tolerances{i});
+        drange_valid(new_range_valid>range_valid,:) = new_drange_valid(new_range_valid>range_valid,:);
+        range_valid = max(range_valid, new_range_valid);
     end
 end
