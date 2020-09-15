@@ -113,6 +113,10 @@ end
 %9_ Finally, true anomaly
 theta=acos(rvec'*evec./(r*e));
 % What if eccentricity is zero?
+if e==0
+    disp("WARNING: zero eccentricity, measuring theta from nodal axis")
+    theta=acos(rvec'*nver./(r));
+end
 
 
 if dot(rvec,vvec)<0
