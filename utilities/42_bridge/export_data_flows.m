@@ -37,7 +37,7 @@ K = Swarm.get_num_timesteps();
 data_acquisition = zeros(N*K,3);
 for t=1:K
     for sc = 1:N
-        data_acquisition(N*(t-1)+sc, :) = [t, sc, Swarm.Communication.effective_source_flow(sc, t)];
+        data_acquisition(N*(t-1)+sc, :) = [Swarm.sample_times(t), sc, Swarm.Communication.effective_source_flow(sc, t)];
     end
 end
 

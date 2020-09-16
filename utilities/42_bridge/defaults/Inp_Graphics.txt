@@ -1,8 +1,9 @@
- <<<<<<<<<<<<<<<<  42 Graphics Configuration File  >>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<  42 Graphics Configuration File  >>>>>>>>>>>>>>>>>>>
 1.0                               !  GL Output Interval [sec]
 Skymap09.txt                       !  Star Catalog File Name
 TRUE                               !  Map Window Exists
 TRUE                               !  Orrery Window Exists
+TRUE                               !  Unit Sphere Window Exists
 ******************************* POV *********************************
 FALSE                              !  Pause at Startup
 TRACK_HOST                         !  POV Mode (TRACK_HOST, TRACK_TARGET, FIXED_IN_HOST)
@@ -31,7 +32,7 @@ FALSE "L Grid"                     !  Show L Grid
 FALSE "F Grid"                     !  Show F Grid
 FALSE "B Grid"                     !  Show B Grid
 FALSE "Gal Grid"                   !  Show B Grid
-FALSE "FOVs"                       !  Show Fields of View
+FALSE  "FOVs"                      !  Show Fields of View
 FALSE "Prox Ops"                   !  Show Prox Ops
 FALSE "TDRS"                       !  Show TDRS Satellites
 TRUE  "Shadows"                    !  Show Shadows
@@ -48,3 +49,7 @@ TRUE  "Clock"                      !  Show Clock
 TRUE  "Tlm Clock"                  !  Show Clock
 FALSE "Credits"                    !  Show Credits
 TRUE  "Night"                      !  Show Night
+********************* Unit Sphere Show Menu *************************
+TRUE                               !  Show Major Constellations
+TRUE                               !  Show Zodiac Constellations
+FALSE                              !  Show Minor Constellations
