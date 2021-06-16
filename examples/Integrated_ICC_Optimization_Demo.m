@@ -158,8 +158,11 @@ warning('error', 'SBDT:harmonic_gravity:inside_radius')
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                     Integrated Orbit Optimization                       %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+optimization_options.optimizer = "Multistart_PM";
+optimization_options.starts = 50;
+optimization_options.max_optimization_time = max_optimization_time;
 
-[Swarm] = integrated_optimization(Swarm, ErosModel, bandwidth_parameters, max_optimization_time, trajectory_bounds, optimize_carrier, verbose);
+[Swarm] = integrated_optimization(Swarm, ErosModel, bandwidth_parameters, optimization_options, trajectory_bounds, optimize_carrier, verbose);
 filename = "benchmarks/MultiStart_results_250k_"+time_str;
 save(filename);
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

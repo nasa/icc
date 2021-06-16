@@ -265,7 +265,14 @@ p_s=zeros(1,M); % Decision variable m corresponds to spacecraft p_s(m)
 w = zeros(1,M); % w(m) is the reward for decision variable m
 
 
-dobservations_dspacecraft = zeros(N, K, M, 3);
+% dobservations_dspacecraft = zeros(N, K, M, 3);
+
+dobservations_dspacecraft_cell = cell(N, K);
+for i_sc=1:N
+    for k = 1:K
+        dobservations_dspacecraft_cell{i_sc, k} = sparse(M,3);
+    end
+end
 
 for k = 1:K-1
     for i_sc = swarm.which_trajectories_set()
@@ -276,8 +283,11 @@ for k = 1:K-1
             p_v(p) = i_v;
             p_s(p) = i_sc;
             w(p) = reward_map{i_sc}(i_v,k) * observable_points_values{i_sc, k}(i_v_index);
-            dobservations_dspacecraft(i_sc, k, p, :) = reward_map{i_sc}(i_v,k) * observable_points_gradients{i_sc, k}(i_v_index, :);
-            dobservations_dspacecraft(i_sc, k+1, p, :) = reward_map{i_sc}(i_v,k) * observable_points_gradients_next{i_sc, k}(i_v_index, :);
+            % dobservations_dspacecraft(i_sc, k, p, :) = reward_map{i_sc}(i_v,k) * observable_points_gradients{i_sc, k}(i_v_index, :);
+            % dobservations_dspacecraft(i_sc, k+1, p, :) = reward_map{i_sc}(i_v,k) * observable_points_gradients_next{i_sc, k}(i_v_index, :);
+
+            dobservations_dspacecraft_cell{i_sc, k}(p, :) = reward_map{i_sc}(i_v,k) * observable_points_gradients{i_sc, k}(i_v_index, :);
+            dobservations_dspacecraft_cell{i_sc, k+1}(p, :) = reward_map{i_sc}(i_v,k) * observable_points_gradients_next{i_sc, k}(i_v_index, :);
         end
     end
 end
@@ -630,7 +640,8 @@ end
 
 for k=1:K
     for i=1:N
-        swarm.Observation.sensitivity(k, i, :) = swarm.Observation.sensitivity(k, i, :) + reshape(observations_flat'*reshape(dobservations_dspacecraft(i, k, :,:), [M, 3]), [1,1,3]);
+        % swarm.Observation.sensitivity(k, i, :) = swarm.Observation.sensitivity(k, i, :) + reshape(observations_flat'*reshape(dobservations_dspacecraft(i, k, :,:), [M, 3]), [1,1,3]);
+        swarm.Observation.sensitivity(k, i, :) = swarm.Observation.sensitivity(k, i, :) + reshape(observations_flat'*reshape(dobservations_dspacecraft_cell{i, k}, [M, 3]), [1,1,3]);
     end
 end
 
