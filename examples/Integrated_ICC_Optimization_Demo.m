@@ -58,6 +58,7 @@ addpath(strcat(ROOT_PATH,'/observed_points_optimizer'))
 addpath(strcat(ROOT_PATH,'/monte_carlo_coverage_optimizer'))
 addpath(strcat(ROOT_PATH,'/relay_orbit_optimizer'))
 addpath(strcat(ROOT_PATH,'/integrated_orbit_optimizer'))
+addpath(strcat(ROOT_PATH,'/network_flow_communication_optimizer'))
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                   User Options: Flags and Parameters                    %
@@ -74,7 +75,7 @@ carrier_index = n_spacecraft;
 sc_types{carrier_index} = 0; % Mark the carrier so it will not be used in the Monte Carlo optimization
                             
 delta_t = 10*60; % [s]; simulation time step
-total_t = 1*24*60*60; % [s]; 1 day, total time of simulation
+total_t = 7*24*60*60; % [s]; 1 day, total time of simulation
 time_vector = 0:delta_t:total_t; % sample times
 
 

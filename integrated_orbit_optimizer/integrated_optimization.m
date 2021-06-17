@@ -80,6 +80,10 @@ if nargin<3
     bandwidth_parameters.max_bandwidth = 100*1e6;
 end
 
+if verbose
+    disp("Starting integrated optimization")
+end
+
 addpath(genpath('../utilities/'))
 initialize_SBDT();
 
@@ -222,6 +226,7 @@ switch optimization_options.optimizer
         time_str = datestr(now,'yyyymmdd_HHMMSS');
 
         for trial_ix = 1:num_trials    
+            fprintf("Start %d/%d\n",trial_ix, num_trials)
             trial_initial_states = initialize_random_orbits(N, gravity_model);
             carrier_initial_conditions = initialize_carrier_orbit(gravity_model);
             trial_initial_states(carrier_index,:) = carrier_initial_conditions;

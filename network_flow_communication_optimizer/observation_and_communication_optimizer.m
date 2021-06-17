@@ -267,14 +267,25 @@ w = zeros(1,M); % w(m) is the reward for decision variable m
 
 % dobservations_dspacecraft = zeros(N, K, M, 3);
 
+if verbose
+    disp("Computing gradient of obs vs sc location");
+end
+
 dobservations_dspacecraft_cell = cell(N, K);
 for i_sc=1:N
     for k = 1:K
-        dobservations_dspacecraft_cell{i_sc, k} = sparse(M,3);
+        dobservations_dspacecraft_cell{i_sc, k} = zeros(M,3); % Should probably be sparse?
     end
 end
 
+if verbose
+    fprintf("  K (out of %d): ",K-1)
+end
+
 for k = 1:K-1
+    if verbose
+        fprintf("%d ", k)
+    end
     for i_sc = swarm.which_trajectories_set()
         for i_v_index = 1:length(observable_points{i_sc, k})
             i_v = observable_points{i_sc, k}(i_v_index);
@@ -292,11 +303,17 @@ for k = 1:K-1
     end
 end
 
+if verbose
+    fprintf(" \n")
+end
 % assert(p==M, "ERROR: mismatch in length of observation variables")
 
 % In the interest of speed, we also build an index for the variables
 % corresponding to time k and spacecraft j. We will use this in two
 % constraints below.
+if verbose
+    disp("Identifying observation opportunities");
+end
 sc_time_observation_opportunities = cell(N,K);
 for j=1:N
     for k=1:K
