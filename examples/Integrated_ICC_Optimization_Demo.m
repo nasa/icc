@@ -42,7 +42,7 @@ verbose = false;
 save_42_inputs = false;
 
 % Maximum time for the trust region integrated orbit optimizer, in seconds
-max_optimization_time = 1800;
+max_optimization_time = 7200;
 
 rng default % Pseudo-random but repeatable scenario
 
