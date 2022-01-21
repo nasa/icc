@@ -43,7 +43,7 @@ addpath(strcat(ROOT_PATH,'/network_flow_communication_optimizer'))
 %                   User Options: Flags and Parameters                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-scenarios_to_test = 500;
+scenarios_to_test = 50;
 
 rng(0); % Get a consistent seed
 
@@ -117,36 +117,6 @@ parfor i=1:20
     i;
 end
 
-scenarios_to_retest = [12,
-34,
-40,
-83,
-137,
-145,
-149,
-165,
-174,
-181,
-183,
-193,
-197,
-199,
-241,
-248,
-274,
-290,
-303,
-337,
-340,
-361,
-389,
-397,
-465,
-477,
-478,
-497,
-500];
-
 for scenario_index = 1:scenarios_to_test
 
     sc_types = cell(1,n_spacecraft);
@@ -210,3 +180,55 @@ save(strcat('benchmarks/inner_loop_final_',mydatestring))
 
 
 cspice_kclear % This cleares the SPICE files from Matlab's memory
+
+%% Plotting
+
+% Ratio between the optimal costs of Problem(6)(LP relax-ation) and
+% Problem(5)(MILP)
+figure()
+histogram(goals_lp./goals_milp)
+xlabel("Ratio between relaxation cost and MILP cost")
+ylabel("Frequency")
+set(gca,'FontSize',16)
+saveas(gcf,strcat('lp_to_milp_ratio_', string(bandwidth_parameters.reference_bandwidth), "_",string(scenario_index),"_",mydatestring, ".eps"),'epsc')
+saveas(gcf,strcat('lp_to_milp_ratio_', string(bandwidth_parameters.reference_bandwidth), "_",string(scenario_index),"_",mydatestring, ".png"))
+
+% Ratio between the optimal costs of the post-processed ver-sion of Problem(6)and Problem(5)
+figure()
+histogram(goals_lpt./goals_milp)
+xlabel("Ratio between post-processed relaxation cost and MILP cost")
+ylabel("Frequency")
+set(gca,'FontSize',16)
+saveas(gcf,strcat('lpt_to_milp_ratio_', string(bandwidth_parameters.reference_bandwidth), "_",string(scenario_index),"_",mydatestring, ".eps"),'epsc')
+saveas(gcf,strcat('lpt_to_milp_ratio_', string(bandwidth_parameters.reference_bandwidth), "_",string(scenario_index),"_",mydatestring, ".png"))
+
+figure()
+h_lpt_lp = histogram(goals_lpt./goals_lp);
+xlabel("Ratio between post-processed relaxation cost and relaxation cost")
+ylabel("Frequency")
+set(gca,'FontSize',16)
+saveas(gcf,strcat('lpt_to_lp_ratio_', string(bandwidth_parameters.reference_bandwidth), "_",string(scenario_index),"_",mydatestring, ".eps"),'epsc')
+saveas(gcf,strcat('lpt_to_lp_ratio_', string(bandwidth_parameters.reference_bandwidth), "_",string(scenario_index),"_",mydatestring, ".png"))
+
+
+% Time required to compute an optimal solution to Problem 6
+figure()
+histogram(inner_solve_times_lpt)
+xline(mean(inner_solve_times_lpt), '--r','LineWidth',2)
+xlabel("Time [s]")
+ylabel("Frequency")
+set(gca,'FontSize',16)
+saveas(gcf,strcat('inner_solve_time_lp_', string(bandwidth_parameters.reference_bandwidth), "_",string(scenario_index),"_",mydatestring, ".eps"),'epsc')
+saveas(gcf,strcat('inner_solve_time_lp_', string(bandwidth_parameters.reference_bandwidth), "_",string(scenario_index),"_",mydatestring, ".png"))
+disp(strcat("Mean inner solve time: ", num2str(mean(inner_solve_times_lpt)), "s"))
+
+% Time required to compute observability and bandwidths,solve Problem(6), and compute the gradient
+figure()
+histogram(total_solve_times_lpt)
+xline(mean(total_solve_times_lpt), '--r','LineWidth',2)
+xlabel("Time [s]")
+ylabel("Frequency")
+set(gca,'FontSize',16)
+saveas(gcf,strcat('full_solve_time_lp_', string(bandwidth_parameters.reference_bandwidth), "_",string(scenario_index),"_",mydatestring, ".eps"),'epsc')
+saveas(gcf,strcat('full_solve_time_lp_', string(bandwidth_parameters.reference_bandwidth), "_",string(scenario_index),"_",mydatestring, ".png"))
+disp(strcat("Mean total solve time: ", num2str(mean(total_solve_times_lpt)), "s"))

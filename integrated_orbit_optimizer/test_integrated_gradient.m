@@ -66,7 +66,7 @@ swarm.Observation.priority = zeros(n_spacecraft,length(time_bounds));
 swarm.Observation.priority(1:2,:) = 1;
 
 % Bandwidth params
-bandwidth_parameters.reference_bandwidth = 250000;
+bandwidth_parameters.reference_bandwidth = 10000;
 bandwidth_parameters.reference_distance = 100000;
 bandwidth_parameters.max_bandwidth = 100*1e6;
 
@@ -176,7 +176,7 @@ randix = 0;
 for k=1:K
     for n1=1:N
         for n2=1:N
-            if abs(swarmb.Communication.dual_bandwidths_and_memories(k, n1, n2))>100*eps
+            if abs(swarmb.Communication.dual_bandwidths_and_memories(k, n1, n2))>1e5*eps
                 randix = randix+1;
                 k_ix(randix) = k;
                 n1_ix(randix) = n1;
