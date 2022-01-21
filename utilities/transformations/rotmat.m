@@ -26,9 +26,11 @@
 
 function [R]=rotmat(angle,axis)
 
-%Syntax: [R]=rotmat(angle,axis)
-%Computes rotation matrix for a single rotation around one of the three axes x, y, z in a 3d space. In order to stack rotations, call the function several times. Remember, however, that after the first rotation you'll turn around the NEW axes, which will be different from the old ones.
-%The axis parameter can be x (or i, or 1), y (or j, or 2), z (or k, or 3). Angle is given in radians.
+% Syntax: [R]=rotmat(angle,axis)
+% Computes rotation matrix for a single rotation around one of the three axes x, y, z in a 3d space.
+% In order to stack rotations, call the function several times.
+% Remember, however, that after the first rotation you'll turn around the NEW axes, which will be different from the old ones.
+% The axis parameter can be x (or i, or 1), y (or j, or 2), z (or k, or 3). Angle is given in radians.
 
 if axis~='x' && axis~='y' && axis~='z'  && axis~='i'  && axis~='j' && axis~='k' &&axis~=1 && axis~=2 && axis~=3 || nargin<2
 	disp('Invalid axis specified, returning identity matrix')

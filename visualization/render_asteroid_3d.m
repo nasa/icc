@@ -18,23 +18,33 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [hdl] = render_asteroid_3d(Asteroid, absolute, plot_time)
+function [hdl] = render_asteroid_3d(Asteroid, absolute, plot_time, scale)
 %F_RENDER_ASTEROID_3D Creates asteroid patch
 %   Syntax: render_asteroid_3d(Asteroid, absolute, plot_time)
 %   Inputs:
 %   - Asteroid is a SBDT body model.
-%   - absolute (optional) is a Boolean variable. If true, the asteroid is
+%   - absolute (optional, default=False) is a Boolean variable. If true, the asteroid is
 %     plotted in an absolute reference frame.
-%   - plot_time is a time. If absolute is false, plot_time is ignored.
+%   - plot_time (optional, default=0) is a time. If absolute is false, plot_time is ignored.
 %     if absolute is true, the asteroid is plotted at time plot_time.
+%   - scale (optional,default=1) is a float. The specified scale is applied to the
+%     plot.
 
 % Create Asteroid Patch
+if nargin<4
+    scale=1;
+end
+
+if nargin<3
+    plot_time=0;
+end
+
 if nargin<2
     absolute = false;
 end
 
 
-ShapeModel.Vertices = Asteroid.BodyModel.shape.vertices;
+ShapeModel.Vertices = Asteroid.BodyModel.shape.vertices*scale;
 ShapeModel.Faces = Asteroid.BodyModel.shape.faces;
 
 if absolute == true
