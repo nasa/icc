@@ -35,7 +35,7 @@ if nargin<3
     sc_optimized = Swarm.which_trajectories_set();
 end
 
-flag_map = 1; % 0 for uniform reward
+flag_map = 0; % 0 for uniform reward
 
 N = Swarm.get_num_spacecraft();
 pos_points = AsteroidModel.BodyModel.shape.faceCenters;

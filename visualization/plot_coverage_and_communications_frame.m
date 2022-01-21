@@ -88,7 +88,13 @@ plot_time = Swarm.sample_times(time_step);
 %     title_font_size = 30;
 % end
 
-h_title = title(['Time = ', num2str(floor(plot_time/8640)/10), ' day '],'fontsize',title_font_size,'fontname',font_name);
+if floor(plot_time/86400)<=1
+    day_str = " day ";
+else
+    day_str = " days ";
+end
+
+h_title = title(strcat("Time = ", num2str(floor(plot_time/8640)/10), day_str),'fontsize',title_font_size,'fontname',font_name);
 
 
 % Draw the asteroid in its new location
@@ -98,7 +104,8 @@ h_ast = render_asteroid_3d(AsteroidModel, absolute, Swarm.sample_times(time_step
 h_sc = render_spacecraft_3d(Swarm, time_step,...
     'color', color_array, 'linewidth', 0.75, 'absolute', absolute, ...
     'show_trail', true, 'markersize', 0, ...
-    'LineWidth',min_line_thickness);
+    'LineWidth',min_line_thickness, ...
+    'fontsize', standard_font_size);
 
 % Coverage
 

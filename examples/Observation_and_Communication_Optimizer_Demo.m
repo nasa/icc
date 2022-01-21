@@ -123,7 +123,7 @@ data_scaling_factor = 1e6;
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %             Find Best Observation Points for Given Orbits               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-observation_and_communication_optimizer_options.verbose = verbose;
+observation_and_communication_optimizer_options.verbose = true;
 observation_and_communication_optimizer_options.ilp = false;
 observation_and_communication_optimizer_options.truncate = false;
 

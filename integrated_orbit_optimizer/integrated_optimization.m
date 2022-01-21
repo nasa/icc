@@ -24,11 +24,11 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [swarm, output] = integrated_optimization(swarm, gravity_model, bandwidth_parameters, max_optimization_time, trajectory_bounds, optimize_carrier, verbose)
+function [swarm, output] = integrated_optimization(swarm, gravity_model, bandwidth_parameters, optimization_options, trajectory_bounds, optimize_carrier, verbose)
 % Optimizes all orbits by using a gradient-based trust region algorithm (fmincon).
 % For a given set of orbits, observations and relays are optimized by
 % calling observation_and_communication_optimizer
-% Syntax: [swarm] = integrated_optimization(swarm, gravity_model, bandwidth_parameters. max_optimization_time)
+% Syntax: [swarm] = integrated_optimization(swarm, gravity_model, bandwidth_parameters. optimization_options, trajectory_bounds, optimize_carrier, verbose)
 % Inputs:
 %  - swarm, a SpacecraftSwarm object
 %  - gravity_model, a GravityField object as used by SpacecraftSwarm
@@ -37,7 +37,24 @@ function [swarm, output] = integrated_optimization(swarm, gravity_model, bandwid
 %    - reference_distance, the reference distance
 %    - max_bandwidth, the maximum available bandwidth at close range
 %     The model assumes a quadratic bandwidth model
-%  - max_optimization_time, the maximum time allocated to fmincon.
+%  - optimization_options, a struct wth several optional parameters:
+%    - optimizer, the name of the optimizer. Available:
+%      - GlobalSearch
+%      - Multistart
+%      - Multistart_PM (default)
+%      - PatternSearch
+%      - Genetic
+%      - ParticleSwarm
+%      - Surrogate
+%      - SimulatedAnnealing
+%      - Fmincon
+%    - max_optimization_time, the maximum time allocated to fmincon. Default: inf
+%    - starts, the number of starting points for multistart. Default: 50
+%  - trajectory_bounds, a struct with two parameters:
+%    - max_distance_m, the maximum distance the spacecraft can go from the body (in m)
+%    - min_distance_m, the minimum distance the spacecraft can go from the body (in m)
+%  - optimize_carrier, a bool. If True, the carrier orbit is also optimized.
+%  - verbose, a bool. If true, prints additional debug information.
 % Output:
 %  - swarm, a SpacecraftSwarm object with updated orbits.
 
@@ -52,13 +69,19 @@ if nargin<5
     trajectory_bounds.min_distance_m = 15000;
 end
 if nargin<4
-    max_optimization_time = inf;
+    optimization_options.max_optimization_time = inf;
+    optimization_options.optimizer = "Multistart_PM";
+    optimization_options.starts = 50;
 end
 
 if nargin<3
     bandwidth_parameters.reference_bandwidth = 250000;
     bandwidth_parameters.reference_distance = 100000;
     bandwidth_parameters.max_bandwidth = 100*1e6;
+end
+
+if verbose
+    disp("Starting integrated optimization")
 end
 
 addpath(genpath('../utilities/'))
@@ -117,7 +140,6 @@ end
 % Nonlinear constraint. We no longer integrate a second time - rather, we
 % check the ICs, and we throw an exception if the integrator ends up inside
 % the reference ellipse.
-% TODO de-hardcode. These are in KM
 max_distance_km = trajectory_bounds.max_distance_m/1e3;
 min_distance_km = trajectory_bounds.min_distance_m/1e3;
 % nonlcon = @(params) communication_constraints(spacecraft,params, gravity_model,ctime,GM, max_distance, min_distance, optvar_scaling_factor);
@@ -156,114 +178,150 @@ lb = -ub;
 
 % Stop function - to enforce stop after a given amount of time
 start_time=tic;
-stop_fun = @(x,optimValues,state) stop_function(x,optimValues,state, start_time, max_optimization_time);
+stop_fun = @(x,optimValues,state) stop_function(x,optimValues,state, start_time, optimization_options.max_optimization_time);
 options.OutputFcn = stop_fun;
 
 % Optimize!
 
-% problem = createOptimProblem('fmincon', 'objective', fun, ...
-%     'x0', initial_conditions, 'Aineq', A, 'bineq', b, ...
-%     'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, ...
-%     'options', options);
+% Note that this is NOT used by the default poor man's multistart
+
 % [x,fval,exitflag,output] = fmincon(fun,initial_conditions,A,b,Aeq,beq,lb,ub,nonlcon,options);
 
-% %% Global Search
-% disp("Global search")
-% gs = GlobalSearch('Display','iter');
-% [x, fval, exitflag, output] = run(gs,problem);
+disp(optimization_options.optimizer)
 
-% %% Multistart with 50 starting points
-% disp("Multistart")
-% ms = MultiStart;
-% [x, fval, exitflag, output] = run(ms,problem,100);
+switch optimization_options.optimizer
 
-%% Poor man's multistart
-num_trials = 50;
-initial_conditions_vec = cell(num_trials,1);
-x_vec = cell(num_trials,1);
-initial_fval_vec = zeros(num_trials,1);
-fval_vec = zeros(num_trials,1);
-exitflag_vec = cell(num_trials,1);
-output_vec = cell(num_trials,1);
-execution_time_vec = cell(num_trials,1);
-time_str = datestr(now,'yyyymmdd_HHMMSS');
+    case 'GlobalSearch'
+        %% Global Search
+        disp("Global search")
 
-for trial_ix = 1:num_trials    
-    trial_initial_states = initialize_random_orbits(N, gravity_model);
-    carrier_initial_conditions = initialize_carrier_orbit(gravity_model);
-    trial_initial_states(carrier_index,:) = carrier_initial_conditions;
-    
-    tmp_initial_conditions = zeros(6*N,1);
-    for sc =1:N
-        offset = 6*(sc-1);
-        assert(all(size(trial_initial_states(sc,:)') == size(optvar_scaling_factor)));
-        tmp_initial_conditions(1+offset:6+offset) = trial_initial_states(sc,:)'.*optvar_scaling_factor;
-    end
-    initial_conditions_vec{trial_ix} = tmp_initial_conditions;
+        problem = createOptimProblem('fmincon', 'objective', fun, ...
+        'x0', initial_conditions, 'Aineq', A, 'bineq', b, ...
+        'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, ...
+        'options', options);
+        gs = GlobalSearch('Display','iter');
+        [x, fval, exitflag, output] = run(gs,problem);
+    case 'Multistart'
 
-    initial_fval_vec(trial_ix) = fun(tmp_initial_conditions);
-    trialtic = tic;
-    par_start_time=tic;
-    par_stop_fun = @(x,optimValues,state) stop_function(x,optimValues,state, par_start_time, max_optimization_time);
-    par_options = options;
-    par_options.OutputFcn = par_stop_fun;
-%     parproblem = createOptimProblem('fmincon', 'objective', fun, ...
-%         'x0', tmp_initial_conditions, 'Aineq', A, 'bineq', b, ...
-%         'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, ...
-%         'options', par_options);
-%     [x_vec{trial_ix}, fval_vec(trial_ix), exitflag_vec{trial_ix}, output_vec{trial_ix}] = fmincon(parproblem);
-    [x_vec{trial_ix}, fval_vec(trial_ix), exitflag_vec{trial_ix}, output_vec{trial_ix}] = fmincon(fun, tmp_initial_conditions, A, b, Aeq, beq, lb, ub, [], par_options);
-    execution_time_vec{trial_ix} = toc(trialtic);
-    tmp_filename = "benchmarks/MultiStart_intermediate_"+string(trial_ix)+"_"+time_str;
-    save(tmp_filename);
+        %% Multistart with 50 starting points
+        disp("Multistart")
+        problem = createOptimProblem('fmincon', 'objective', fun, ...
+        'x0', initial_conditions, 'Aineq', A, 'bineq', b, ...
+        'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, ...
+        'options', options);
+        ms = MultiStart;
+        [x, fval, exitflag, output] = run(ms,problem,optimization_options.starts);
+
+    case 'Multistart_PM'
+
+        %% Poor man's multistart
+        num_trials = optimization_options.starts;
+        initial_conditions_vec = cell(num_trials,1);
+        x_vec = cell(num_trials,1);
+        initial_fval_vec = zeros(num_trials,1);
+        fval_vec = zeros(num_trials,1);
+        exitflag_vec = cell(num_trials,1);
+        output_vec = cell(num_trials,1);
+        execution_time_vec = cell(num_trials,1);
+        time_str = datestr(now,'yyyymmdd_HHMMSS');
+
+        for trial_ix = 1:num_trials    
+            fprintf("Start %d/%d\n",trial_ix, num_trials)
+            trial_initial_states = initialize_random_orbits(N, gravity_model);
+            carrier_initial_conditions = initialize_carrier_orbit(gravity_model);
+            trial_initial_states(carrier_index,:) = carrier_initial_conditions;
+            
+            tmp_initial_conditions = zeros(6*N,1);
+            for sc =1:N
+                offset = 6*(sc-1);
+                assert(all(size(trial_initial_states(sc,:)') == size(optvar_scaling_factor)));
+                tmp_initial_conditions(1+offset:6+offset) = trial_initial_states(sc,:)'.*optvar_scaling_factor;
+            end
+            initial_conditions_vec{trial_ix} = tmp_initial_conditions;
+
+            initial_fval_vec(trial_ix) = fun(tmp_initial_conditions);
+            trialtic = tic;
+            par_start_time=tic;
+            par_stop_fun = @(x,optimValues,state) stop_function(x,optimValues,state, par_start_time, optimization_options.max_optimization_time);
+            par_options = options;
+            par_options.OutputFcn = par_stop_fun;
+        %     parproblem = createOptimProblem('fmincon', 'objective', fun, ...
+        %         'x0', tmp_initial_conditions, 'Aineq', A, 'bineq', b, ...
+        %         'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, ...
+        %         'options', par_options);
+        %     [x_vec{trial_ix}, fval_vec(trial_ix), exitflag_vec{trial_ix}, output_vec{trial_ix}] = fmincon(parproblem);
+            [x_vec{trial_ix}, fval_vec(trial_ix), exitflag_vec{trial_ix}, output_vec{trial_ix}] = fmincon(fun, tmp_initial_conditions, A, b, Aeq, beq, lb, ub, [], par_options);
+            execution_time_vec{trial_ix} = toc(trialtic);
+            tmp_filename = "benchmarks/MultiStart_intermediate_"+string(trial_ix)+"_"+time_str;
+            save(tmp_filename);
+        end
+        [best_swarm_cost, best_swarm_index] = min(fval_vec);
+        x = x_vec{best_swarm_index};
+        output = output_vec{best_swarm_index};
+
+    case 'PatternSearch'
+
+        % Pattern Search
+        disp("Pattern search")
+        psoptions = optimoptions('fmincon',... %     'SpecifyObjectiveGradient',true,...
+        'Display', 'Iter',...
+        'CheckGradients', true, ...
+        'UseParallel', true);
+        % Missing OutputFcn for now
+        [x, fval, exitflag, output] = patternsearch(fun,initial_conditions,A,b,Aeq,beq,lb,ub,psoptions);
+        %% Pattern Search
+        % [x, fval, exitflag, output] = patternsearch(problem);
+
+    case 'Genetic'
+
+        % Genetic Algorithn - does not quite work, need to refine UBs and LBs?
+        disp("Genetic algorithm")
+        gaoptions = optimoptions('fmincon',... %     'SpecifyObjectiveGradient',true,...
+            'Display', 'Iter',...
+            'CheckGradients', true, ...
+            'UseParallel', true);
+            % Missing OutputFcn for now
+        disp(length(initial_conditions))
+        [x, fval, exitflag, output] = ga(fun,length(initial_conditions),A,b,Aeq,beq,lb,ub,gaoptions);
+        %% Genetic Algorithn
+        [x, fval, exitflag, output] = patternsearch(fun,len(initial_conditions),A,b,Aeq,beq,lb,ub,nonlcon,options);
+
+    case 'ParticleSwarm'
+
+        % Particle Swarm - does not support nonlinear constraint
+        disp("Particle Swarm")
+        psooptions = optimoptions('fmincon',... %     'SpecifyObjectiveGradient',true,...
+            'Display', 'Iter',...
+            'CheckGradients', true, ...
+            'UseParallel', true);
+            % Missing OutputFcn for now
+        [x, fval, exitflag, output] = particleswarm(fun,length(initial_conditions),lb,ub,psooptions);
+
+    case 'Surrogate'
+
+        % Surrogate optimization - requires constraints on the inputs
+        disp("Surrogate optimization")
+        surrogateopt(fun, lb, ub, options);
+
+    case 'SimulatedAnnealing'
+
+        % Simulated annealing
+        disp("Simulated annealing")
+        [x, fval, exitflag, output] = simulannealbnd(fun, initial_conditions, lb, ub);
+
+    case 'Fmincon'
+        % Vanilla fmincon
+        disp("Local fmincon")
+        problem = createOptimProblem('fmincon', 'objective', fun, ...
+        'x0', initial_conditions, 'Aineq', A, 'bineq', b, ...
+        'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, ...
+        'options', options);
+        [x,fval,exitflag,output] = fmincon(problem);
+
+    otherwise
+        error("Optimizer not recognized!")
+
 end
-[best_swarm_cost, best_swarm_index] = min(fval_vec);
-x = x_vec{best_swarm_index};
-output = output_vec{best_swarm_index};
-
-%% Pattern Search
-%disp("Pattern search")
-%psoptions = optimoptions('fmincon',... %     'SpecifyObjectiveGradient',true,...
-%    'Display', 'Iter',...
-%    'CheckGradients', true, ...
-%    'UseParallel', true);
-%    % Missing OutputFcn for now
-%[x, fval, exitflag, output] = patternsearch(fun,initial_conditions,A,b,Aeq,beq,lb,ub,psoptions);
-% %% Pattern Search
-% % [x, fval, exitflag, output] = patternsearch(problem);
-
-%% Genetic Algorithn - does not quite work, need to refine UBs and LBs?
-% disp("Genetic algorithm")
-% gaoptions = optimoptions('fmincon',... %     'SpecifyObjectiveGradient',true,...
-%     'Display', 'Iter',...
-%     'CheckGradients', true, ...
-%     'UseParallel', true);
-%     % Missing OutputFcn for now
-% disp(length(initial_conditions))
-% [x, fval, exitflag, output] = ga(fun,length(initial_conditions),A,b,Aeq,beq,lb,ub,gaoptions);
-% %% Genetic Algorithn
-% [x, fval, exitflag, output] = patternsearch(fun,len(initial_conditions),A,b,Aeq,beq,lb,ub,nonlcon,options);
-
-%% Particle Swarm - does not support nonlinear constraint
-% disp("Particle Swarm")
-% psooptions = optimoptions('fmincon',... %     'SpecifyObjectiveGradient',true,...
-%     'Display', 'Iter',...
-%     'CheckGradients', true, ...
-%     'UseParallel', true);
-%     % Missing OutputFcn for now
-% [x, fval, exitflag, output] = particleswarm(fun,length(initial_conditions),lb,ub,psooptions);
-
-%% Surrogate optimization - requires constraints on the inputs
-% disp("Surrogate optimization")
-% surrogateopt(fun, lb, ub, options);
-
-%% Simulated annealing
-% disp("Simulated annealing")
-% [x, fval, exitflag, output] = simulannealbnd(fun, initial_conditions, lb, ub);
-
-%% Vanilla fmincon
-% disp("Local fmincon")
-% [x,fval,exitflag,output] = fmincon(problem);
 
 %%
 if verbose

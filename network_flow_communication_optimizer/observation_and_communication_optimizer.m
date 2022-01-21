@@ -265,9 +265,27 @@ p_s=zeros(1,M); % Decision variable m corresponds to spacecraft p_s(m)
 w = zeros(1,M); % w(m) is the reward for decision variable m
 
 
-dobservations_dspacecraft = zeros(N, K, M, 3);
+% dobservations_dspacecraft = zeros(N, K, M, 3);
+
+if verbose
+    disp("Computing gradient of obs vs sc location");
+end
+
+% dobservations_dspacecraft_cell = cell(N, K);
+% for i_sc=1:N
+%     for k = 1:K
+%         dobservations_dspacecraft_cell{i_sc, k} = zeros(M,3); % Should probably be sparse?
+%     end
+% end
+
+if verbose
+    fprintf("  K (out of %d): ",K-1)
+end
 
 for k = 1:K-1
+    if verbose
+        fprintf("%d ", k)
+    end
     for i_sc = swarm.which_trajectories_set()
         for i_v_index = 1:length(observable_points{i_sc, k})
             i_v = observable_points{i_sc, k}(i_v_index);
@@ -276,17 +294,31 @@ for k = 1:K-1
             p_v(p) = i_v;
             p_s(p) = i_sc;
             w(p) = reward_map{i_sc}(i_v,k) * observable_points_values{i_sc, k}(i_v_index);
-            dobservations_dspacecraft(i_sc, k, p, :) = reward_map{i_sc}(i_v,k) * observable_points_gradients{i_sc, k}(i_v_index, :);
-            dobservations_dspacecraft(i_sc, k+1, p, :) = reward_map{i_sc}(i_v,k) * observable_points_gradients_next{i_sc, k}(i_v_index, :);
+            % Removed: The allocation as a matrix is huge, and MATLAB does
+            % not do sparse 3+D matrices.
+            % dobservations_dspacecraft(i_sc, k, p, :) = reward_map{i_sc}(i_v,k) * observable_points_gradients{i_sc, k}(i_v_index, :);
+            % dobservations_dspacecraft(i_sc, k+1, p, :) = reward_map{i_sc}(i_v,k) * observable_points_gradients_next{i_sc, k}(i_v_index, :);
+            
+            % Removed: we do not need to keep around the whole set of
+            % matrices, we can just compute them per each i_sc and k and
+            % overwrite afterwards. We do just that around line 700.
+%             dobservations_dspacecraft_cell{i_sc, k}(p, :) = reward_map{i_sc}(i_v,k) * observable_points_gradients{i_sc, k}(i_v_index, :);
+%             dobservations_dspacecraft_cell{i_sc, k+1}(p, :) = reward_map{i_sc}(i_v,k) * observable_points_gradients_next{i_sc, k}(i_v_index, :);
         end
     end
 end
 
+if verbose
+    fprintf(" \n")
+end
 % assert(p==M, "ERROR: mismatch in length of observation variables")
 
 % In the interest of speed, we also build an index for the variables
 % corresponding to time k and spacecraft j. We will use this in two
 % constraints below.
+if verbose
+    disp("Identifying observation opportunities");
+end
 sc_time_observation_opportunities = cell(N,K);
 for j=1:N
     for k=1:K
@@ -307,7 +339,7 @@ num_variables = M +K*N*N+num_carriers*K;
 % This encourages spacecraft to not send information needlessly on the
 % links. Careful! This is a penalty per bit. If it is too high, we will not
 % collect data _at all_.
-sparsification_penalty = 1/(max(max(data_rates(data_rates>0))));
+sparsification_penalty = 0; %1/(max(max(data_rates(data_rates>0))));
 
 f = sparsification_penalty*ones(num_variables,1);
 % f = zeros(num_variables,1);
@@ -593,6 +625,10 @@ for obs_index = 1:M
 %             end
 %         end
 %     end
+%     FASTER version of the loop above, since we know which k and j
+%     correspond to this observation
+%     swarm.Observation.sensitivity(k, j, :) = swarm.Observation.sensitivity(k, j,:) + observations_flat(obs_index)*reshape(dobservations_dspacecraft(j, k, obs_index,:), [1,1,3]);
+
 end
 
 
@@ -628,11 +664,56 @@ if options.truncate
 end
 % sensitivity: value of v times dobservations_dspacecraft. sensitivity = zeros(N,K,1,3);
 
-for k=1:K
-    for i=1:N
-        swarm.Observation.sensitivity(k, i, :) = swarm.Observation.sensitivity(k, i, :) + reshape(observations_flat'*reshape(dobservations_dspacecraft(i, k, :,:), [M, 3]), [1,1,3]);
+% for k=1:K
+%     for i=1:N
+%         % swarm.Observation.sensitivity(k, i, :) = swarm.Observation.sensitivity(k, i, :) + reshape(observations_flat'*reshape(dobservations_dspacecraft(i, k, :,:), [M, 3]), [1,1,3]);
+%         swarm.Observation.sensitivity(k, i, :) = swarm.Observation.sensitivity(k, i, :) + reshape(observations_flat'*reshape(dobservations_dspacecraft_cell{i, k}, [M, 3]), [1,1,3]);
+%     end
+% end
+
+% This is a LOWER-MEMORY version of the code that computes
+% dobservations_dspacecraft around line 290. Instead of computing dobs_dsc
+% for all times and spacecraft (which results in huge memory footprint), we
+% only compute it locally and use it right away to compute the sensitivity.
+% Note that each observation affects two time steps (the current one and
+% the next), so we march through time and keep track of the current
+% sensitivity (which we use in the update) and the next step's sensitivity
+% (which becomes this step's sensitivity at the next iteration). 
+
+% tmp_sOs = zeros(size(swarm.Observation.sensitivity));
+
+dobservations_dspacecraft_ik = zeros(M,3); % dobservations_dspacecraft(i,k,:,:)
+dobservations_dspacecraft_ikpp = zeros(M,3); % dobservations_dspacecraft(i,k+1,:,:)
+
+pp=0;
+for k = 1:K
+    for i_sc = swarm.which_trajectories_set()
+        % Bring in the derivatives at time k+1 we computed previously
+        dobservations_dspacecraft_ik = dobservations_dspacecraft_ikpp;
+        dobservations_dspacecraft_ikpp = zeros(size(dobservations_dspacecraft_ikpp));
+        if k<K  % If this is not the last time step
+            % Go through the observations
+            for i_v_index = 1:length(observable_points{i_sc, k})
+                i_v = observable_points{i_sc, k}(i_v_index);
+                pp = pp+1;
+
+                % Check that we know what observation this is
+                assert(p_k(pp) == k);
+                assert(p_v(pp) == i_v);
+                assert(p_s(pp) == i_sc);
+                % Run the same update we had on line 290ish.
+                dobservations_dspacecraft_ik(pp, :) = reward_map{i_sc}(i_v,k) * observable_points_gradients{i_sc, k}(i_v_index, :);
+                dobservations_dspacecraft_ikpp(pp, :) = reward_map{i_sc}(i_v,k) * observable_points_gradients_next{i_sc, k}(i_v_index, :);
+            end
+        end
+        % At this point dobservations_dspacecraft_ik is initialized, and
+        % we will never touch it again. So it is OK to use it.
+        swarm.Observation.sensitivity(k, i_sc, :) = swarm.Observation.sensitivity(k, i_sc, :) + reshape(observations_flat'*reshape(dobservations_dspacecraft_ik, [M, 3]), [1,1,3]);
+
     end
 end
+% assert(isequal(tmp_sOs,swarm.Observation.sensitivity));
+% disp("They _are_ equal!")
 
 toc_fill_out = toc(t_fill_out);
 

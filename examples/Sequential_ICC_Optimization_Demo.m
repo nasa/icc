@@ -47,7 +47,7 @@ max_optimization_time = 36000;
 rng default % Pseudo-random but repeatable scenario
 
 time_str = datestr(now,'yyyymmdd_HHMMSS');
-videoname = ['ICC_integrated_',time_str,'.mp4'];
+videoname = ['ICC_sequential_',time_str,'.mp4'];
 
 % Add Required Packages to PATH
 addpath(genpath(strcat(ROOT_PATH,'/small_body_dynamics/EROS 433')))
@@ -58,6 +58,7 @@ addpath(strcat(ROOT_PATH,'/observed_points_optimizer'))
 addpath(strcat(ROOT_PATH,'/monte_carlo_coverage_optimizer'))
 addpath(strcat(ROOT_PATH,'/relay_orbit_optimizer'))
 addpath(strcat(ROOT_PATH,'/integrated_orbit_optimizer'))
+addpath(strcat(ROOT_PATH,'/network_flow_communication_optimizer'))
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                   User Options: Flags and Parameters                    %
@@ -74,7 +75,7 @@ carrier_index = n_spacecraft;
 sc_types{carrier_index} = 0; % Mark the carrier so it will not be used in the Monte Carlo optimization
                             
 delta_t = 10*60; % [s]; simulation time step
-total_t = 1*24*60*60; % [s]; 1 day, total time of simulation
+total_t = 7*24*60*60; % [s]; 1 day, total time of simulation
 time_vector = 0:delta_t:total_t; % sample times
 
 
@@ -90,10 +91,10 @@ trajectory_bounds.max_distance_m = 140000;
 trajectory_bounds.min_distance_m = 12000;
 
 % Number of orbits to consider in the Monte Carlo science orbit optimizer
-n_trial_orbits = 250;
+n_trial_orbits = 1000;
 
 % Maximum time for the trust region relay orbit optimizer, in seconds
-max_relay_optimization_time = 1800;
+max_relay_optimization_time = 7200;
 % Which spacecraft should be optimized as relays?
 relay_orbit_indices = [4, 5, 6];
 assert(max(relay_orbit_indices)<=(n_spacecraft-1), "ERROR: relay orbit indices exceed number of spacecraft");
@@ -196,7 +197,8 @@ bandwidth_model = @(x1, x2) quadratic_comm_model(x1, x2, bandwidth_parameters,oc
 
 [Swarm, goal, problem_solve_time] = observation_and_communication_optimizer(ErosModel, Swarm, bandwidth_model);
 
-save("Greedy_sequential_250k_randomuniform");
+filename = "benchmarks/Greedy_sequential_results_250k_uniform_"+time_str;
+save(filename);
 
 % Parameters for bandwidth model
 bandwidth_parameters.reference_bandwidth = 10000;
@@ -211,8 +213,24 @@ bandwidth_model = @(x1, x2) quadratic_comm_model(x1, x2, bandwidth_parameters,oc
 
 [Swarm, goal, problem_solve_time] = observation_and_communication_optimizer(ErosModel, Swarm, bandwidth_model);
 
-save("Greedy_sequential_10k_randomuniform");
+filename = "benchmarks/Greedy_sequential_results_10k_uniform_"+time_str;
+save(filename);
 
+% Parameters for bandwidth model
+bandwidth_parameters.reference_bandwidth = 1e9;
+bandwidth_parameters.reference_distance = 1000000;
+bandwidth_parameters.max_bandwidth = 1e9;
+
+spherical_asteroid_parameters.max_radius = ErosModel.BodyModel.shape.maxRadius*1e3;
+spherical_asteroid_parameters.min_radius = ErosModel.BodyModel.shape.maxRadius*1e3;
+
+occlusion_test =  @(x1, x2) is_occluded(x1, x2, spherical_asteroid_parameters);
+bandwidth_model = @(x1, x2) quadratic_comm_model(x1, x2, bandwidth_parameters,occlusion_test);
+
+[Swarm, goal, problem_solve_time] = observation_and_communication_optimizer(ErosModel, Swarm, bandwidth_model);
+
+filename = "benchmarks/Greedy_sequential_results_unconstrainedk_uniform_"+time_str;
+save(filename);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                           Show Combined Results                         %
@@ -221,7 +239,19 @@ save("Greedy_sequential_10k_randomuniform");
 % Do you want the 3d plot to be in an absolute or relative frame?
 absolute = true;
 
-plot_coverage_and_communications_with_insets(Swarm, ErosModel,'absolute', absolute, 'record_video', record_video, "video_name", "Greedy_sequential_10k")
+% First, a static plot
+h1 = figure();
+set(h1,'Color',[1 1 1]);
+set(h1,'units','normalized','outerposition',[0 0 1 1])
+set(h1,'PaperPositionMode','auto');
+initialize_spatial_plot_3d();
+plot_coverage_and_communications_frame(Swarm, ErosModel, Swarm.get_num_timesteps, 'absolute', absolute);
+axis equal
+saveas(h1,strcat(string(bandwidth_parameters.reference_bandwidth/1e3),"k_greedy_orbits_",time_str,".png"))
+
+videoname = ['ICC_sequential_',time_str,'.mp4'];
+
+plot_coverage_and_communications_with_insets(Swarm, ErosModel,'absolute', absolute, 'record_video', record_video, "video_name", videoname)
 
 % Create 42 representation of the orbits
 if save_42_inputs

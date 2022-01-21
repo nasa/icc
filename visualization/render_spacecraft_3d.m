@@ -39,7 +39,8 @@ linewidth = 1;
 showTrail = true;
 absolute= true;
 plot_names = true;
-color_array = ['r', 'b', 'g', 'c', 'm']; 
+color_array = ['r', 'b', 'g', 'c', 'm'];
+standard_font_size = 25;
 
 if length(varargin) > 2
     for i = 3:2:length(varargin)
@@ -61,6 +62,9 @@ if length(varargin) > 2
 
         if strcmpi(varargin{i},'plot_names') || strcmpi(varargin{i},'names')
             plot_names = varargin{i+1};
+        end
+        if strcmpi(varargin{i},'font_size') || strcmpi(varargin{i},'fontsize') || strcmpi(varargin{i},'standard_font_size')
+            standard_font_size = varargin{i+1};
         end
     end
 end
@@ -85,7 +89,7 @@ for i_sc = 1:n_spacecraft
     end
     if plot_names
 %         h(3*(i_sc-1)+3) = text( sc_position_array(end, 1, i_sc), sc_position_array(end, 2, i_sc), sc_position_array(end, 3, i_sc),string(Swarm.Parameters.types{i_sc}));
-        h(3*(i_sc-1)+3) = text( sc_position_array(end, 1, i_sc), sc_position_array(end, 2, i_sc), sc_position_array(end, 3, i_sc),string(i_sc));
+        h(3*(i_sc-1)+3) = text( sc_position_array(end, 1, i_sc), sc_position_array(end, 2, i_sc), sc_position_array(end, 3, i_sc),string(i_sc), 'FontSize', standard_font_size);
 
     end
     if showTrail == true % shows the entire orbital path
