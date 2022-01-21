@@ -42,7 +42,7 @@ verbose = false;
 save_42_inputs = false;
 
 % Maximum time for the trust region integrated orbit optimizer, in seconds
-max_optimization_time = 1800;
+max_optimization_time = 7200;
 
 rng default % Pseudo-random but repeatable scenario
 
@@ -164,14 +164,25 @@ optimization_options.starts = 50;
 optimization_options.max_optimization_time = max_optimization_time;
 
 [Swarm] = integrated_optimization(Swarm, ErosModel, bandwidth_parameters, optimization_options, trajectory_bounds, optimize_carrier, verbose);
-filename = "benchmarks/MultiStart_results_250k_"+time_str;
+filename = strcat("benchmarks/MultiStart_results_", string(bandwidth_parameters.reference_bandwidth/1e3), "k_uniform_", time_str);
 save(filename);
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                           Show Combined Results                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Do you want the 3d plot to be in an absolute or relative frame?
 absolute = true;
+
+% First, a static plot
+h1 = figure();
+set(h1,'Color',[1 1 1]);
+set(h1,'units','normalized','outerposition',[0 0 1 1])
+set(h1,'PaperPositionMode','auto');
+initialize_spatial_plot_3d();
+plot_coverage_and_communications_frame(Swarm, ErosModel, Swarm.get_num_timesteps, 'absolute', absolute);
+axis equal
+saveas(h1,strcat(string(bandwidth_parameters.reference_bandwidth/1e3),"k_joint_orbits_",time_str,".png"))
+
+% Do you want the 3d plot to be in an absolute or relative frame?
 
 plot_coverage_and_communications_with_insets(Swarm, ErosModel,'absolute', absolute, 'record_video', record_video, 'video_name', videoname)
 

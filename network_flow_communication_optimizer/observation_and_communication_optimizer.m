@@ -339,7 +339,7 @@ num_variables = M +K*N*N+num_carriers*K;
 % This encourages spacecraft to not send information needlessly on the
 % links. Careful! This is a penalty per bit. If it is too high, we will not
 % collect data _at all_.
-sparsification_penalty = 1/(max(max(data_rates(data_rates>0))));
+sparsification_penalty = 0; %1/(max(max(data_rates(data_rates>0))));
 
 f = sparsification_penalty*ones(num_variables,1);
 % f = zeros(num_variables,1);

@@ -31,6 +31,8 @@
 
 clear, clc, close all, run ../startup.m  % refresh
 
+COMPUTE_MILP = false;
+
 % Add Required Packages to PATH
 addpath(genpath(strcat(ROOT_PATH,'/small_body_dynamics/EROS 433')))
 addpath(strcat(ROOT_PATH,'/small_body_dynamics'))
@@ -43,7 +45,8 @@ addpath(strcat(ROOT_PATH,'/network_flow_communication_optimizer'))
 %                   User Options: Flags and Parameters                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-scenarios_to_test = 50;
+scenarios_to_test = 501;
+
 
 rng(0); % Get a consistent seed
 
@@ -57,7 +60,7 @@ sc_max_memory = 8*20*1e9.*ones(1,n_spacecraft); % 20 GB max memory for instrumen
 sc_max_memory(1,carrier_index) = 8*10000*1e9; % Memory limit for carrier spacecraft
 
 delta_t = 10*60; % [s]; simulation time step
-total_t = 1*24*60*60; % [s]; 1 day, total time of simulation
+total_t = 7*24*60*60; % [s]; 1 day, total time of simulation
 time_vector = 0:delta_t:total_t; % sample times
 
 color_array = ['k', 'r', 'b', 'g', 'c', 'm', 'y'];
@@ -119,12 +122,12 @@ end
 
 for scenario_index = 1:scenarios_to_test
 
+
     sc_types = cell(1,n_spacecraft);
     for i_sc = 1:n_spacecraft
         sc_types{i_sc}  = randi([1,4]); % Indicies for instruments on board
     end
     sc_types{carrier_index} = 0; % Mark the carrier so it will not be used in the Monte Carlo optimization
-
     
     % Instantiate SpacecraftSwarm class for handling spacecraft data
     Swarm = SpacecraftSwarm(time_vector, sc_types, sc_max_memory);
@@ -132,7 +135,11 @@ for scenario_index = 1:scenarios_to_test
     sc_initial_state_array = initialize_random_orbits(n_spacecraft, ErosGravity);
     carrier_initial_conditions = initialize_carrier_orbit(ErosGravity);
     sc_initial_state_array(carrier_index,:) = carrier_initial_conditions;    
-    
+
+    if scenario_index == 431 % Bad and for some reason we do not catch it
+        continue
+    end
+
     % Integrate the spacecraft' orbits
     Swarm.integrate_trajectories(ErosGravity, sc_initial_state_array);
 
@@ -165,19 +172,50 @@ for scenario_index = 1:scenarios_to_test
     inner_solve_times_lpt(scenario_index) = problem_solve_time_truncated;
     goals_lpt(scenario_index) = goal_truncated;
     
-    disp("MILP")
-    observation_and_communication_optimizer_options.ilp = true;
-    observation_and_communication_optimizer_options.truncate = false;
-    milptic = tic;
-    [Swarm_milp, goal_milp, problem_solve_time_milp] = observation_and_communication_optimizer(ErosGravity, Swarm, bandwidth_model, data_scaling_factor, observation_and_communication_optimizer_options);
-    total_solve_times_milp(scenario_index) = toc(milptic);
-    inner_solve_times_milp(scenario_index) = problem_solve_time_milp;
-    goals_milp(scenario_index) = goal_milp;
-    save(strcat('benchmarks/inner_loop_intermediate_', string(scenario_index),"_",mydatestring))
+    if COMPUTE_MILP
+        disp("MILP")
+        observation_and_communication_optimizer_options.ilp = true;
+        observation_and_communication_optimizer_options.truncate = false;
+        milptic = tic;
+        [Swarm_milp, goal_milp, problem_solve_time_milp] = observation_and_communication_optimizer(ErosGravity, Swarm, bandwidth_model, data_scaling_factor, observation_and_communication_optimizer_options);
+        total_solve_times_milp(scenario_index) = toc(milptic);
+        inner_solve_times_milp(scenario_index) = problem_solve_time_milp;
+        goals_milp(scenario_index) = goal_milp;
+    else
+        total_solve_times_milp(scenario_index) = NaN;
+        inner_solve_times_milp(scenario_index) = NaN;
+        goals_milp(scenario_index) = NaN;
+    end
+    save(strcat('benchmarks/inner_loop_intermediate_', string(bandwidth_parameters.reference_bandwidth), "_",string(scenario_index),"_",mydatestring))
 end
 
-save(strcat('benchmarks/inner_loop_final_',mydatestring))
+% total_solve_times_milp(431:432)=total_solve_times_milp(501:502)
+% inner_solve_times_milp(431:432)=inner_solve_times_milp(501:502)
+% goals_milp(431:432)=goals_milp(501:502)
 
+% total_solve_times_lpt(431:432)=total_solve_times_lpt(501:502)
+% inner_solve_times_lpt(431:432)=inner_solve_times_lpt(501:502)
+% goals_lpt(431:432)=goals_lpt(501:502)
+
+% total_solve_times_lp(431:432)=total_solve_times_lp(501:502)
+% inner_solve_times_lp(431:432)=inner_solve_times_lp(501:502)
+% goals_lp(431:432)=goals_lp(501:502)
+
+
+
+% total_solve_times_milp=total_solve_times_milp(1:500);
+% inner_solve_times_milp=inner_solve_times_milp(1:500);
+% goals_milp=goals_milp(1:500);
+
+% total_solve_times_lpt=total_solve_times_lpt(1:500);
+% inner_solve_times_lpt=inner_solve_times_lpt(1:500);
+% goals_lpt=goals_lpt(1:500);
+
+% total_solve_times_lp=total_solve_times_lp(1:500);
+% inner_solve_times_lp=inner_solve_times_lp(1:500);
+% goals_lp=goals_lp(1:500);
+
+save(strcat('benchmarks/inner_loop_final_',string(bandwidth_parameters.reference_bandwidth),"_",mydatestring))
 
 cspice_kclear % This cleares the SPICE files from Matlab's memory
 

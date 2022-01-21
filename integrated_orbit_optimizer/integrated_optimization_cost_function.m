@@ -124,14 +124,14 @@ for i_sc = 1:N
             swarm.integrate_trajectory(i_sc, gravity_model, sc_initial_condition(:, i_sc)', 'absolute');
             distances = vecnorm(swarm.abs_trajectory_array(:,1:3,i_sc),2,2);
             if max(distances)> trajectory_bounds.max_distance_m
-                warning("ERROR: Trajectory %d went too far from asteroid (max distance %f m, bound %f m). Returning inf", i_sc, max(distances), trajectory_bounds.max_distance_m);
+                warning("ERROR: Trajectory %d went too far from asteroid (max distance %f m, bound %f m).", i_sc, max(distances), trajectory_bounds.max_distance_m);
                 out_of_bounds = true;
                 goal = inf;
                 gradient = nan;
 %                 return
             end
             if min(distances) < trajectory_bounds.min_distance_m
-                warning("ERROR: Trajectory %d went too close to asteroid (min distance %f m, bound %f m). Returning inf", i_sc, min(distances), trajectory_bounds.min_distance_m);
+                warning("ERROR: Trajectory %d went too close to asteroid (min distance %f m, bound %f m).", i_sc, min(distances), trajectory_bounds.min_distance_m);
                 out_of_bounds = true;
                 goal = inf;
                 gradient = nan;
